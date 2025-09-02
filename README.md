@@ -51,17 +51,22 @@ Pavel Sibirenko
 	•	linux-image-unsigned-...amd64.deb
 	•	linux-modules-...amd64.deb
 Установи их:
+###
 sudo dpkg -i *.deb
 После перезагрузки система загрузится с новым ядром.
-3. С помощью утилиты mainline (удобнее)
+
+2. С помощью утилиты mainline (удобнее)
 Есть GUI/CLI-программа для управления mainline-ядрами.
 Установка:
+###
 sudo add-apt-repository ppa:cappelikan/ppa
 sudo apt update
 sudo apt install mainline
 Запуск:
+###
 mainline --list   # список доступных ядер
 mainline --install 6.10.5   # установка ядра
+
 Важно
 	•	Mainline-ядра не поддерживаются Canonical официально, их используют «на свой риск».
 	•	Если что-то пойдет не так, всегда можно загрузиться со старого ядра (оно остаётся в меню GRUB).
