@@ -75,7 +75,47 @@ Ubuntu по умолчанию использует ядра, которые п�
 </details>
 
 **Выполнение домашнего задания:**
- - #cd /home/spg
+- spg@ol-alp-ubuntu1:~$ uname -r
+- 6.8.0-79-generic
+- spg@ol-alp-ubuntu1:~$ cat /proc/version
+- Linux version 6.8.0-79-generic (buildd@lcy02-amd64-049) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #79-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 12 14:42:46 UTC 2025
+- spg@ol-alp-ubuntu1:~$ sudo add-apt-repository ppa:cappelikan/ppa
+- spg@ol-alp-ubuntu1:~$ sudo su
+- root@ol-alp-ubuntu1:/home/spg#
+- apt update
+- Scanning linux images...
+
+Running kernel seems to be up-to-date.
+- mainline --list
+- mainline 1.4.13
+Notice: "--list" has been renamed to "list"
+Updating Kernels...
+----------------------------------------------------------------
+Available Kernels
+----------------------------------------------------------------
+- 6.16.4
+- 6.16.3
+- 6.16.2
+- 6.16.1
+- 6.16
+- 6.15.11
+-  ...
+- mainline --install 6.10.5
+- mainline 1.4.13
+Notice: "--install" has been renamed to "install"
+Updating Kernels...
+Downloading 6.10.5
+Installing 6.10.5
+sh: 1: pkexec: not found
+- spg@ol-alp-ubuntu1:~$ sudo apt update
+- sudo apt install policykit-1
+- sudo su
+- mainline --install 6.10.5
+- ...update-initramfs:
+-  Generating /boot/initrd.img-6.10.5-061005-generic...
+- reboot
+- spg@ol-alp-ubuntu1:~$ uname -r
+- 6.10.5-061005-generic
 
 ## 2 Урок
 
