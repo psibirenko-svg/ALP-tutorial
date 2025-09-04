@@ -85,12 +85,14 @@ Pavel Sibirenko
 - apt update
 - Scanning linux images...
 
-Running kernel seems to be up-to-date.
+- Running kernel seems to be up-to-date.
 - mainline --list
 - mainline 1.4.13
-Notice: "--list" has been renamed to "list"
-Updating Kernels...
-Available Kernels...
+- Notice: "--list" has been renamed to "list"
+- Updating Kernels...
+- -----------------------
+- Available Kernels...
+- -----------------------
 - 6.16.4
 - 6.16.3
 - 6.16.2
