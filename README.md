@@ -1,4 +1,4 @@
-1Pavel Sibirenko
+Pavel Sibirenko
 # 1 месяц
 ## 1 урок
 **Домашнее задание** <ins>"Обновление ядра системы"</ins>
