@@ -206,5 +206,44 @@ sh: 1: pkexec: not found
 
 **Выполнение домашнего задания:**
 
+- Добавлено 2 диска по 25ГБ.
+- Перезагружена машина
+- **root@ol-alp-ubuntu1:/home/spg#fdisk -l**
+- Disk /dev/sda: 30 GiB, 32212254720 bytes, 62914560 sectors
+- Disk model: Virtual disk
+- Units: sectors of 1 * 512 = 512 bytes
+- Sector size (logical/physical): 512 bytes / 512 bytes
+- I/O size (minimum/optimal): 512 bytes / 512 bytes
+- Disklabel type: gpt
+- Disk identifier: 8D9F226A-26B4-4BCB-B1D9-1A25308F5904
+
+ -Device       Start      End  Sectors Size Type
+ -/dev/sda1     2048     4095     2048   1M BIOS boot
+ -/dev/sda2     4096  4198399  4194304   2G Linux filesystem
+ -/dev/sda3  4198400 62912511 58714112  28G Linux filesystem
 
 
+- Disk /dev/sdb: 25 GiB, 26843545600 bytes, 52428800 sectors
+- Disk model: Virtual disk
+- Units: sectors of 1 * 512 = 512 bytes
+ -Sector size (logical/physical): 512 bytes / 512 bytes
+ -I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+
+- Disk /dev/sdc: 25 GiB, 26843545600 bytes, 52428800 sectors
+- Disk model: Virtual disk
+- Units: sectors of 1 * 512 = 512 bytes
+- Sector size (logical/physical): 512 bytes / 512 bytes
+- I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+- **root@ol-alp-ubuntu1:/home/spg# mdadm --zero-superblock --force /dev/sd{b,c}**
+- mdadm: Unrecognised md component device - /dev/sdb
+- mdadm: Unrecognised md component device - /dev/sdc
+
+- **root@ol-alp-ubuntu1:/home/spg# mdadm --create --verbose /dev/md0 -l 1 -n 2 /dev/sd{b,c}**
+- mdadm: Note: this array has metadata at the start and
+-    may not be suitable as a boot device.  If you plan to
+-    store '/boot' on this device please ensure that
+-    your boot-loader understands md/v1.x metadata, or use
+-    --metadata=0.90
+- mdadm: size set to 26196992K
