@@ -250,3 +250,10 @@ sh: 1: pkexec: not found
 - Continue creating array? y
 - mdadm: Defaulting to version 1.2 metadata
 - mdadm: array /dev/md0 started.
+- root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat # проверка RAID
+- Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10]
+- md0 : active raid1 sdc[1] sdb[0]
+-       26196992 blocks super 1.2 [2/2] [UU]
+-       [===================>.]  resync = 96.9% (25406848/26196992) finish=0.0min speed=206724K/sec
+-
+- unused devices: <none>
