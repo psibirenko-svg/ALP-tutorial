@@ -247,3 +247,6 @@ sh: 1: pkexec: not found
 -    your boot-loader understands md/v1.x metadata, or use
 -    --metadata=0.90
 - mdadm: size set to 26196992K
+- Continue creating array? y
+- mdadm: Defaulting to version 1.2 metadata
+- mdadm: array /dev/md0 started.
