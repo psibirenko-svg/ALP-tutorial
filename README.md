@@ -250,10 +250,223 @@ sh: 1: pkexec: not found
 - Continue creating array? y
 - mdadm: Defaulting to version 1.2 metadata
 - mdadm: array /dev/md0 started.
-- root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat # проверка RAID
+- **root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat** # проверка RAID
 - Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10]
 - md0 : active raid1 sdc[1] sdb[0]
--       26196992 blocks super 1.2 [2/2] [UU]
--       [===================>.]  resync = 96.9% (25406848/26196992) finish=0.0min speed=206724K/sec
+- 26196992 blocks super 1.2 [2/2] [UU]
+- [===================>.]  resync = 96.9% (25406848/26196992) finish=0.0min speed=206724K/sec
 -
 - unused devices: <none>
+- **root@ol-alp-ubuntu1:/home/spg# mdadm -D /dev/md0**
+- /dev/md0:
+- Version : 1.2
+- Creation Time : Mon Sep  8 12:30:54 2025
+- Raid Level : raid1
+- Array Size : 26196992 (24.98 GiB 26.83 GB)
+- Used Dev Size : 26196992 (24.98 GiB 26.83 GB)
+- Raid Devices : 2
+- Total Devices : 2
+- Persistence : Superblock is persistent
+- Update Time : Mon Sep  8 12:33:04 2025
+- State : clean
+- Active Devices : 2
+- Working Devices : 2
+- Failed Devices : 0
+- Spare Devices : 0
+- Consistency Policy : resync
+- Name : ol-alp-ubuntu1:0  (local to host ol-alp-ubuntu1)
+- UUID : fb759b8b:cfc4115e:f806dd32:0d7e6930
+- Events : 17
+- Number   Major   Minor   RaidDevice State
+- 	0       8       16        0      active sync   /dev/sdb
+- 	1       8       32        1      active sync   /dev/sdc
+- **root@ol-alp-ubuntu1:/home/spg# mdadm /dev/md0 --fail /dev/sdc** # "ломаем" диск 1 в RAID-е md0
+- mdadm: set /dev/sdc faulty in /dev/md0
+- **root@ol-alp-ubuntu1:/home/spg#mdadm -D /dev/md0** # проверяем
+- Number   Major   Minor   RaidDevice State
+- 0       8       16        0      active sync   /dev/sdb
+- 0        0        1      removed
+- 1       8       32        -      faulty   /dev/sdc
+- **root@ol-alp-ubuntu1:/home/spg# mdadm /dev/md0 --remove /dev/sdc** # удаляем "сломанный диск" из массива md0
+- mdadm: hot removed /dev/sdc from /dev/md0
+- "заменили" диск на новый (**Нужно ли быть уверенным, что на новом нет никакой информации, чтобы не повредить данные на md0?**)
+- **root@ol-alp-ubuntu1:/home/spg# mdadm /dev/md0 --add /dev/sdc**
+mdadm: added /dev/sdc
+- **root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat** # Процесс rebuild-а
+- Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10]
+- md0 : active raid1 sdc[2] sdb[0]
+- 26196992 blocks super 1.2 **[2/1] [U_]**
+- [=======>.............]  recovery = **36.8%** (9652352/26196992) finish=1.3min speed=206294K/sec
+- **root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat**
+- Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10]
+- md0 : active raid1 sdc[2] sdb[0]
+- 26196992 blocks super 1.2 **[2/1] [U_]**
+- [=============>.......]  recovery = **68.3%** (17907840/26196992) finish=0.6min speed=200041K/sec
+- unused devices: <none>
+- **root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat**
+- Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10]
+- md0 : active raid1 sdc[2] sdb[0]
+- 26196992 blocks super 1.2 **[2/2] [UU]**
+- unused devices: <none>
+- parted -s /dev/md0 mklabel gpt
+root@ol-alp-ubuntu1:/home/spg# fdisk /dev/md0
+
+Welcome to fdisk (util-linux 2.39.3).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+
+Command (m for help): p
+Disk /dev/md0: 24.98 GiB, 26825719808 bytes, 52393984 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 590C44E9-EC0D-4A26-BC53-E5775ACF2E02
+
+Device     Start      End  Sectors Size Type
+/dev/md0p1  2048 10479615 10477568   5G Linux filesystem
+
+Command (m for help): d
+Selected partition 1
+Partition 1 has been deleted.
+
+Command (m for help): p
+Disk /dev/md0: 24.98 GiB, 26825719808 bytes, 52393984 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 590C44E9-EC0D-4A26-BC53-E5775ACF2E02
+root@ol-alp-ubuntu1:/home/spg# parted -s /dev/md0 mklabel gpt
+root@ol-alp-ubuntu1:/home/spg# parted /dev/md0 mkpart primary ext4 0% 20%
+Information: You may need to update /etc/fstab.
+
+root@ol-alp-ubuntu1:/home/spg# cat /proc/mdstat
+Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10]
+md0 : active raid1 sdc[2] sdb[0]
+      26196992 blocks super 1.2 [2/2] [UU]
+
+unused devices: <none>
+root@ol-alp-ubuntu1:/home/spg# fdisk /dev/md0
+
+Welcome to fdisk (util-linux 2.39.3).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+
+Command (m for help): p
+Disk /dev/md0: 24.98 GiB, 26825719808 bytes, 52393984 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 590C44E9-EC0D-4A26-BC53-E5775ACF2E02
+
+Device     Start      End  Sectors Size Type
+/dev/md0p1  2048 10479615 10477568   5G Linux filesystem
+
+Command (m for help): d
+Selected partition 1
+Partition 1 has been deleted.
+
+Command (m for help): p
+Disk /dev/md0: 24.98 GiB, 26825719808 bytes, 52393984 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 590C44E9-EC0D-4A26-BC53-E5775ACF2E02
+
+Command (m for help): exit
+e: unknown command
+
+Command (m for help): quit
+
+root@ol-alp-ubuntu1:/home/spg# parted /dev/md0
+GNU Parted 3.6
+Using /dev/md0
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) mklabel gpt
+Warning: The existing disk label on /dev/md0 will be destroyed and all data on this disk will be lost. Do you
+want to continue?
+Yes/No? Y
+(parted) print
+Model: Linux Software RAID Array (md)
+Disk /dev/md0: 26.8GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
+
+Number  Start  End  Size  File system  Name  Flags
+
+(parted) mkpart primary ext4 0% 20%
+(parted) mkpart primary ext4 20% 40%
+(parted) mkpart primary ext4 40% 60%
+(parted) mkpart primary ext4 60% 80%
+(parted) mkpart primary ext4 80% 100%
+(parted) print
+Model: Linux Software RAID Array (md)
+Disk /dev/md0: 26.8GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
+
+Number  Start   End     Size    File system  Name     Flags
+ 1      1049kB  5366MB  5365MB  ext4         primary
+ 2      5366MB  10.7GB  5365MB  ext4         primary
+ 3      10.7GB  16.1GB  5366MB  ext4         primary
+ 4      16.1GB  21.5GB  5365MB  ext4         primary
+ 5      21.5GB  26.8GB  5365MB  ext4         primary
+
+(parted) quit
+Information: You may need to update /etc/fstab.
+
+root@ol-alp-ubuntu1:/home/spg# for i in $(seq 1 5); do sudo mkfs.ext4 /dev/md0p$i; done
+mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 1309696 4k blocks and 327680 inodes
+Filesystem UUID: 92eca3f1-12d7-49ce-be6a-733e609bb7d7
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 1309696 4k blocks and 327680 inodes
+Filesystem UUID: 6f5c3479-02a4-4ed2-a7aa-026f09ccef68
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 1309952 4k blocks and 327680 inodes
+Filesystem UUID: 5c870d58-bc00-444b-a417-c5c5d1282f7b
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done
+- **root@ol-alp-ubuntu1:/home/spg# reboot**
+- **spg@ol-alp-ubuntu1:~$ df -k**
+- Filesystem                        1K-blocks    Used Available Use% Mounted on
+- tmpfs                                201536    1188    200348   1% /run
+- /dev/mapper/ubuntu--vg-ubuntu--lv  14339080 5001468   8587432  37% /
+- tmpfs                               1007672       0   1007672   0% /dev/shm
+- tmpfs                                  5120       0      5120   0% /run/lock
+- /dev/md127p3                        5071520      24   4793124   1% /mnt/raid/part3
+- /dev/md127p4                        5070496      24   4792152   1% /mnt/raid/part4
+- /dev/md127p1                        5070496      24   4792152   1% /mnt/raid/part1
+- /dev/md127p2                        5070496      24   4792152   1% /mnt/raid/part2
+- /dev/md127p5                        5070496      24   4792152   1% /mnt/raid/part5
+- /dev/sda2                           1992552  101928   1769384   6% /boot
+- tmpfs                                201532      16    201516   1% /run/user/1000
+
