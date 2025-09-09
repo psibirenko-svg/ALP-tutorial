@@ -448,4 +448,13 @@ mdadm: added /dev/sdc
 - **/dev/md127p5**                        5070496      24   4792152   1% /mnt/raid/part5
 - /dev/sda2                           1992552  101928   1769384   6% /boot
 - tmpfs                                201532      16    201516   1% /run/user/1000
-
+  
+- **root@ol-alp-ubuntu1:/# ls -hal /mnt/raid**
+- total 28K
+- drwxr-xr-x 7 root root 4.0K Sep  8 13:31 .
+- drwxr-xr-x 3 root root 4.0K Sep  8 13:31 ..
+- drwxr-xr-x 4 root root 4.0K Sep  9 11:40 part1
+- drwxr-xr-x 3 root root 4.0K Sep  8 13:19 part2
+- drwxr-xr-x 3 root root 4.0K Sep  8 13:19 part3
+- drwxr-xr-x 3 root root 4.0K Sep  8 13:19 part4
+- drwxr-xr-x 3 root root 4.0K Sep  8 13:19 part5
