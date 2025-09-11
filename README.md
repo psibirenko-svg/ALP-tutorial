@@ -483,7 +483,7 @@ mdadm: added /dev/sdc
 
 - Добавлено 2 диска по 25ГБ (cтало 5 дисков: 1 - система, 2 - raid
 - Перезагружена машина
-- root@ol-alp-ubuntu1:~# lsblk
+- **root@ol-alp-ubuntu1:~# lsblk**
 - NAME                      MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
 - sda                         8:0    0   30G  0 disk
 - ├─sda1                      8:1    0    1M  0 part
@@ -505,5 +505,28 @@ mdadm: added /dev/sdc
 -   ├─md127p4               259:3    0    5G  0 part  /mnt/raid/part4
 -   └─md127p5               259:4    0    5G  0 part  /mnt/raid/part5
 - sdd                         8:48   0   25G  0 disk
-sde                         8:64   0   25G  0 disk
-sr0                        11:0    1  3.1G  0 rom
+- sde                         8:64   0   25G  0 disk
+- sr0                        11:0    1  3.1G  0 rom
+- **root@ol-alp-ubuntu1:~# cat /proc/mdstat** # посмотрим на наш массив, его нужно разобрать для домашнего задания (нужно 4 диска)
+- Personalities : [raid1] [raid0] [raid6] [raid5] [raid4] [raid10]
+- md127 : active raid1 sdb[0] sdc[2]
+- root@ol-alp-ubuntu1:~# umount /dev/md127p1
+- root@ol-alp-ubuntu1:~# umount /dev/md127p2
+- root@ol-alp-ubuntu1:~# umount /dev/md127p3
+- root@ol-alp-ubuntu1:~# umount /dev/md127p4
+- root@ol-alp-ubuntu1:~# umount /dev/md127p5
+- **root@ol-alp-ubuntu1:~# umount /dev/md127**
+- umount: /dev/md127: not mounted.
+- **root@ol-alp-ubuntu1:~# lsblk**
+- NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+- sda                         8:0    0   30G  0 disk
+- ├─sda1                      8:1    0    1M  0 part
+- ├─sda2                      8:2    0    2G  0 part /boot
+- └─sda3                      8:3    0   28G  0 part
+-   └─ubuntu--vg-ubuntu--lv 252:0    0   14G  0 lvm  /
+- sdb                         8:16   0   25G  0 disk
+- sdc                         8:32   0   25G  0 disk
+- sdd                         8:48   0   25G  0 disk
+- sde                         8:64   0   25G  0 disk
+- sr0                        11:0    1  3.1G  0 rom
+
