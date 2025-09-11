@@ -477,3 +477,33 @@ mdadm: added /dev/sdc
 
 <details>
 <summary> = Теория = </summary>
+**Выполнение домашнего задания:**
+</details>
+
+
+- Добавлено 2 диска по 25ГБ (cтало 5 дисков: 1 - система, 2 - raid
+- Перезагружена машина
+- root@ol-alp-ubuntu1:~# lsblk
+- NAME                      MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+- sda                         8:0    0   30G  0 disk
+- ├─sda1                      8:1    0    1M  0 part
+- ├─sda2                      8:2    0    2G  0 part  /boot
+- └─sda3                      8:3    0   28G  0 part
+-   └─ubuntu--vg-ubuntu--lv 252:0    0   14G  0 lvm   /
+- sdb                         8:16   0   25G  0 disk
+- └─md127                     9:127  0   25G  0 raid1
+-   ├─md127p1               259:0    0    5G  0 part  /mnt/raid/part1
+-   ├─md127p2               259:1    0    5G  0 part  /mnt/raid/part2
+-   ├─md127p3               259:2    0    5G  0 part  /mnt/raid/part3
+-   ├─md127p4               259:3    0    5G  0 part  /mnt/raid/part4
+-   └─md127p5               259:4    0    5G  0 part  /mnt/raid/part5
+- sdc                         8:32   0   25G  0 disk
+- └─md127                     9:127  0   25G  0 raid1
+-   ├─md127p1               259:0    0    5G  0 part  /mnt/raid/part1
+-   ├─md127p2               259:1    0    5G  0 part  /mnt/raid/part2
+-   ├─md127p3               259:2    0    5G  0 part  /mnt/raid/part3
+-   ├─md127p4               259:3    0    5G  0 part  /mnt/raid/part4
+-   └─md127p5               259:4    0    5G  0 part  /mnt/raid/part5
+- sdd                         8:48   0   25G  0 disk
+sde                         8:64   0   25G  0 disk
+sr0                        11:0    1  3.1G  0 rom
