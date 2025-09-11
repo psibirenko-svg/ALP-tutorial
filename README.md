@@ -529,4 +529,5 @@ mdadm: added /dev/sdc
 - sdd                         8:48   0   25G  0 disk
 - sde                         8:64   0   25G  0 disk
 - sr0                        11:0    1  3.1G  0 rom
-
+- # теперь у нас 4 свободных диска для ДЗ
+- 
