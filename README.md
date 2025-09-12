@@ -653,7 +653,7 @@ mdadm: added /dev/sdc
 -  LV Write Access        read/write
 -  LV Creation host, time ol-alp-ubuntu1, 2025-09-12 06:17:06 +0000
 -  LV Status              available
--  # open                 0
+-  open                 0
 -  LV Size                <20.00 GiB
 -  Current LE             5119
 -  Segments               1
@@ -661,7 +661,7 @@ mdadm: added /dev/sdc
 -  Read ahead sectors     auto
 -  - currently set to     256
 -  Block device           252:1
-- **oot@ol-alp-ubuntu1:~# vgs**
+- **root@ol-alp-ubuntu1:~# vgs**
 -  VG        #PV #LV #SN Attr   VSize   VFree
 -  otus        1   1   0 wz--n- <25.00g  5.00g
 -  ubuntu-vg   1   1   0 wz--n- <28.00g 14.00g
