@@ -590,4 +590,30 @@ mdadm: added /dev/sdc
 - **sde                         8:64   0   25G  0 disk**
 - sr0                        11:0    1  3.1G  0 rom
 - **# теперь у нас 4 свободных диска для ДЗ**
-- 
+- **root@ol-alp-ubuntu1:~# lvmdiskscan**
+-  /dev/sda2 [       2.00 GiB]
+-  /dev/sda3 [     <28.00 GiB] LVM physical volume
+-  /dev/sdd  [      25.00 GiB]
+-  /dev/sde  [      25.00 GiB]
+-  2 disks
+-  1 partition
+-  0 LVM physical volume whole disks
+-  1 LVM physical volume
+-  **# нет 2-х дисков (не подготовлены для LVM (PV), т.к. размечены под ext4**
+- **root@ol-alp-ubuntu1:~# wipefs -a /dev/sdb** # удаляем старую разметку (сотрет данные)
+- /dev/sdb: 4 bytes were erased at offset 0x00001000 (linux_raid_member): fc 4e 2b a9
+- **root@ol-alp-ubuntu1:~# wipefs -a /dev/sdc** # удаляем старую разметку (сотрет данные)
+- /dev/sdc: 4 bytes were erased at offset 0x00001000 (linux_raid_member): fc 4e 2b a9
+- **root@ol-alp-ubuntu1:~# lvmdiskscan** # проверяем
+-  /dev/sda2 [       2.00 GiB]
+-  /dev/sda3 [     <28.00 GiB] LVM physical volume
+-  **/dev/sdb  [      25.00 GiB]**
+-  **/dev/sdc  [      25.00 GiB]**
+-  **/dev/sdd  [      25.00 GiB]**
+-  **/dev/sde  [      25.00 GiB]**
+-  4 disks
+-  1 partition
+-  0 LVM physical volume whole disks
+-  1 LVM physical volume
+
+
