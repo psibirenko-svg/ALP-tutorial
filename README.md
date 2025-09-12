@@ -755,3 +755,82 @@ mdadm: added /dev/sdc
 
 - # Работа со снапшотами
 - **Снапшот создается командой lvcreate, только с флагом -s, который указывает на то, что это снимок:**
+- **root@ol-alp-ubuntu1:~# lvcreate -L 500M -s -n test-snap /dev/otus/test**
+- Logical volume "test-snap" created.
+- **root@ol-alp-ubuntu1:~# vgs -o +lv_size,lv_name | grep test** # проверка
+- otus        2   3   1 wz--n-  49.99g <5.49g <43.92g test
+- otus        2   3   1 wz--n-  49.99g <5.49g 500.00m test-snap
+- **root@ol-alp-ubuntu1:~# lsblk**
+- NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+- sda                         8:0    0   30G  0 disk
+- ├─sda1                      8:1    0    1M  0 part
+- ├─sda2                      8:2    0    2G  0 part /boot
+- └─sda3                      8:3    0   28G  0 part
+-  └─ubuntu--vg-ubuntu--lv 252:0    0   14G  0 lvm  /
+- sdb                         8:16   0   25G  0 disk
+- ├─otus-small              252:2    0  100M  0 lvm
+- └─otus-test-real          252:3    0 43.9G  0 lvm
+-  ├─otus-test             252:1    0 43.9G  0 lvm
+-  └─otus-test--snap       252:5    0 43.9G  0 lvm
+- sdc                         8:32   0   25G  0 disk
+- ├─**otus-test-real**          252:3    0 43.9G  0 lvm
+- │ ├─otus-test             252:1    0 43.9G  0 lvm
+- │ └─**otus-test--snap**       252:5    0 43.9G  0 lvm
+- └─**otus-test--snap-cow**     252:4    0  500M  0 lvm
+-  └─otus-test--snap       252:5    0 43.9G  0 lvm
+- sdd                         8:48   0   25G  0 disk
+- sde                         8:64   0   25G  0 disk
+- sr0                        11:0    1  3.1G  0 rom
+- **root@ol-alp-ubuntu1:~# mkdir /data-snap**
+- **root@ol-alp-ubuntu1:~# mount /dev/otus/test-snap /data-snap/**
+- **root@ol-alp-ubuntu1:~# ll /data-snap/**
+- total 20445776
+- drwxr-xr-x  3 root root        4096 Sep 12 06:47 ./
+- drwxr-xr-x 26 root root        4096 Sep 12 07:21 ../
+- drwx------  2 root root       16384 Sep 12 06:34 lost+found/
+- -rw-r--r--  1 root root 20936445952 Sep 12 06:49 test.log
+- # Можно также восстановить предыдущее состояние. “Откатиться” на снапшот.
+- **root@ol-alp-ubuntu1:~# umount /data-snap**
+- **root@ol-alp-ubuntu1:/# umount /data**
+- umount: /data: not mounted.
+- **root@ol-alp-ubuntu1:/# lvconvert --merge /dev/otus/test-snap**
+- Merging of volume otus/test-snap started.
+- otus/test: Merged: 100.00%
+- **root@ol-alp-ubuntu1:/# mount /dev/otus/test /data**
+- **root@ol-alp-ubuntu1:/# ll /data**
+- total 20445776
+- drwxr-xr-x  3 root root        4096 Sep 12 06:47 ./
+- drwxr-xr-x 26 root root        4096 Sep 12 07:21 ../
+- drwx------  2 root root       16384 Sep 12 06:34 lost+found/
+- -rw-r--r--  1 root root 20936445952 Sep 12 06:49 test.log
+- # Работа с LVM-RAID
+- **root@ol-alp-ubuntu1:/# pvcreate /dev/sd{d,e}**
+- Physical volume "/dev/sdd" successfully created.
+- Physical volume "/dev/sde" successfully created.
+- **root@ol-alp-ubuntu1:/# vgcreate vg0 /dev/sd{d,e}**
+- Volume group "vg0" successfully create
+- **root@ol-alp-ubuntu1:/# lvcreate -l+80%FREE -m1 -n mirror vg0**
+- Logical volume "mirror" created.
+- **root@ol-alp-ubuntu1:/# lvs**
+- LV        VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+- small     otus      -wi-a----- 100.00m
+- test      otus      -wi-ao---- <43.92g
+- ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
+- mirror    vg0       rwi-a-r--- <20.00g                                    45.80
+-
+- # Домашнее задание
+- На виртуальной машине с Ubuntu 24.04 и LVM.
+- Уменьшить том под / до 8G.
+- Выделить том под /home.
+- Выделить том под /var - сделать в mirror.
+- /home - сделать том для снапшотов.
+- Прописать монтирование в fstab. Попробовать с разными опциями и разными файловыми системами (на выбор).
+- Работа со снапшотами:
+- сгенерить файлы в /home/;
+- снять снапшот;
+- удалить часть файлов;
+- восстановится со снапшота.
+-  * На дисках попробовать поставить btrfs/zfs — с кэшем, снапшотами и разметить там каталог /opt.
+- Логировать работу можно с помощью утилиты script
+
+  - 
