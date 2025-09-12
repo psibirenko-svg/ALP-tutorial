@@ -691,6 +691,44 @@ mdadm: added /dev/sdc
 - **root@ol-alp-ubuntu1:~# mkdir /data**
 - **root@ol-alp-ubuntu1:~# mount /dev/otus/test /data/**
 - **root@ol-alp-ubuntu1:~# mount | grep /data**
-/dev/mapper/otus-test on /data type ext4 (rw,relatime
-
-
+- /dev/mapper/otus-test on /data type ext4 (rw,relatime
+- # Расширение LVM
+- Допустим, перед нами встала проблема нехватки свободного места в директории /data. Мы можем расширить файловую систему на LV /dev/otus/test за - счет нового блочного устройства /dev/sdc.
+- **root@ol-alp-ubuntu1:~# pvcreate /dev/sdc**
+- Physical volume "/dev/sdc" successfully created.
+- **root@ol-alp-ubuntu1:~# vgextend otus /dev/sdc** # расширяем VG otus диском sdc
+- Volume group "otus" successfully extended
+- **root@ol-alp-ubuntu1:~# vgdisplay -v otus | grep 'PV Name'** # проверка
+- PV Name               /dev/sdb
+- PV Name               /dev/sdc
+- **root@ol-alp-ubuntu1:~# vgs**
+- VG        #PV #LV #SN Attr   VSize   VFree
+- otus        2   2   0 wz--n-  49.99g <29.90g
+- ubuntu-vg   1   1   0 wz--n- <28.00g  14.00g
+- **root@ol-alp-ubuntu1:~# dd if=/dev/zero of=/data/test.log bs=1M  count=80000 status=progress** # займем все место на диске
+- 20094910464 bytes (20 GB, 19 GiB) copied, 16 s, 1.3 GB/s
+- dd: error writing '/data/test.log': **No space left on device** # занято 100% дискового пространства
+- 19967+0 records in
+- 19966+0 records out
+- 20936445952 bytes (21 GB, 19 GiB) copied, 16.7435 s, 1.3 GB/s
+- **root@ol-alp-ubuntu1:~# df -Th /data/**
+- Filesystem            Type  Size  Used Avail Use% Mounted on
+- /dev/mapper/otus-test ext4   20G   20G     0 100% /data
+- **root@ol-alp-ubuntu1:~# lvextend -l+80%FREE /dev/otus/test** # Увеличиваем LV за счет части (80%) появившегося свободного места.
+- Size of logical volume otus/test changed from <20.00 GiB (5119 extents) **to <43.92 GiB** (11243 extents).
+- Logical volume otus/test successfully resized.
+- **root@ol-alp-ubuntu1:~# lvs /dev/otus/test**
+- LV   VG   Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+- test otus -wi-ao---- <43.92g
+- **root@ol-alp-ubuntu1:~# df -Th /data** # файловая система в размере пока не изменилась
+- Filesystem            Type  Size  Used Avail Use% Mounted on
+- /dev/mapper/otus-test ext4   20G   20G     0 100% /data
+- **root@ol-alp-ubuntu1:~# resize2fs /dev/otus/test**
+- resize2fs 1.47.0 (5-Feb-2023)
+- Filesystem at /dev/otus/test is mounted on /data; on-line resizing required
+- old_desc_blocks = 3, new_desc_blocks = 6
+- The filesystem on /dev/otus/test is now 11512832 (4k) blocks long.
+- **root@ol-alp-ubuntu1:~# df -Th /data** # проверяем место
+- Filesystem            Type  Size  Used Avail Use% Mounted on
+- /dev/mapper/otus-test ext4   44G   20G   22G  48% /data
+- # Допустим Вы забыли оставить место на снапшоты. Можно уменьшить существующий LV с помощью команды lvreduce, но перед этим необходимо отмонтировать файловую систему, проверить её на ошибки и уменьшить ее размер:
