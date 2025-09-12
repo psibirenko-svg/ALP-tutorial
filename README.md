@@ -615,5 +615,33 @@ mdadm: added /dev/sdc
 -  1 partition
 -  0 LVM physical volume whole disks
 -  1 LVM physical volume
+-  **root@ol-alp-ubuntu1:~# pvcreate /dev/sdb** # разметим диск для будущего использования LVM - создадим PV
+-  Physical volume "/dev/sdb" successfully created
+-  **root@ol-alp-ubuntu1:~# vgcreate otus /dev/sdb** # создаем первый уровень абстракции - VG
+-  Volume group "otus" successfully created
+-  **root@ol-alp-ubuntu1:~# lvcreate -l+80%FREE -n test otus** # создаем Logical Volume (LV)
+-  Logical volume "test" created.
+-  **root@ol-alp-ubuntu1:~# vgdisplay otus**
+-  --- Volume group ---
+-  VG Name               otus
+-  System ID
+-  Format                lvm2
+-  Metadata Areas        1
+-  Metadata Sequence No  2
+-  VG Access             read/write
+-  VG Status             resizable
+-  MAX LV                0
+-  Cur LV                1
+-  Open LV               0
+-  Max PV                0
+-  Cur PV                1
+-  Act PV                1
+-  VG Size               <25.00 GiB
+-  PE Size               4.00 MiB
+-  Total PE              6399
+-  Alloc PE / Size       5119 / <20.00 GiB
+-  Free  PE / Size       1280 / 5.00 GiB
+-  VG UUID               jCugMC-ZHcJ-muKG-FqI5-XiQr-aACB-Us9wMV
+
 
 
