@@ -732,3 +732,26 @@ mdadm: added /dev/sdc
 - Filesystem            Type  Size  Used Avail Use% Mounted on
 - /dev/mapper/otus-test ext4   44G   20G   22G  48% /data
 - # Допустим Вы забыли оставить место на снапшоты. Можно уменьшить существующий LV с помощью команды lvreduce, но перед этим необходимо отмонтировать файловую систему, проверить её на ошибки и уменьшить ее размер:
+
+- **root@ol-alp-ubuntu1:~# umount /data/**
+- **root@ol-alp-ubuntu1:~# e2fsck -fy /dev/otus/test**
+- e2fsck 1.47.0 (5-Feb-2023)
+- Pass 1: Checking inodes, blocks, and sizes
+- Pass 2: Checking directory structure
+- Pass 3: Checking directory connectivity
+- Pass 4: Checking reference counts
+- Pass 5: Checking group summary information
+- /dev/otus/test: 12/2883584 files (0.0% non-contiguous), 5338504/11512832 blocks
+- **root@ol-alp-ubuntu1:~# resize2fs /dev/otus/test 30G**
+- resize2fs 1.47.0 (5-Feb-2023)
+- Resizing the filesystem on /dev/otus/test to 7864320 (4k) blocks.
+- The filesystem on /dev/otus/test is now 7864320 (4k) blocks long.
+- **root@ol-alp-ubuntu1:~# df -Th /data**
+- Filesystem                        Type  Size  Used Avail Use% Mounted on
+- /dev/mapper/ubuntu--vg-ubuntu--lv ext4   14G  4.8G  8.2G  37% /
+- **root@ol-alp-ubuntu1:~# lvs /dev/otus/test**
+- LV   VG   Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+- test otus -wi-a----- <43.92g
+
+- # Работа со снапшотами
+- **Снапшот создается командой lvcreate, только с флагом -s, который указывает на то, что это снимок:**
