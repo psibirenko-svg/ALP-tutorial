@@ -642,6 +642,41 @@ mdadm: added /dev/sdc
 -  Alloc PE / Size       5119 / <20.00 GiB
 -  Free  PE / Size       1280 / 5.00 GiB
 -  VG UUID               jCugMC-ZHcJ-muKG-FqI5-XiQr-aACB-Us9wMV
+-  **root@ol-alp-ubuntu1:~# vgdisplay -v otus | grep 'PV Name'**
+-  PV Name               /dev/sdb
+-  **root@ol-alp-ubuntu1:~# lvdisplay /dev/otus/test**
+-  --- Logical volume ---
+-  LV Path                /dev/otus/test
+-  LV Name                test
+-  VG Name                otus
+-  LV UUID                0B0NKg-ICGz-PyZM-SlqY-qg9j-pEgW-Izl0XI
+-  LV Write Access        read/write
+-  LV Creation host, time ol-alp-ubuntu1, 2025-09-12 06:17:06 +0000
+-  LV Status              available
+-  # open                 0
+-  LV Size                <20.00 GiB
+-  Current LE             5119
+-  Segments               1
+-  Allocation             inherit
+-  Read ahead sectors     auto
+-  - currently set to     256
+-  Block device           252:1
+- **oot@ol-alp-ubuntu1:~# vgs**
+-  VG        #PV #LV #SN Attr   VSize   VFree
+-  otus        1   1   0 wz--n- <25.00g  5.00g
+-  ubuntu-vg   1   1   0 wz--n- <28.00g 14.00g
+- **root@ol-alp-ubuntu1:~# lvs**
+-  LV        VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+-  test      otus      -wi-a----- <20.00g
+-  ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
+- **root@ol-alp-ubuntu1:~# lvcreate -L100M -n small otus** # создать еще один LV из свободного места. На этот раз создадим не экстентами, а абсолютным значением в мегабайтах:
+-  Logical volume "small" created.
+-  **root@ol-alp-ubuntu1:~# lvs**
+-  LV        VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+-  small     otus      -wi-a----- 100.00m
+-  test      otus      -wi-a----- <20.00g
+-  ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
+
 
 
 
