@@ -676,7 +676,21 @@ mdadm: added /dev/sdc
 -  small     otus      -wi-a----- 100.00m
 -  test      otus      -wi-a----- <20.00g
 -  ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
-
-
+- **root@ol-alp-ubuntu1:~# mkfs.ext4 /dev/otus/test** # Создаем на LV файловую систему и смонтируем его
+- mke2fs 1.47.0 (5-Feb-2023)
+- Creating filesystem with 5241856 4k blocks and 1310720 inodes
+- Filesystem UUID: e962ea62-1dcc-4f03-be63-d15e556065a2
+- Superblock backups stored on blocks:
+- 32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208,
+- 4096000
+-
+- Allocating group tables: done
+- Writing inode tables: done
+- Creating journal (32768 blocks): done
+- Writing superblocks and filesystem accounting information: done
+- **root@ol-alp-ubuntu1:~# mkdir /data**
+- **root@ol-alp-ubuntu1:~# mount /dev/otus/test /data/**
+- **root@ol-alp-ubuntu1:~# mount | grep /data**
+/dev/mapper/otus-test on /data type ext4 (rw,relatime
 
 
