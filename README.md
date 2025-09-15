@@ -904,7 +904,21 @@ mdadm: added /dev/sdc
 - └─vg0-mirror_rimage_1     252:6    0   20G  0 lvm
 -   └─vg0-mirror            252:7    0   20G  0 lvm
 - sr0                        11:0    1 1024M  0 rom
--
+- #Домашнее задание
+- **На виртуальной машине с Ubuntu 24.04 и LVM.
+- **Уменьшить том под / до 8G.
+- **Выделить том под /home.
+- **Выделить том под /var - сделать в mirror.
+- **/home - сделать том для снапшотов.
+- **Прописать монтирование в fstab. Попробовать с разными опциями и разными файловыми системами (на выбор).
+- **Работа со снапшотами:
+- **сгенерить файлы в /home/;
+- **снять снапшот;
+- **удалить часть файлов;
+- **восстановится со снапшота.
+- ** * На дисках попробовать поставить btrfs/zfs — с кэшем, снапшотами и разметить там каталог /opt.
+- ** Логировать работу можно с помощью утилиты script
+
 - **root@ol-alp-ubuntu1:~# pvcreate /dev/sdb**
 -   Physical volume "/dev/sdb" successfully created.
 - **root@ol-alp-ubuntu1:~# vgcreate vg_root /dev/sdb**
@@ -924,6 +938,10 @@ mdadm: added /dev/sdc
 - Writing inode tables: done
 - Creating journal (32768 blocks): done
 - Writing superblocks and filesystem accounting information: done
+- **root@ol-alp-ubuntu1:~# mount /dev/vg_root/lv_root /mnt**
+
+- **root@ol-alp-ubuntu1:~# rsync -avxHAX --progress / /mnt/** # копируем все данные с / раздела в /mnt
+- 
 
  
 
