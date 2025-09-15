@@ -949,7 +949,9 @@ mdadm: added /dev/sdc
 - **root@ol-alp-ubuntu1:~# for i in /proc/ /sys/ /dev/ /run/ /boot/; \
  do mount --bind $i /mnt/$i; done**
 - **root@ol-alp-ubuntu1:~# chroot /mnt/**
-- **root@ol-alp-ubuntu1:/# grub-mkconfig -o /boot/grub/grub.cfg**
+- **root@ol-alp-ubuntu1:/# grub-mkconfig -o /boot/grub/grub.cfg** # Cконфигурируем grub для того, чтобы при старте перейти в новый /.
+Сымитируем текущий root, сделаем в него chroot и обновим grub:
+
 - Sourcing file `/etc/default/grub'
 - Generating grub configuration file ...
 - Found linux image: /boot/vmlinuz-6.8.0-79-generic
@@ -959,7 +961,10 @@ mdadm: added /dev/sdc
 - Check GRUB_DISABLE_OS_PROBER documentation entry.
 - Adding boot menu entry for UEFI Firmware Settings ...
 - done
-
+- **root@ol-alp-ubuntu1:/# update-initramfs -u**
+- update-initramfs: Generating /boot/initrd.img-6.8.0-79-generic
+- **root@ol-alp-ubuntu1:/# reboot**
+- 
 
 
  
