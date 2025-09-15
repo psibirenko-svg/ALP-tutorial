@@ -964,11 +964,42 @@ mdadm: added /dev/sdc
 - **root@ol-alp-ubuntu1:/# update-initramfs -u**
 - update-initramfs: Generating /boot/initrd.img-6.8.0-79-generic
 - **root@ol-alp-ubuntu1:/# reboot**
-- # Теперь нам нужно изменить размер старой VG и вернуть на него рут. Для этого удаляем старый LV размером в 40G и создаём новый на 8G:
+- # Теперь нам нужно изменить размер старой VG и вернуть на него рут. Для этого удаляем старый LV размером в 25G и создаём новый на 8G:
 - **root@ol-alp-ubuntu1:/home/spg# lvremove /dev/ubuntu-vg/ubuntu-lv**
 - Do you really want to remove and DISCARD active logical volume ubuntu-vg/ubuntu-lv? [y/n]: Y
 -  Logical volume "ubuntu-lv" successfully removed.
+- **root@ol-alp-ubuntu1:/home/spg# lvcreate -n ubuntu-vg/ubuntu-lv -L 8G /dev/ubuntu-vg**
+- Logical volume "ubuntu-lv" created.
+- **root@ol-alp-ubuntu1:/home/spg# mkfs.ext4 /dev/ubuntu-vg/ubuntu-lv**
+- mke2fs 1.47.0 (5-Feb-2023)
+- Discarding device blocks: done
+- Creating filesystem with 2097152 4k blocks and 524288 inodes
+- Filesystem UUID: 2a8d4d79-8b33-47a2-baf2-e5b9c408c43a
+- Superblock backups stored on blocks:
+- 	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
+
+- Allocating group tables: done
+- Writing inode tables: done
+- Creating journal (16384 blocks): done
+- Writing superblocks and filesystem accounting information: done
+
+- **root@ol-alp-ubuntu1:/home/spg# mount /dev/ubuntu-vg/ubuntu-lv /mnt**
+- **root@ol-alp-ubuntu1:/home/spg# rsync -avxHAX --progress / /mnt/**
+- # Так же как в первый раз cконфигурируем grub.
+- **root@ol-alp-ubuntu1:/home/spg# for i in /proc/ /sys/ /dev/ /run/ /boot/;  do mount --bind $i /mnt/$i; done**
+- **root@ol-alp-ubuntu1:/home/spg# chroot /mnt/**
+- **root@ol-alp-ubuntu1:/# grub-mkconfig -o /boot/grub/grub.cfg**
+- Sourcing file `/etc/default/grub'
+- Generating grub configuration file ...
+- Found linux image: /boot/vmlinuz-6.8.0-79-generic
+- Found initrd image: /boot/initrd.img-6.8.0-79-generic
+- Warning: os-prober will not be executed to detect other bootable partitions.
+- Systems on them will not be added to the GRUB boot configuration.
+- Check GRUB_DISABLE_OS_PROBER documentation entry.
+- Adding boot menu entry for UEFI Firmware Settings ...
+- done
 - 
+
 
 
  
