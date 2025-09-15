@@ -904,7 +904,26 @@ mdadm: added /dev/sdc
 - └─vg0-mirror_rimage_1     252:6    0   20G  0 lvm
 -   └─vg0-mirror            252:7    0   20G  0 lvm
 - sr0                        11:0    1 1024M  0 rom
+-
+- **root@ol-alp-ubuntu1:~# pvcreate /dev/sdb**
+-   Physical volume "/dev/sdb" successfully created.
+- **root@ol-alp-ubuntu1:~# vgcreate vg_root /dev/sdb**
+-   Volume group "vg_root" successfully created
+- **root@ol-alp-ubuntu1:~# lvcreate -n lv_root -l +100%FREE /dev/vg_root**
+- WARNING: ext4 signature detected on /dev/vg_root/lv_root at offset 1080. Wipe it? [y/n]: Y
+-   Wiping ext4 signature on /dev/vg_root/lv_root.
+-   Logical volume "lv_root" created.
+- **root@ol-alp-ubuntu1:~# mkfs.ext4 /dev/vg_root/lv_root**
+- mke2fs 1.47.0 (5-Feb-2023)
+- Creating filesystem with 6552576 4k blocks and 1638400 inodes
+- Filesystem UUID: 783b3aed-d8d5-4c32-b246-57c6db19d784
+- Superblock backups stored on blocks:
+- 	4096000
 
+- Allocating group tables: done
+- Writing inode tables: done
+- Creating journal (32768 blocks): done
+- Writing superblocks and filesystem accounting information: done
 
  
 
