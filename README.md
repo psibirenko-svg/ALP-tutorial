@@ -820,7 +820,7 @@ mdadm: added /dev/sdc
 
 
 
-- root@ol-alp-ubuntu1:~# lsblk
+- **root@ol-alp-ubuntu1:~# lsblk**
 - NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
 - sda                         8:0    0   30G  0 disk
 - ├─sda1                      8:1    0    1M  0 part
@@ -843,7 +843,7 @@ mdadm: added /dev/sdc
 - └─vg0-mirror_rimage_1     252:6    0   20G  0 lvm
 -   └─vg0-mirror            252:7    0   20G  0 lvm
 - sr0                        11:0    1 1024M  0 rom
-- root@ol-alp-ubuntu1:~#  lvdisplay /dev/otus/test
+- **root@ol-alp-ubuntu1:~#  lvdisplay /dev/otus/test**
 -   --- Logical volume ---
 -   LV Path                /dev/otus/test
 -   LV Name                test
@@ -861,30 +861,30 @@ mdadm: added /dev/sdc
 -   - currently set to     256
 -   Block device           252:0
 
-- root@ol-alp-ubuntu1:~# vgs
+- **root@ol-alp-ubuntu1:~# vgs**
 -   VG        #PV #LV #SN Attr   VSize   VFree
 -   otus        2   2   0 wz--n-  49.99g <5.98g
 -   ubuntu-vg   1   1   0 wz--n- <28.00g 14.00g
 -   vg0         2   1   0 wz--n-  49.99g  9.99g
-- root@ol-alp-ubuntu1:~# lvs
+- **root@ol-alp-ubuntu1:~# lvs**
 -   LV        VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
 -   small     otus      -wi-a----- 100.00m
 -   test      otus      -wi-a----- <43.92g
 -   ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
 -   mirror    vg0       rwi-a-r--- <20.00g                                    100.00
-- root@ol-alp-ubuntu1:~# lvremove /dev/otus/test
+- **root@ol-alp-ubuntu1:~# lvremove /dev/otus/test**
 - Do you really want to remove and DISCARD active logical volume otus/test? [y/n]: Y
 -   Logical volume "test" successfully removed.
-- root@ol-alp-ubuntu1:~# lvremove /dev/otus/small
+- **root@ol-alp-ubuntu1:~# lvremove /dev/otus/small**
 - Do you really want to remove and DISCARD active logical volume otus/small? [y/n]: Y
 -   Logical volume "small" successfully removed.
-- root@ol-alp-ubuntu1:~# vgremove otus
+- **root@ol-alp-ubuntu1:~# vgremove otus**
 -   Volume group "otus" successfully removed
-- root@ol-alp-ubuntu1:~# pvremove /dev/sdb
+- **root@ol-alp-ubuntu1:~# pvremove /dev/sdb**
 -   Labels on physical volume "/dev/sdb" successfully wiped.
-- root@ol-alp-ubuntu1:~# pvremove /dev/sdc
+- **root@ol-alp-ubuntu1:~# pvremove /dev/sdc**
 -   Labels on physical volume "/dev/sdc" successfully wiped.
-- root@ol-alp-ubuntu1:~# lsblk
+- **root@ol-alp-ubuntu1:~# lsblk**
 - NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
 - sda                         8:0    0   30G  0 disk
 - ├─sda1                      8:1    0    1M  0 part
