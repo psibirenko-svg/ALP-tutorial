@@ -944,7 +944,13 @@ mdadm: added /dev/sdc
 - **root@ol-alp-ubuntu1:~# ls /mnt**
 - bin                boot   dev  home  lib64              lost+found  mnt  proc  run   sbin.usr-is-merged  srv       sys  usr
 - bin.usr-is-merged  cdrom  etc  lib   lib.usr-is-merged  media       opt  root  sbin  snap                swap.img  tmp  var
+- **сконфигурируем grub для того, чтобы при старте перейти в новый /.
+Сымитируем текущий root, сделаем в него chroot и обновим grub:**
+- **root@ol-alp-ubuntu1:~# for i in /proc/ /sys/ /dev/ /run/ /boot/; \
+ do mount --bind $i /mnt/$i; done**
+- **root@ol-alp-ubuntu1:~# chroot /mnt/**
 - 
+
 
 
  
