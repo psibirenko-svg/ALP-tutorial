@@ -941,7 +941,11 @@ mdadm: added /dev/sdc
 - **root@ol-alp-ubuntu1:~# mount /dev/vg_root/lv_root /mnt**
 
 - **root@ol-alp-ubuntu1:~# rsync -avxHAX --progress / /mnt/** # копируем все данные с / раздела в /mnt
+- **root@ol-alp-ubuntu1:~# ls /mnt**
+- bin                boot   dev  home  lib64              lost+found  mnt  proc  run   sbin.usr-is-merged  srv       sys  usr
+- bin.usr-is-merged  cdrom  etc  lib   lib.usr-is-merged  media       opt  root  sbin  snap                swap.img  tmp  var
 - 
+
 
  
 
