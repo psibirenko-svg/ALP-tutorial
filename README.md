@@ -998,7 +998,23 @@ mdadm: added /dev/sdc
 - Check GRUB_DISABLE_OS_PROBER documentation entry.
 - Adding boot menu entry for UEFI Firmware Settings ...
 - done
-- 
+- **root@ol-alp-ubuntu1:/# update-initramfs -u**
+- update-initramfs: Generating /boot/initrd.img-6.8.0-79-generic
+- W: Couldn't identify type of root file system for fsck hook
+- # Пока не перезагружаемся и не выходим из под chroot - мы можем заодно перенести /var.
+- # Выделить том под /var в зеркало
+- **root@ol-alp-ubuntu1:/# pvcreate /dev/sdc /dev/sdd**
+-   Can't initialize physical volume "/dev/sdd" of volume group "vg0" without -ff
+-   /dev/sdd: physical volume not initialized.
+-   Physical volume "/dev/sdc" successfully created.
+- **root@ol-alp-ubuntu1:/# vgcreate vg_var /dev/sdc /dev/sdd**
+-   Physical volume '/dev/sdd' is already in volume group 'vg0'
+-   /dev/sdd: physical volume not initialized.
+- **root@ol-alp-ubuntu1:/# vgremove /dev/vg0**
+-   Volume group "vg0" successfully removed
+- **root@ol-alp-ubuntu1:/# vgcreate vg_var /dev/sdc /dev/sdd**
+-   Volume group "vg_var" successfully created
+-   
 
 
 
