@@ -1042,9 +1042,76 @@ mdadm: added /dev/sdc
 -   Logical volume "lv_root" successfully removed.
 - **root@ol-alp-ubuntu1:/home/spg# vgremove /dev/vg_root
 -   Volume group "vg_root" successfully removed
-- **root@ol-alp-ubuntu1:/home/spg# pvremove /dev/sdb
+- **root@ol-alp-ubuntu1:/home/spg# pvremove /dev/sdb**
 -   Labels on physical volume "/dev/sdb" successfully wiped.
--   
+-  # Выделить том под /home
+Выделяем том под /home по тому же принципу что делали для /var:
+- **root@ol-alp-ubuntu1:/home/spg# lvcreate -n LogVol_Home -L 2G /dev/ubuntu-vg**
+-   Logical volume "LogVol_Home" created.
+- **root@ol-alp-ubuntu1:/home/spg# mkfs.ext4 /dev/ubuntu-vg/LogVol_Home**
+- mke2fs 1.47.0 (5-Feb-2023)
+- Discarding device blocks: done
+- Creating filesystem with 524288 4k blocks and 131072 inodes
+- Filesystem UUID: b28aacff-dc63-4343-98c8-fe64bd743c70
+- Superblock backups stored on blocks:
+- 	32768, 98304, 163840, 229376, 294912
+
+- Allocating group tables: done
+- Writing inode tables: done
+- Creating journal (16384 blocks): done
+- Writing superblocks and filesystem accounting information: done
+- **root@ol-alp-ubuntu1:/home/spg# mount /dev/ubuntu-vg/LogVol_Home /mnt/**
+- **root@ol-alp-ubuntu1:/home/spg# cp -aR /home/* /mnt/**
+- **root@ol-alp-ubuntu1:/home/spg# rm -rf /home/* **
+- **root@ol-alp-ubuntu1:/home/spg# umount /mnt**
+- mount /dev/ubuntu-vg/LogVol_Home /home/
+- # Правим fstab для автоматического монтирования /home:
+- **root@ol-alp-ubuntu1:/home/spg# echo "`blkid | grep Home | awk '{print $2}'` \
+ /home xfs defaults 0 0" >> /etc/fstab**
+- **root@ol-alp-ubuntu1:/home/spg# vi /etc/fstab**
+- # Работа со снапшотами
+Генерируем файлы в /home/:
+- **root@ol-alp-ubuntu1:/home/spg# touch /home/file{1..20**
+- # Снять снапшот:
+- ** root@ol-alp-ubuntu1:/home/spg# lvcreate -L 100MB -s -n home_snap \ /dev/ubuntu-vg/LogVol_Home**
+-  Logical volume "home_snap" created.
+-  **root@ol-alp-ubuntu1:/home/spg# rm -f /home/file{11..20}**
+-  # Процесс восстановления из снапшота:
+-  **root@ol-alp-ubuntu1:/home/spg# umount /home**
+- **root@ol-alp-ubuntu1:/home/spg# lvconvert --merge /dev/ubuntu-vg/home_snap**
+- Merging of volume ubuntu-vg/home_snap started.
+- ubuntu-vg/LogVol_Home: Merged: 100.00%
+- **root@ol-alp-ubuntu1:/home/spg# mount /dev/mapper/ubuntu--vg-LogVol_Home /home**
+- mount: (hint) your fstab has been modified, but systemd still uses
+- the old version; use 'systemctl daemon-reload' to reload.
+- **root@ol-alp-ubuntu1:/home/spg# ls -al /home**
+- total 28
+- drwxr-xr-x  4 root root  4096 Sep 15 09:19 .
+- drwxr-xr-x 23 root root  4096 Sep 15 05:58 ..
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file1
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file10
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file11
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file12
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file13
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file14
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file15
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file16
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file17
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file18
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file19
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file2
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file20
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file3
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file4
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file5
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file6
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file7
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file8
+- -rw-r--r--  1 root root     0 Sep 15 09:19 file9
+- drwx------  2 root root 16384 Sep 15 09:12 lost+found
+- drwxr-x---  4 spg  spg   4096 Sep 15 06:01 spg
+- # Файлы успешно восстановлены с помощью снапшота.
+
   
 
 
