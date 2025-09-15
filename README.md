@@ -817,3 +817,94 @@ mdadm: added /dev/sdc
 - test      otus      -wi-ao---- <43.92g
 - ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
 - mirror    vg0       rwi-a-r--- <20.00g                                    45.80
+
+
+
+- root@ol-alp-ubuntu1:~# lsblk
+- NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+- sda                         8:0    0   30G  0 disk
+- ├─sda1                      8:1    0    1M  0 part
+- ├─sda2                      8:2    0    2G  0 part /boot
+- └─sda3                      8:3    0   28G  0 part
+-   └─ubuntu--vg-ubuntu--lv 252:2    0   14G  0 lvm  /
+- sdb                         8:16   0   25G  0 disk
+- ├─otus-test               252:0    0 43.9G  0 lvm
+- └─otus-small              252:1    0  100M  0 lvm
+- sdc                         8:32   0   25G  0 disk
+- └─otus-test               252:0    0 43.9G  0 lvm
+- sdd                         8:48   0   25G  0 disk
+- ├─vg0-mirror_rmeta_0      252:3    0    4M  0 lvm
+- │ └─vg0-mirror            252:7    0   20G  0 lvm
+- └─vg0-mirror_rimage_0     252:4    0   20G  0 lvm
+-   └─vg0-mirror            252:7    0   20G  0 lvm
+- sde                         8:64   0   25G  0 disk
+- ├─vg0-mirror_rmeta_1      252:5    0    4M  0 lvm
+- │ └─vg0-mirror            252:7    0   20G  0 lvm
+- └─vg0-mirror_rimage_1     252:6    0   20G  0 lvm
+-   └─vg0-mirror            252:7    0   20G  0 lvm
+- sr0                        11:0    1 1024M  0 rom
+- root@ol-alp-ubuntu1:~#  lvdisplay /dev/otus/test
+-   --- Logical volume ---
+-   LV Path                /dev/otus/test
+-   LV Name                test
+-   VG Name                otus
+-   LV UUID                0B0NKg-ICGz-PyZM-SlqY-qg9j-pEgW-Izl0XI
+-   LV Write Access        read/write
+-  LV Creation host, time ol-alp-ubuntu1, 2025-09-12 06:17:06 +0000
+-   LV Status              available
+-   # open                 0
+-  LV Size                <43.92 GiB
+-   Current LE             11243
+-   Segments               3
+-   Allocation             inherit
+-   Read ahead sectors     auto
+-   - currently set to     256
+-   Block device           252:0
+
+- root@ol-alp-ubuntu1:~# vgs
+-   VG        #PV #LV #SN Attr   VSize   VFree
+-   otus        2   2   0 wz--n-  49.99g <5.98g
+-   ubuntu-vg   1   1   0 wz--n- <28.00g 14.00g
+-   vg0         2   1   0 wz--n-  49.99g  9.99g
+- root@ol-alp-ubuntu1:~# lvs
+-   LV        VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+-   small     otus      -wi-a----- 100.00m
+-   test      otus      -wi-a----- <43.92g
+-   ubuntu-lv ubuntu-vg -wi-ao---- <14.00g
+-   mirror    vg0       rwi-a-r--- <20.00g                                    100.00
+- root@ol-alp-ubuntu1:~# lvremove /dev/otus/test
+- Do you really want to remove and DISCARD active logical volume otus/test? [y/n]: Y
+-   Logical volume "test" successfully removed.
+- root@ol-alp-ubuntu1:~# lvremove /dev/otus/small
+- Do you really want to remove and DISCARD active logical volume otus/small? [y/n]: Y
+-   Logical volume "small" successfully removed.
+- root@ol-alp-ubuntu1:~# vgremove otus
+-   Volume group "otus" successfully removed
+- root@ol-alp-ubuntu1:~# pvremove /dev/sdb
+-   Labels on physical volume "/dev/sdb" successfully wiped.
+- root@ol-alp-ubuntu1:~# pvremove /dev/sdc
+-   Labels on physical volume "/dev/sdc" successfully wiped.
+- root@ol-alp-ubuntu1:~# lsblk
+- NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+- sda                         8:0    0   30G  0 disk
+- ├─sda1                      8:1    0    1M  0 part
+- ├─sda2                      8:2    0    2G  0 part /boot
+- └─sda3                      8:3    0   28G  0 part
+-   └─ubuntu--vg-ubuntu--lv 252:2    0   14G  0 lvm  /
+- sdb                         8:16   0   25G  0 disk
+- sdc                         8:32   0   25G  0 disk
+- sdd                         8:48   0   25G  0 disk
+- ├─vg0-mirror_rmeta_0      252:3    0    4M  0 lvm
+- │ └─vg0-mirror            252:7    0   20G  0 lvm
+- └─vg0-mirror_rimage_0     252:4    0   20G  0 lvm
+-   └─vg0-mirror            252:7    0   20G  0 lvm
+- sde                         8:64   0   25G  0 disk
+- ├─vg0-mirror_rmeta_1      252:5    0    4M  0 lvm
+- │ └─vg0-mirror            252:7    0   20G  0 lvm
+- └─vg0-mirror_rimage_1     252:6    0   20G  0 lvm
+-   └─vg0-mirror            252:7    0   20G  0 lvm
+- sr0                        11:0    1 1024M  0 rom
+
+
+ 
+
