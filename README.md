@@ -1014,7 +1014,21 @@ mdadm: added /dev/sdc
 -   Volume group "vg0" successfully removed
 - **root@ol-alp-ubuntu1:/# vgcreate vg_var /dev/sdc /dev/sdd**
 -   Volume group "vg_var" successfully created
--   
+- **root@ol-alp-ubuntu1:/# lvcreate -L 950M -m1 -n lv_var vg_var**
+-   Rounding up size to full physical extent 952.00 MiB
+-   Logical volume "lv_var" created.
+- **root@ol-alp-ubuntu1:/# mkfs.ext4 /dev/vg_var/lv_var**
+- mke2fs 1.47.0 (5-Feb-2023)
+- Creating filesystem with 243712 4k blocks and 60928 inodes
+- Filesystem UUID: 7452f181-6515-4b19-9215-9b8cc70da811
+- Superblock backups stored on blocks:
+- 	32768, 98304, 163840, 229376
+
+- Allocating group tables: done
+- Writing inode tables: done
+- Creating journal (4096 blocks): done
+- Writing superblocks and filesystem accounting information: done
+  
 
 
 
