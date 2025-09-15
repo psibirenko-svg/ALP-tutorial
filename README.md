@@ -1028,6 +1028,23 @@ mdadm: added /dev/sdc
 - Writing inode tables: done
 - Creating journal (4096 blocks): done
 - Writing superblocks and filesystem accounting information: done
+- **root@ol-alp-ubuntu1:/# mount /dev/vg_var/lv_var /mnt**
+- **root@ol-alp-ubuntu1:/# cp -aR /var/* /mnt/**
+- **root@ol-alp-ubuntu1:/# mkdir /tmp/oldvar && mv /var/* /tmp/oldvar**
+- **root@ol-alp-ubuntu1:/# umount /mnt**
+- **root@ol-alp-ubuntu1:/# mount /dev/vg_var/lv_var /var**
+- **root@ol-alp-ubuntu1:/# echo "`blkid | grep var: | awk '{print $2}'` \
+ /var ext4 defaults 0 0" >> /etc/fstab**
+- **root@ol-alp-ubuntu1:/# vi /etc/fstab**
+- **root@ol-alp-ubuntu1:/# reboot**
+- **root@ol-alp-ubuntu1:/home/spg# lvremove /dev/vg_root/lv_root
+- Do you really want to remove and DISCARD active logical volume vg_root/lv_root? [y/n]: Y
+-   Logical volume "lv_root" successfully removed.
+- **root@ol-alp-ubuntu1:/home/spg# vgremove /dev/vg_root
+-   Volume group "vg_root" successfully removed
+- **root@ol-alp-ubuntu1:/home/spg# pvremove /dev/sdb
+-   Labels on physical volume "/dev/sdb" successfully wiped.
+-   
   
 
 
