@@ -1294,7 +1294,7 @@ B = [X][Y][Z]
 ---
 
 ## 🔹 Как включить
-```bash
+bash
 zfs set dedup=on tank/data
 
 
