@@ -1545,7 +1545,38 @@ ZFS кэширование обеспечивает:
 - /otus4:
 - total **40237**
 - -rw-r--r-- 1 root root 41174169 Sep  2 07:31 pg2600.converter.log
+- **root@ol-alp-ubuntu1:~# zfs list** # проверим сколько занимает файл в наших пулах
+- NAME    USED  AVAIL  REFER  MOUNTPOINT
+- otus1  21.7M   330M  21.6M  /otus1
+- otus2  17.7M   334M  17.6M  /otus2
+- otus3  10.9M   341M  10.7M  /otus3
+- otus4  39.4M   313M  39.3M  /otus4
+- **root@ol-alp-ubuntu1:~# zfs get all | grep compressratio | grep -v ref** # проверим степень сжатия и убедимя что алгоритм gzip-9 самый эффективный по сжатию...
+- otus1  compressratio         1.82x                  -
+- otus2  compressratio         2.23x                  -
+- otus3  compressratio         3.66x                  -
+- otus4  compressratio         1.00x                  -
+- # Определение настроек пула
+- **wget -O archive.tar.gz --no-check-certificate 'https://drive.usercontent.google.com/download?id=1MvrcEp-WgAQe57aDEzxSRalPAwbNN1Bb&export=download'** # Скачиваем архив в домашний каталог
+- **tar -xzvf archive.tar.gz** #  расжимаем его
+- zpoolexport/
+- zpoolexport/filea
+- zpoolexport/fileb
+- **root@ol-alp-ubuntu1:~# zpool import -d zpoolexport/**
+-    pool: otus
+-      id: 6554193320433390805
+-   state: ONLINE
+- status: Some supported features are not enabled on the pool.
+- 	(Note that they may be intentionally disabled if the
+- 	'compatibility' property is set.)
+-  action: The pool can be imported using its name or numeric identifier, though
+- 	some features will not be available without an explicit 'zpool upgrade'.
+-  config:
 
+- 	otus                         ONLINE
+- 	  mirror-0                   ONLINE
+- 	    /root/zpoolexport/filea  ONLINE
+- 	    /root/zpoolexport/fileb  ONLINE
 
 
 
