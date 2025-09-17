@@ -1496,7 +1496,7 @@ ZFS кэширование обеспечивает:
 - errors: No known data errors
 - **root@ol-alp-ubuntu1:~# zpool export zfs_test**  # переименуем пул через экспорт-импорт в otus1
 - **root@ol-alp-ubuntu1:~# zpool import zfs_test otus1**
-- **root@ol-alp-ubuntu1:~# zpool status**
+- **root@ol-alp-ubuntu1:~# zpool status** #  посмотрим инфу по дискам
 - pool: otus1
 -  state: ONLINE
 - config:
@@ -1511,13 +1511,41 @@ ZFS кэширование обеспечивает:
 - **root@ol-alp-ubuntu1:~# zpool create -f otus2 mirror /dev/sdd /dev/sde**
 - **root@ol-alp-ubuntu1:~# zpool create -f otus3 mirror /dev/sdf /dev/sdg**
 - **root@ol-alp-ubuntu1:~# zpool create -f otus4 mirror /dev/sdh /dev/sdi**
-- **root@ol-alp-ubuntu1:~# zpool list** # создали 4 пула
+- **root@ol-alp-ubuntu1:~# zpool list** # создали 4 пула и посмотрим по ним инфу
 - NAME    SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
 - otus1   480M   130K   480M        -         -     0%     0%  1.00x    ONLINE  -
 - otus2   480M   130K   480M        -         -     0%     0%  1.00x    ONLINE  -
 - otus3   480M   110K   480M        -         -     0%     0%  1.00x    ONLINE  -
 - otus4   480M   110K   480M        -         -     0%     0%  1.00x    ONLINE  -
 
-- 
+- **root@ol-alp-ubuntu1:~# zfs set compression=lzjb otus1** #  добавим каждому пулу разный алгоритм сжатия
+- **root@ol-alp-ubuntu1:~# zfs set compression=lz4 otus2**
+- **root@ol-alp-ubuntu1:~# zfs set compression=gzip-9 otus3**
+- **oot@ol-alp-ubuntu1:~# zfs set compression=zle otus4**
+- **root@ol-alp-ubuntu1:~# zfs get all | grep compression** # проверим
+- otus1  compression           lzjb                   local
+- otus2  compression           lz4                    local
+- otus3  compression           gzip-9                 local
+- otus4  compression           zle                    local
+- ## сжатие будет работать только с вновь записанными файлами, закачаем на все 4 пула один и тот же файл
+- **root@ol-alp-ubuntu1:~# for i in {1..4}; do wget -P /otus$i https://gutenberg.org/cache/epub/2600/pg2600.converter.log; done**
+- **root@ol-alp-ubuntu1:~# ls -l /otus*** # проверяем и видим, что метод сжатия в пуле otus3 (gzip-9) самый эффективный по сжатию
+- /otus1:
+- total **22111**
+- -rw-r--r-- 1 root root 41174169 Sep  2 07:31 pg2600.converter.log
+
+- /otus2:
+- total **18013**
+- -rw-r--r-- 1 root root 41174169 Sep  2 07:31 pg2600.converter.log
+
+- /otus3:
+- total **10969**
+- -rw-r--r-- 1 root root 41174169 Sep  2 07:31 pg2600.converter.log
+
+- /otus4:
+- total **40237**
+- -rw-r--r-- 1 root root 41174169 Sep  2 07:31 pg2600.converter.log
+
+
 
 
