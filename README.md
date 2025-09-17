@@ -1462,9 +1462,11 @@ ZFS кэширование обеспечивает:
 
 </details>
 
-**spg@ol-alp-ubuntu1:~$ sudo -i**
+- ## 1. Определение алгоритма с наилучшим сжатием
+
+- **spg@ol-alp-ubuntu1:~$ sudo -i**
 - [sudo] password for spg:
-**root@ol-alp-ubuntu1:~# lsblk**
+- **root@ol-alp-ubuntu1:~# lsblk**
 - NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
 - sda                         8:0    0   30G  0 disk
 - ├─sda1                      8:1    0    1M  0 part
@@ -1480,8 +1482,8 @@ ZFS кэширование обеспечивает:
 - sdh                         8:112  0  512M  0 disk
 - sdi                         8:128  0  512M  0 disk
 - sr0                        11:0    1 1024M  0 rom
-- **apt install zfsutils-linux -y** # установка ZFS
-- **zpool create -f zfs_test mirror /dev/vdb /dev/vdc** # создаем пул на двух дисках (bc)
+- **root@ol-alp-ubuntu1:~# apt install zfsutils-linux -y** # установка ZFS
+- **root@ol-alp-ubuntu1:~# zpool create -f zfs_test mirror /dev/vdb /dev/vdc** # создаем пул на двух дисках (bc)
 - **root@ol-alp-ubuntu1:~# zpool status**
 -   pool: zfs_test
 -  state: ONLINE
@@ -1556,15 +1558,15 @@ ZFS кэширование обеспечивает:
 - otus2  compressratio         2.23x                  -
 - otus3  compressratio         3.66x                  -
 - otus4  compressratio         1.00x                  -
-- # Определение настроек пула
-- **wget -O archive.tar.gz --no-check-certificate 'https://drive.usercontent.google.com/download?id=1MvrcEp-WgAQe57aDEzxSRalPAwbNN1Bb&export=download'** # Скачиваем архив в домашний каталог
-- **tar -xzvf archive.tar.gz** #  расжимаем его
+- # 2. Определение настроек пула
+- **root@ol-alp-ubuntu1:~# wget -O archive.tar.gz --no-check-certificate 'https://drive.usercontent.google.com/download?id=1MvrcEp-WgAQe57aDEzxSRalPAwbNN1Bb&export=download'** # Скачиваем архив в домашний каталог
+- **root@ol-alp-ubuntu1:~# tar -xzvf archive.tar.gz** #  расжимаем его
 - zpoolexport/
 - zpoolexport/filea
 - zpoolexport/fileb
 - **root@ol-alp-ubuntu1:~# zpool import -d zpoolexport/**
--    pool: otus
--       id: 6554193320433390805
+-    pool: otus # **имя пула otus импортируется из файла**
+- id: 6554193320433390805
 -   state: ONLINE
 - status: Some supported features are not enabled on the pool.
 - 	(Note that they may be intentionally disabled if the
@@ -1575,8 +1577,47 @@ ZFS кэширование обеспечивает:
 
 - 	otus                         ONLINE
 - mirror-0                   ONLINE
--       /root/zpoolexport/filea  ONLINE
--       /root/zpoolexport/fileb  ONLINE
+- /root/zpoolexport/filea  ONLINE
+- /root/zpoolexport/fileb  ONLINE
+- **root@ol-alp-ubuntu1:~#  zpool import -d zpoolexport/ otus** # импорт пула otus к нам в ОС
+- **root@ol-alp-ubuntu1:~# zpool status**
+-   pool: otus
+-  state: ONLINE
+- status: Some supported and requested features are not enabled on the pool.
+- 	The pool can still be used, but some features are unavailable.
+- action: Enable all features using 'zpool upgrade'. Once this is done,
+- 	the pool may no longer be accessible by software that does not support
+- 	the features. See zpool-features(7) for details.
+- config:
+
+- NAME                      STATE     READ WRITE CKSUM
+- otus                     ONLINE       0     0     0
+- mirror-0                 ONLINE       0     0     0
+- /root/zpoolexport/filea  ONLINE       0     0     0
+- /root/zpoolexport/fileb  ONLINE       0     0     0
+
+- errors: No known data errors
+
+- **root@ol-alp-ubuntu1:~# zfs get all otus** # запрос всех параметров
+- **root@ol-alp-ubuntu1:~# zfs get available otus** # Размер
+- NAME  PROPERTY   VALUE  SOURCE
+- otus  available  350M   -
+- **root@ol-alp-ubuntu1:~# zfs get readonly otus** # тип
+- NAME  PROPERTY  VALUE   SOURCE
+- otus  readonly  off     default
+- **root@ol-alp-ubuntu1:~# zfs get recordsize otus** # значение recordsize
+- NAME  PROPERTY    VALUE    SOURCE
+- otus  recordsize  128K     local
+- **root@ol-alp-ubuntu1:~# zfs get compression otus** # тип сжатия (или параметр отключения)
+- NAME  PROPERTY     VALUE           SOURCE
+- otus  compression  zle             local
+- **root@ol-alp-ubuntu1:~# zfs get checksum otus** # тип контрольной суммы
+- NAME  PROPERTY  VALUE      SOURCE
+- otus  checksum  sha256     local
+- ## 3. Работа со снапшотом, поиск сообщения от преподавателя
+- 
+
+
 
 
 
