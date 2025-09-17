@@ -1564,7 +1564,7 @@ ZFS кэширование обеспечивает:
 - zpoolexport/fileb
 - **root@ol-alp-ubuntu1:~# zpool import -d zpoolexport/**
 -    pool: otus
--      id: 6554193320433390805
+-       id: 6554193320433390805
 -   state: ONLINE
 - status: Some supported features are not enabled on the pool.
 - 	(Note that they may be intentionally disabled if the
@@ -1574,9 +1574,9 @@ ZFS кэширование обеспечивает:
 -  config:
 
 - 	otus                         ONLINE
-- 	  mirror-0                   ONLINE
-- 	    /root/zpoolexport/filea  ONLINE
-- 	    /root/zpoolexport/fileb  ONLINE
+- mirror-0                   ONLINE
+-       /root/zpoolexport/filea  ONLINE
+-       /root/zpoolexport/fileb  ONLINE
 
 
 
