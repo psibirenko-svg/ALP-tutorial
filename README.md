@@ -1487,13 +1487,37 @@ ZFS кэширование обеспечивает:
 -  state: ONLINE
 - config:
 
-- 	NAME        STATE     READ WRITE CKSUM
-- 	zfs_test    ONLINE       0     0     0
-- 	  mirror-0  ONLINE       0     0     0
-- 	    sdb     ONLINE       0     0     0
-- 	    sdc     ONLINE       0     0     0
+- NAME      STATE   READ WRITE CKSUM
+- zfs_test  ONLINE   0     0     0
+- mirror-0  ONLINE   0     0     0
+- sdb     ONLINE     0     0     0
+- sdc     ONLINE     0     0     0
 
 - errors: No known data errors
+- **root@ol-alp-ubuntu1:~# zpool export zfs_test**  # переименуем пул через экспорт-импорт в otus1
+- **root@ol-alp-ubuntu1:~# zpool import zfs_test otus1**
+- **root@ol-alp-ubuntu1:~# zpool status**
+- pool: otus1
+-  state: ONLINE
+- config:
+
+- NAME      STATE     READ WRITE CKSUM
+- otus1     ONLINE     0     0     0
+- mirror-0  ONLINE     0     0     0
+- sdb     ONLINE       0     0     0
+- sdc     ONLINE       0     0     0
+
+- errors: No known data errors
+- **root@ol-alp-ubuntu1:~# zpool create -f otus2 mirror /dev/sdd /dev/sde**
+- **root@ol-alp-ubuntu1:~# zpool create -f otus3 mirror /dev/sdf /dev/sdg**
+- **root@ol-alp-ubuntu1:~# zpool create -f otus4 mirror /dev/sdh /dev/sdi**
+- **root@ol-alp-ubuntu1:~# zpool list** # создали 4 пула
+- NAME    SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
+- otus1   480M   130K   480M        -         -     0%     0%  1.00x    ONLINE  -
+- otus2   480M   130K   480M        -         -     0%     0%  1.00x    ONLINE  -
+- otus3   480M   110K   480M        -         -     0%     0%  1.00x    ONLINE  -
+- otus4   480M   110K   480M        -         -     0%     0%  1.00x    ONLINE  -
+
 - 
- 
+
 
