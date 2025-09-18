@@ -1615,7 +1615,26 @@ ZFS кэширование обеспечивает:
 - NAME  PROPERTY  VALUE      SOURCE
 - otus  checksum  sha256     local
 - ## 3. Работа со снапшотом, поиск сообщения от преподавателя
-- 
+- **root@ol-alp-ubuntu1:~# pwd**
+- /root
+- root@ol-alp-ubuntu1:~# wget -O otus_task2.file --no-check-certificate https://drive.usercontent.google.com/download?id=1wgxjih8YZ-cqLqaZVa0lA3h3Y029c3oI&export=download # Скачаем файл, указанный в задании
+- [1] 7119
+- Redirecting output to ‘wget-log’.
+
+- [1]+  Done                    wget -O otus_task2.file --no-check-certificate https://drive.usercontent.google.com/download?id=1wgxjih8YZ-cqLqaZVa0lA3h3Y029c3oI
+- **root@ol-alp-ubuntu1:~# ls** # проверим
+- archive.tar.gz  **otus_task2.file**  wget-log  zpoolexport
+- **root@ol-alp-ubuntu1:~# zfs receive otus/test@today < otus_task2.file** # Восстановим файловую систему из снапшота
+- **oot@ol-alp-ubuntu1:~# find /otus/test -name "secret_message"**
+- /otus/test/task1/file_mess/secret_message
+- /otus/test/task1/file_mess/secret_message
+- -bash: /otus/test/task1/file_mess/secret_message: Permission denied
+- **root@ol-alp-ubuntu1:~# cat /otus/test/task1/file_mess/secret_message**
+- https://otus.ru/lessons/linux-hl/ # видим ссылку на курс OTUS
+- https://otus.ru/lessons/linux-hl/
+
+- -bash: https://otus.ru/lessons/linux-hl/: No such file or directory
+## задание выполнено
 
 
 
