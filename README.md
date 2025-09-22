@@ -1793,7 +1793,80 @@ ZFS кэширование обеспечивает:
 - **root@ol-apl-ubuntu-sernfs:~# mkdir -p /srv/share/upload** # создаем директорию для экспорта
 - **root@ol-apl-ubuntu-sernfs:~# chown -R nobody:nogroup /srv/share** # настраиваем владельцев
 - **root@ol-apl-ubuntu-sernfs:~# chmod 0777 /srv/share/upload** # настраиваем права
-- 
+- **root@ol-apl-ubuntu-sernfs:~# vim /etc/exports** # здесь лежит структура, которая позволит экспортировать ранее созданную директорию
+- /srv/share 10.0.77.0/24(rw,sync,root_squash) # добавим туда строчку для экспорта нашего ресурса для нашей сети 10.0.77.0/24
+
+- **root@ol-apl-ubuntu-sernfs:~# exportfs -r** # Экспортируем ранее созданную директорию
+- exportfs: /etc/exports [1]: Neither 'subtree_check' or 'no_subtree_check' specified for export "10.0.77.0/24:/srv/share".
+- Assuming default behaviour ('no_subtree_check').
+- NOTE: this default has changed since nfs-utils version 1.0.x
+- **root@ol-apl-ubuntu-sernfs:~# exportfs -s** # Проверяем, что экспортируется
+- /srv/share  10.0.77.0/24(sync,wdelay,hide,no_subtree_check,sec=sys,rw,secure,root_squash,no_all_squash)
+---
+- ## Настраиваем клиент NFS
+- **устанавливаем клиента NFS**
+- **spg@ol-apl-ubuntu-clntnfs:~$ sudo -i**
+- [sudo] password for spg:
+- **root@ol-apl-ubuntu-clntnfs:~# apt install nfs-common**
+- **root@ol-apl-ubuntu-clntnfs:~# echo "10.0.77.182:/srv/share/ /mnt nfs vers=3,noauto,x-systemd.automount 0 0" >> /etc/fstab** # добавляем монтирование
+- **root@ol-apl-ubuntu-clntnfs:~# vim /etc/fstab** # проверяем строку монтирования удаленного ресурса на сервере nfs
+- 10.0.77.182:/srv/share/ /mnt nfs vers=3,noauto,x-systemd.automount 0 0
+- **root@ol-apl-ubuntu-clntnfs:~# systemctl daemon-reload**  # для перезагрузки конфигурации сервисов без остановки или перезапуска самих служб
+- **root@ol-apl-ubuntu-clntnfs:~# systemctl restart remote-fs.target** # для перезапуска всех удалённых файловых систем, которые смонтированы через systemd
+---
+- ## Проверка работоспособности
+- **root@ol-apl-ubuntu-sernfs:/srv/share/upload# cd /srv/share/upload/**
+- **root@ol-apl-ubuntu-sernfs:/srv/share/upload# touch check_file**
+- **root@ol-apl-ubuntu-sernfs:/srv/share/upload# ls -hal**
+- total 8.0K
+- drwxrwxrwx 2 nobody nogroup 4.0K Sep 22 12:26 .
+- drwxr-xr-x 3 nobody nogroup 4.0K Sep 22 12:25 ..
+- -rw-r--r-- 1 root   root       0 Sep 22 12:26 check_file
+- **root@ol-apl-ubuntu-clntnfs:/mnt/upload# cd /mnt/upload/**
+- **root@ol-apl-ubuntu-clntnfs:/mnt/upload# ls -hal**
+- total 8.0K
+- drwxrwxrwx 2 nobody nogroup 4.0K Sep 22 12:26 .
+- drwxr-xr-x 3 nobody nogroup 4.0K Sep 22 12:25 ..
+- -rw-r--r-- 1 root   root       0 Sep 22 12:26 check_file
+---
+- ## Проверки работоспособности стенда через перезагрузки:
+- ##  Клиент
+- **root@ol-apl-ubuntu-clntnfs:/mnt/upload# reboot**
+- **spg@ol-apl-ubuntu-clntnfs:~$ sudo -i**
+- [sudo] password for spg:
+- **root@ol-apl-ubuntu-clntnfs:~# ls -hal  /mnt/upload/**
+- total 8.0K
+- drwxrwxrwx 2 nobody nogroup 4.0K Sep 22 12:26 .
+- drwxr-xr-x 3 nobody nogroup 4.0K Sep 22 12:25 ..
+- ## Сервер
+- **root@ol-apl-ubuntu-sernfs:~# reboot**
+- **root@ol-apl-ubuntu-sernfs:~# exportfs -s**
+- /srv/share  10.0.77.0/24(sync,wdelay,hide,no_subtree_check,sec=sys,rw,secure,root_squash,no_all_squash)
+- **root@ol-apl-ubuntu-sernfs:~# showmount -a**
+- All mount points on ol-apl-ubuntu-sernfs:
+- 10.0.77.142:/srv/share
+- **root@ol-apl-ubuntu-sernfs:~# ls -hal  /srv/share/upload/**
+- total 8.0K
+- drwxrwxrwx 2 nobody nogroup 4.0K Sep 22 12:26 .
+- drwxr-xr-x 3 nobody nogroup 4.0K Sep 22 12:25 ..
+- -rw-r--r-- 1 root   root       0 Sep 22 12:26 check_file
+- ## клиент
+- **root@ol-apl-ubuntu-clntnfs:~# ls -hal  /mnt/upload/**
+- total 8.0K
+- drwxrwxrwx 2 nobody nogroup 4.0K Sep 22 12:26 .
+- drwxr-xr-x 3 nobody nogroup 4.0K Sep 22 12:25 ..
+- -rw-r--r-- 1 root   root       0 Sep 22 12:26 check_file
+- - root@ol-apl-ubuntu-clntnfs:~#
+- - -rw-r--r-- 1 root   root       0 Sep 22 12:26 check_file
+- **root@ol-apl-ubuntu-clntnfs:~# cd /mnt/upload/**
+- **root@ol-apl-ubuntu-clntnfs:/mnt/upload# touch final_check**
+- **root@ol-apl-ubuntu-clntnfs:/mnt/upload# ls -hal**
+- total 8.0K
+- drwxrwxrwx 2 nobody nogroup 4.0K Sep 22 12:44 .
+- drwxr-xr-x 3 nobody nogroup 4.0K Sep 22 12:25 ..
+- -rw-r--r-- 1 root   root       0 Sep 22 12:26 **check_file**
+- -rw-r--r-- 1 nobody nogroup    0 Sep 22 12:44 **final_check**
+- ## Демонстрационный стенд работоспособен
 
 
 
