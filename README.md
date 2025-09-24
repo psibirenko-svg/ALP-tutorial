@@ -2155,6 +2155,26 @@ https://github.com/google/ngx_brotli** # нужно скачать исходн�
 - ...
 -rw-r--r--. 1 root root   37K Sep 24 13:50 nginx-1.20.1-22.el9.3.alma.1.x86_64.rpm
 - ...
+- Копируем пакеты в общий каталог
+- ***[root@AlmaLinux93 rpmbuild]# cp ~/rpmbuild/RPMS/noarch/* ~/rpmbuild/RPMS/x86_64/** 
+- **[root@AlmaLinux93 rpmbuild]# cd ~/rpmbuild/RPMS/x86_64**
+- **[root@AlmaLinux93 x86_64]# yum localinstall *.rpm***
+- ...
+- Installed:
+- almalinux-logos-httpd-90.6-2.el9.noarch                         nginx-2:1.20.1-22.el9.3.alma.1.x86_64
+- nginx-all-modules-2:1.20.1-22.el9.3.alma.1.noarch               nginx-core-2:1.20.1-22.el9.3.alma.1.x86_64
+- nginx-filesystem-2:1.20.1-22.el9.3.alma.1.noarch                nginx-mod-devel-2:1.20.1-22.el9.3.alma.1.x86_64
+- nginx-mod-http-image-filter-2:1.20.1-22.el9.3.alma.1.x86_64     nginx-mod-http-perl-2:1.20.1-22.el9.3.alma.1.x86_64
+- nginx-mod-http-xslt-filter-2:1.20.1-22.el9.3.alma.1.x86_64      nginx-mod-mail-2:1.20.1-22.el9.3.alma.1.x86_64
+- nginx-mod-stream-2:1.20.1-22.el9.3.alma.1.x86_64
+- Complete!
+- **[root@AlmaLinux93 x86_64]# systemctl start nginx**
+- **[root@AlmaLinux93 x86_64]# systemctl status nginx**
+- ...
+- Sep 24 14:11:30 AlmaLinux93 systemd[1]: Starting The nginx HTTP and reverse proxy server...
+- Sep 24 14:11:30 AlmaLinux93 nginx[49885]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+- Sep 24 14:11:30 AlmaLinux93 nginx[49885]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+- Sep 24 14:11:30 AlmaLinux93 systemd[1]: Started The nginx HTTP and reverse proxy server.
 - 
 
 
