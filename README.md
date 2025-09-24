@@ -2008,6 +2008,15 @@ ___
  yum-utils cmake gcc git nano** # загружаем из Интернета инструменты для работы с RPM (rpmdevtools), основной пакет для сборки (rpm-build), для создания собственного YUM/DNF репозитория(createrepo), доп.утилиты (yum-utils), систему сборки пакетов (cmake), компилятор C (gcc), систему контроля версий (git) и текстовый редактор (nano)
 - ...
 - Complete!
-- 
-
+- **[root@AlmaLinux93 ~]# mkdir rpm && cd rpm** # создаем рабочий каталог
+- **[root@AlmaLinux93 rpm]#**
+- ### Для примера возьмем пакет Nginx и соберем его с дополнительным модулем ngx_broli
+- **root@AlmaLinux93 rpm]# yumdownloader --source nginx** # скачаем nginx RPM без установки
+- enabling appstream-source repository
+- enabling baseos-source repository
+- enabling extras-source repository
+- AlmaLinux 9 - AppStream - Source                                                          912 kB/s | 881 kB     00:00
+- AlmaLinux 9 - BaseOS - Source                                                             387 kB/s | 377 kB     00:00
+- AlmaLinux 9 - Extras - Source                                                              14 kB/s | 8.2 kB     00:00
+- nginx-1.20.1-22.el9_6.3.alma.1.src.rpm                                                    3.8 MB/s | 1.1 MB     00:00
 
