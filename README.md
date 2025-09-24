@@ -2003,3 +2003,11 @@ ___
 - git branch -M main
 - git push -u origin main
 </details>
+
+- **[root@AlmaLinux93 ~]# yum install -y wget rpmdevtools rpm-build createrepo \
+ yum-utils cmake gcc git nano** # загружаем из Интернета инструменты для работы с RPM (rpmdevtools), основной пакет для сборки (rpm-build), для создания собственного YUM/DNF репозитория(createrepo), доп.утилиты (yum-utils), систему сборки пакетов (cmake), компилятор C (gcc), систему контроля версий (git) и текстовый редактор (nano)
+- ...
+- Complete!
+- 
+
+
