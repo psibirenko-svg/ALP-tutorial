@@ -2011,7 +2011,7 @@ ___
 - **[root@AlmaLinux93 ~]# mkdir rpm && cd rpm** # создаем рабочий каталог
 - **[root@AlmaLinux93 rpm]#**
 - ### Для примера возьмем пакет Nginx и соберем его с дополнительным модулем ngx_broli
-- **root@AlmaLinux93 rpm]# yumdownloader --source nginx** # скачаем nginx RPM без установки
+- **root@AlmaLinux93 rpm]# yumdownloader --source nginx** # скачаем nginx RPM без установки в рабочий каталог
 - enabling appstream-source repository
 - enabling baseos-source repository
 - enabling extras-source repository
@@ -2019,4 +2019,84 @@ ___
 - AlmaLinux 9 - BaseOS - Source                                                             387 kB/s | 377 kB     00:00
 - AlmaLinux 9 - Extras - Source                                                              14 kB/s | 8.2 kB     00:00
 - nginx-1.20.1-22.el9_6.3.alma.1.src.rpm                                                    3.8 MB/s | 1.1 MB     00:00
+- **[root@AlmaLinux93 rpm]# ls**
+- nginx-1.20.1-22.el9_6.3.alma.1.src.rpm
+- **[root@AlmaLinux93 rpm]# ls /root/rpmbuild/**
+- ***[root@AlmaLinux93 rpm]# rpm -Uvh nginx*.src.rpm**
+- Updating / installing...
+- 1:nginx-2:1.20.1-22.el9_6.3.alma.1 warning: user mockbuild does not exist - using root
+- warning: group mock does not exist - using root
+- ################################# [100%]
+- **[root@AlmaLinux93 rpm]# ls /root/rpmbuild/**
+- BUILD  RPMS  SOURCES  SPECS  SRPMS
+
+- **[root@AlmaLinux93 rpm]# ls /root/rpmbuild/SPECS/**
+- nginx.spec
+- **[root@AlmaLinux93 rpm]# ls /root/rpmbuild/SOURCES/**
+- 0001-remove-Werror-in-upstream-build-scripts.patch               UPGRADE-NOTES-1.6-to-1.10
+- 0002-fix-PIDFile-handling.patch                                  macros.nginxmods.in
+- 0003-Support-loading-cert-hardware-token-PKC.patch               maxim.key
+- 0004-Set-proper-compiler-optimalization-level-O2-for-perl.patch  mdounin.key
+- 0005-Init-openssl-engine-properly.patch                          nginx-1.20.1-CVE-2025-23419.patch
+- 0006-Fix-ALPACA-security-issue.patch                             nginx-1.20.1.tar.gz
+- 0007-Enable-TLSv1.3-by-default.patch                             nginx-1.20.1.tar.gz.asc
+- 0008-CVE-2023-44487-HTTP-2-per-iteration-stream-handling.patch   nginx-logo.png
+- 0009-defer-ENGINE_finish-calls-to-a-cleanup.patch                nginx-upgrade
+- 0010-Optimized-chain-link-usage.patch                            nginx-upgrade.8
+- 0011-CVE-2024-7347-Buffer-overread-in-the-mp4-module.patch       nginx.conf
+- 0012-CVE-2022-41741-and-CVE-2022-41742-fix.patch                 nginx.logrotate
+- 0013-SSL-use-of-the-SSL_OP_IGNORE_UNEXPECTED_EOF-option.patch    nginx.service
+- 404.html                                                         nginx.sysusers
+- 50x.html                                                         nginxmods.attr
+- README.dynamic                                                   sb.key
+- **[root@AlmaLinux93 rpm]# yum-builddep nginx** # Установка всех зависимостей, необходимых для сборки пакета Nginx из исходников (SRPM) на AlmaLinux/RHEL-подобных системах.
+- **[root@AlmaLinux93 rpm]# cd /root**
+- **[root@AlmaLinux93 ~]# git clone --recurse-submodules -j8 \
+https://github.com/google/ngx_brotli** # нужно скачать исходный код модуля ngx_brotli — он
+потребуется при сборке
+- Cloning into 'ngx_brotli'...
+- remote: Enumerating objects: 237, done.
+- remote: Counting objects: 100% (37/37), done.
+- remote: Compressing objects: 100% (16/16), done.
+- remote: Total 237 (delta 24), reused 21 (delta 21), pack-reused 200 (from 1)
+- Receiving objects: 100% (237/237), 79.51 KiB | 992.00 KiB/s, done.
+- Resolving deltas: 100% (114/114), done.
+- Submodule 'deps/brotli' (https://github.com/google/brotli.git) registered for path 'deps/brotli'
+- Cloning into '/root/ngx_brotli/deps/brotli'...
+- remote: Enumerating objects: 8473, done.
+- remote: Counting objects: 100% (240/240), done.
+- remote: Compressing objects: 100% (143/143), done.
+- remote: Total 8473 (delta 146), reused 102 (delta 96), pack-reused 8233 (from 4)
+- Receiving objects: 100% (8473/8473), 41.85 MiB | 30.03 MiB/s, done.
+- Resolving deltas: 100% (5401/5401), done.
+- Submodule path 'deps/brotli': checked out 'ed738e842d2fbdf2d6459e39267a633c4a9b2f5d'
+- **[root@AlmaLinux93 ~]# cd ngx_brotli/deps/brotli**
+- **[root@AlmaLinux93 brotli]# mkdir out && cd out**
+- **[root@AlmaLinux93 out]# cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_CXX_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_INSTALL_PREFIX=./installed ..**
+-- The C compiler identification is GNU 11.5.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Build type is 'Release'
+-- Performing Test BROTLI_EMSCRIPTEN
+-- Performing Test BROTLI_EMSCRIPTEN - Failed
+-- Compiler is not EMSCRIPTEN
+-- Looking for log2
+-- Looking for log2 - not found
+-- Looking for log2
+-- Looking for log2 - found
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+- CMake Warning:
+- Manually-specified variables were not used by the project:
+
+- CMAKE_CXX_FLAGS
+
+-- Build files have been written to: /root/ngx_brotli/deps/brotli/out
+
+
+
+
 
