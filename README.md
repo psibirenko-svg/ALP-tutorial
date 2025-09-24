@@ -1996,4 +1996,10 @@ ___
 - RPM — стандарт для RedHat/Fedora.
 - Оба формата выполняют одну задачу: установку и управление пакетами
 - Различаются экосистемой и инструментами.
+
+## Как добавить локальный проект в свой репозиторий на GitGub:
+- cd путь/к/проекту
+- git remote add origin https://github.com/psibirenko-svg/spgrepo.git
+- git branch -M main
+- git push -u origin main
 </details>
