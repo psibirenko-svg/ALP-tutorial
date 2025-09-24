@@ -2097,6 +2097,66 @@ https://github.com/google/ngx_brotli** # нужно скачать исходн�
 
 -- Build files have been written to: /root/ngx_brotli/deps/brotli/out
 
+- **[root@AlmaLinux93 out]# cmake --build . --config Release -j 2 --target brotlienc**
+- [  3%] Building C object CMakeFiles/brotlicommon.dir/c/common/constants.c.o
+- [  6%] Building C object CMakeFiles/brotlicommon.dir/c/common/context.c.o
+- [ 10%] Building C object CMakeFiles/brotlicommon.dir/c/common/dictionary.c.o
+- [ 13%] Building C object CMakeFiles/brotlicommon.dir/c/common/platform.c.o
+- [ 17%] Building C object CMakeFiles/brotlicommon.dir/c/common/shared_dictionary.c.o
+- [ 20%] Building C object CMakeFiles/brotlicommon.dir/c/common/transform.c.o
+- [ 24%] Linking C static library libbrotlicommon.a
+- [ 24%] Built target brotlicommon
+- [ 27%] Building C object CMakeFiles/brotlienc.dir/c/enc/backward_references.c.o
+- [ 31%] Building C object CMakeFiles/brotlienc.dir/c/enc/backward_references_hq.c.o
+- [ 34%] Building C object CMakeFiles/brotlienc.dir/c/enc/bit_cost.c.o
+- [ 37%] Building C object CMakeFiles/brotlienc.dir/c/enc/block_splitter.c.o
+- [ 41%] Building C object CMakeFiles/brotlienc.dir/c/enc/brotli_bit_stream.c.o
+- [ 44%] Building C object CMakeFiles/brotlienc.dir/c/enc/cluster.c.o
+- [ 48%] Building C object CMakeFiles/brotlienc.dir/c/enc/command.c.o
+- [ 51%] Building C object CMakeFiles/brotlienc.dir/c/enc/compound_dictionary.c.o
+- [ 55%] Building C object CMakeFiles/brotlienc.dir/c/enc/compress_fragment.c.o
+- [ 58%] Building C object CMakeFiles/brotlienc.dir/c/enc/compress_fragment_two_pass.c.o
+- [ 62%] Building C object CMakeFiles/brotlienc.dir/c/enc/dictionary_hash.c.o
+- [ 65%] Building C object CMakeFiles/brotlienc.dir/c/enc/encode.c.o
+- [ 68%] Building C object CMakeFiles/brotlienc.dir/c/enc/encoder_dict.c.o
+- [ 72%] Building C object CMakeFiles/brotlienc.dir/c/enc/entropy_encode.c.o
+- [ 75%] Building C object CMakeFiles/brotlienc.dir/c/enc/fast_log.c.o
+- [ 79%] Building C object CMakeFiles/brotlienc.dir/c/enc/histogram.c.o
+- [ 82%] Building C object CMakeFiles/brotlienc.dir/c/enc/literal_cost.c.o
+- [ 86%] Building C object CMakeFiles/brotlienc.dir/c/enc/memory.c.o
+- [ 89%] Building C object CMakeFiles/brotlienc.dir/c/enc/metablock.c.o
+- [ 93%] Building C object CMakeFiles/brotlienc.dir/c/enc/static_dict.c.o
+- [ 96%] Building C object CMakeFiles/brotlienc.dir/c/enc/utf8_util.c.o
+- [100%] Linking C static library libbrotlienc.a
+- [100%] Built target brotlienc
+- **[root@AlmaLinux93 out]# cd ../../../..**
+- **[root@AlmaLinux93 ~]# pwd**
+- /root
+-  Нужно поправить сам spec файл, чтобы Nginx собирался с необходимыми нам опциями: находим секцию с параметрами configure (до условий if) и добавляем указание на модуль (не забудьте указать завершающий обратный слэш):
+--add-module=/root/ngx_brotli \
+- **[root@AlmaLinux93]# vi /root/rpmbuild/SPECS/nginx.spec**
+- **[root@AlmaLinux93 SPECS]# rpmbuild -ba nginx.spec -D 'debug_package %{nil}'** # собираем пакет RPM, запускает сборку binary и source пакетов (-b = build, a = all). То есть создаются: 	бинарный RPM (~/rpmbuild/RPMS/…) и 	исходный SRPM (~/rpmbuild/SRPMS/…) и -D 'debug_package - отключает автоматическую генерацию пакета с отладочными символами
+
+- ...
+- Executing(%license): /bin/sh -e /var/tmp/rpm-tmp.lNW9Nj
+- + umask 022
+- + cd /root/rpmbuild/BUILD
+- + cd nginx-1.20.1
+- + LICENSEDIR=/root/rpmbuild/BUILDROOT/nginx-1.20.1-22.el9.3.alma.1.x86_64/usr/share/licenses/nginx-core
+- + export LC_ALL=C
+- + LC_ALL=C
+- + export LICENSEDIR
+- + /usr/bin/mkdir -p /root/rpmbuild/BUILDROOT/nginx-1.20.1-22.el9.3.alma.1.x86_64/usr/share/licenses/nginx-core
+- + cp -pr LICENSE /root/rpmbuild/BUILDROOT/nginx-1.20.1-22.el9.3.alma.1.x86_64/usr/share/licenses/nginx-core
+- + RPM_EC=0
+- ++ jobs -p
+- + exit 0
+- **root@AlmaLinux93 rpmbuild]# ls -hal RPMS/x86_64/** # смотрим, что пакеты создались
+- ...
+-rw-r--r--. 1 root root   37K Sep 24 13:50 nginx-1.20.1-22.el9.3.alma.1.x86_64.rpm
+- ...
+- 
+
 
 
 
