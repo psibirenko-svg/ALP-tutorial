@@ -2072,29 +2072,32 @@ https://github.com/google/ngx_brotli** # нужно скачать исходн�
 - Submodule path 'deps/brotli': checked out 'ed738e842d2fbdf2d6459e39267a633c4a9b2f5d'
 - **[root@AlmaLinux93 ~]# cd ngx_brotli/deps/brotli**
 - **[root@AlmaLinux93 brotli]# mkdir out && cd out**
-- **[root@AlmaLinux93 out]# cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_CXX_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_INSTALL_PREFIX=./installed ..**
--- The C compiler identification is GNU 11.5.0
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: /bin/cc - skipped
--- Detecting C compile features
--- Detecting C compile features - done
--- Build type is 'Release'
--- Performing Test BROTLI_EMSCRIPTEN
--- Performing Test BROTLI_EMSCRIPTEN - Failed
--- Compiler is not EMSCRIPTEN
--- Looking for log2
--- Looking for log2 - not found
--- Looking for log2
--- Looking for log2 - found
--- Configuring done (0.5s)
--- Generating done (0.0s)
+- **[root@AlmaLinux93 out]# cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_CXX_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_INSTALL_PREFIX=./installed ..** # Собираем модуль ngx_brotli: с оптимизациями для релиза (без отладочной информации, с оптимизацией скорости), статических библиотек вместо динамических, Флаги компиляции для C: -Ofast — агрессивные оптимизации скорости; -m64 — 64-битная архитектура; -march=native -mtune=native — использовать инструкции текущего процессора; -flto — Link Time Optimization (оптимизация на этапе линковки); -funroll-loops — раскручивание циклов; -ffunction-sections -fdata-sections — разделение функций и данных на секции; -Wl,--gc-sections — удаление неиспользуемых секций на этапе линковки. -DCMAKE_CXX_FLAGS="..." - Те же флаги, но для компилятора C++. -DCMAKE_INSTALL_PREFIX=./installed - Устанавливать готовый билд в директорию ./installed.
+
+- -- The C compiler identification is GNU 11.5.0
+- -- Detecting C compiler ABI info
+- -- Detecting C compiler ABI info - done
+- -- Check for working C compiler: /bin/cc - skipped
+- -- Detecting C compile features
+- -- Detecting C compile features - done
+- -- Build type is 'Release'
+- -- Performing Test BROTLI_EMSCRIPTEN
+- -- Performing Test BROTLI_EMSCRIPTEN - Failed
+- -- Compiler is not EMSCRIPTEN
+- -- Looking for log2
+- -- Looking for log2 - not found
+- -- Looking for log2
+- -- Looking for log2 - found
+- -- Configuring done (0.5s)
+- -- Generating done (0.0s)
 - CMake Warning:
 - Manually-specified variables were not used by the project:
 
 - CMAKE_CXX_FLAGS
 
 -- Build files have been written to: /root/ngx_brotli/deps/brotli/out
+
+
 
 
 
