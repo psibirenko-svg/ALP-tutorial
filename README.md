@@ -2175,8 +2175,61 @@ https://github.com/google/ngx_brotli** # нужно скачать исходн�
 - Sep 24 14:11:30 AlmaLinux93 nginx[49885]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 - Sep 24 14:11:30 AlmaLinux93 nginx[49885]: nginx: configuration file /etc/nginx/nginx.conf test is successful
 - Sep 24 14:11:30 AlmaLinux93 systemd[1]: Started The nginx HTTP and reverse proxy server.
-- 
 
+---
+
+# Создем свой репозиторий и размещаем там ранее собранный RPM
+
+- **[root@AlmaLinux93 x86_64]# mkdir /usr/share/nginx/html/repo**
+- **[root@AlmaLinux93 x86_64]# cp ~/rpmbuild/RPMS/x86_64/*.rpm /usr/share/nginx/html/repo/** #Директория для статики у Nginx по умолчанию /usr/share/nginx/html. Создадим там каталог repo: копируем туда наши собранные RPM-пакеты
+
+- **root@AlmaLinux93 x86_64]# ls /usr/share/nginx/html/repo/** # проверяем
+- nginx-1.20.1-22.el9.3.alma.1.x86_64.rpm              nginx-mod-http-image-filter-1.20.1-22.el9.3.alma.1.x86_64.rpm
+- nginx-all-modules-1.20.1-22.el9.3.alma.1.noarch.rpm  nginx-mod-http-perl-1.20.1-22.el9.3.alma.1.x86_64.rpm
+- nginx-core-1.20.1-22.el9.3.alma.1.x86_64.rpm         nginx-mod-http-xslt-filter-1.20.1-22.el9.3.alma.1.x86_64.rpm
+- nginx-filesystem-1.20.1-22.el9.3.alma.1.noarch.rpm   nginx-mod-mail-1.20.1-22.el9.3.alma.1.x86_64.rpm
+- nginx-mod-devel-1.20.1-22.el9.3.alma.1.x86_64.rpm    nginx-mod-stream-1.20.1-22.el9.3.alma.1.x86_64.rpm
+- **[root@AlmaLinux93 x86_64]# createrepo /usr/share/nginx/html/repo/** # Инициализируем репозиторий
+- Directory walk started
+- Directory walk done - 10 packages
+- Temporary output repo path: /usr/share/nginx/html/repo/.repodata/
+- Preparing sqlite DBs
+- Pool started (with 5 workers)
+- Pool finished
+- **root@AlmaLinux93 x86_64]# vi /etc/nginx/nginx.conf** # настроим в NGINX доступ к листингу каталога. В файле /etc/nginx/nginx.conf в блоке server добавим следующие директивы:
+- index index.html index.htm;
+- autoindex on;
+- **[root@AlmaLinux93 x86_64]# nginx -t** #  перезапускаем nginx
+- nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+- nginx: configuration file /etc/nginx/nginx.conf test is successful
+- **[root@AlmaLinux93 x86_64]# nginx -s reload**
+- <html>
+- <head><title>Index of /repo/</title></head>
+- <body>
+- <h1>Index of /repo/</h1><hr><pre><a href="../">../</a>
+- <a href="repodata/">repodata/</a>                                          25-Sep-2025 12:15                   -
+- <a href="nginx-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-1.20.1-22.el9.3.alma.1.x86_64.rpm</a>            25-Sep-2025 12:11               36976
+- <a href="nginx-all-modules-1.20.1-22.el9.3.alma.1.noarch.rpm">nginx-all-modules-1.20.1-22.el9.3.alma.1.noarch..&gt;</a> 25-Sep-2025 12:11                8089
+- <a href="nginx-core-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-core-1.20.1-22.el9.3.alma.1.x86_64.rpm</a>       25-Sep-2025 12:11             1030199
+- <a href="nginx-filesystem-1.20.1-22.el9.3.alma.1.noarch.rpm">nginx-filesystem-1.20.1-22.el9.3.alma.1.noarch.rpm</a> 25-Sep-2025 12:11                9696
+- <a href="nginx-mod-devel-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-mod-devel-1.20.1-22.el9.3.alma.1.x86_64.rpm</a>  25-Sep-2025 12:11              761144
+- <a href="nginx-mod-http-image-filter-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-mod-http-image-filter-1.20.1-22.el9.3.alm..&gt;</a> 25-Sep-2025 12:11               20101
+- <a href="nginx-mod-http-perl-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-mod-http-perl-1.20.1-22.el9.3.alma.1.x86_..&gt;</a> 25-Sep-2025 12:11               31607
+- <a href="nginx-mod-http-xslt-filter-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-mod-http-xslt-filter-1.20.1-22.el9.3.alma..&gt;</a> 25-Sep-2025 12:11               18885
+- <a href="nginx-mod-mail-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-mod-mail-1.20.1-22.el9.3.alma.1.x86_64.rpm</a>   25-Sep-2025 12:11               54514
+- <a href="nginx-mod-stream-1.20.1-22.el9.3.alma.1.x86_64.rpm">nginx-mod-stream-1.20.1-22.el9.3.alma.1.x86_64.rpm</a> 25-Sep-2025 12:11               81157
+- </pre><hr></body>
+- </html>
+- **[root@AlmaLinux93 x86_64]# cat >> /etc/yum.repos.d/otus.repo << EOF** # Все готово для того, чтобы протестировать репозиторий.Добавим его в /etc/yum.repos.d
+- > [otus]
+- > name=otus-linux
+- > baseurl=http://localhost/repo
+- > gpgcheck=0
+- > enabled=1
+- > EOF
+- **[root@AlmaLinux93 x86_64]# yum repolist enabled | grep otus**
+- otus                             otus-linux
+- 
 
 
 
