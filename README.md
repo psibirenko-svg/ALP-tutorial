@@ -2229,7 +2229,93 @@ https://github.com/google/ngx_brotli** # нужно скачать исходн�
 - > EOF
 - **[root@AlmaLinux93 x86_64]# yum repolist enabled | grep otus**
 - otus                             otus-linux
-- 
+- **[root@AlmaLinux93 x86_64]# cd /usr/share/nginx/html/repo/** # Добавим пакет в наш репозиторий
+- **[root@AlmaLinux93 repo]# wget https://repo.percona.com/yum/percona-release-latest.noarch.rpm**
+- --2025-09-26 11:38:38--  https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+- Resolving repo.percona.com (repo.percona.com)... 49.12.125.205, 2a01:4f8:242:5792::2
+- Connecting to repo.percona.com (repo.percona.com)|49.12.125.205|:443... connected.
+- HTTP request sent, awaiting response... 200 OK
+- Length: 28532 (28K) [application/x-redhat-package-manager]
+- Saving to: ‘percona-release-latest.noarch.rpm’
+
+- percona-release-latest.noarch.rpm       100%[=============================================================================>]  27.86K  --.-KB/s    in 0s
+
+- 2025-09-26 11:38:39 (292 MB/s) - ‘percona-release-latest.noarch.rpm’ saved [28532/28532]
+- **[root@AlmaLinux93 repo]# createrepo /usr/share/nginx/html/repo/** # Обновим список пакетов в репозитории
+- Directory walk started
+- Directory walk done - 11 packages
+- Temporary output repo path: /usr/share/nginx/html/repo/.repodata/
+- Preparing sqlite DBs
+- Pool started (with 5 workers)
+- Pool finished
+- **[root@AlmaLinux93 repo]# yum makecache**
+- AlmaLinux 9 - AppStream                                                                                                       6.9 kB/s | 4.2 kB     00:00
+- AlmaLinux 9 - BaseOS                                                                                                          5.9 kB/s | 3.8 kB     00:00
+- AlmaLinux 9 - Extras                                                                                                          7.7 kB/s | 3.3 kB     00:00
+- otus-linux                                                                                                                    2.9 MB/s | 3.0 kB     00:00
+- otus-linux                                                                                                                    2.1 MB/s | 7.2 kB     00:00
+- **[root@AlmaLinux93 repo]# yum list | grep otus**
+- percona-release.noarch                               1.0-32                              otus
+---
+
+- **[root@AlmaLinux93 repo]# yum install -y percona-release.noarch** # Так как Nginx у нас уже стоит, установим репозиторий percona-release
+- Last metadata expiration check: 0:01:48 ago on Fri Sep 26 11:42:24 2025.
+- Dependencies resolved.
+- ==============================================================================================================================================================
+-  Package                                      Architecture                        Version                             Repository                         Size
+- ==============================================================================================================================================================
+- Installing:
+-  percona-release                              noarch                              1.0-32                              otus                               28 k
+
+- Transaction Summary
+- ==============================================================================================================================================================
+- Install  1 Package
+
+- Total download size: 28 k
+- Installed size: 50 k
+- Downloading Packages:
+- percona-release-latest.noarch.rpm                                                                                              18 MB/s |  28 kB     00:00
+- --------------------------------------------------------------------------------------------------------------------------------------------------------------
+- Total                                                                                                                         2.7 MB/s |  28 kB     00:00
+- Running transaction check
+- Transaction check succeeded.
+- Running transaction test
+- Transaction test succeeded.
+- Running transaction
+-   Preparing        :                                                                                                                                      1/1
+-   Installing       : percona-release-1.0-32.noarch                                                                                                        1/1
+-   Running scriptlet: percona-release-1.0-32.noarch                                                                                                        1/1
+- * Enabling the Percona Release repository
+- <*> All done!
+- * Enabling the Percona Telemetry repository
+- <*> All done!
+- * Enabling the PMM2 Client repository
+- <*> All done!
+- The percona-release package now contains a percona-release script that can enable additional repositories for our newer products.
+
+- Note: currently there are no repositories that contain Percona products or distributions enabled. We recommend you to enable Percona Distribution repositories instead of - - - individual product repositories, because with the Distribution you will get not only the database itself but also a set of other componets that will help you work with your - - database.
+
+- For example, to enable the Percona Distribution for MySQL 8.0 repository use:
+
+-   percona-release setup pdps8.0
+
+- Note: To avoid conflicts with older product versions, the percona-release setup command may disable our original repository for some products.
+
+- For more information, please visit:
+-   https://docs.percona.com/percona-software-repositories/percona-release.html
+
+
+-   Verifying        : percona-release-1.0-32.noarch                                                                                                        1/1
+
+- Installed:
+-   percona-release-1.0-32.noarch
+
+- Complete!
+
+---
+
+
+
 
 
 
