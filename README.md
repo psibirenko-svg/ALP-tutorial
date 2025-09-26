@@ -2310,7 +2310,7 @@ https://github.com/google/ngx_brotli** # нужно скачать исходн�
 - Installed:
 -   percona-release-1.0-32.noarch
 
-- Complete!
+- **Complete!**
 
 ---
 
