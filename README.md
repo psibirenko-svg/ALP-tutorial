@@ -2417,4 +2417,96 @@ Initialized empty Git repository in /usr/share/nginx/html/repo/.git/
 -  VG          #PV #LV #SN Attr   VSize   VFree
 -  **ubuntu-otus**   1   1   0 wz--n- <28.00g 14.00g
 
+# 2 месяц
+## 9 урок
+**Домашнее задание** <ins>"Systemd - создание unit-файла"</ins>
 
+Цель: Научиться редактировать существующие и создавать новые unit-файлы;
+
+🎯**Задание
+- 1. Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова (файл лога и ключевое слово должны задаваться в /etc/default).
+- 2. Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта (https://gist.github.com/cea2k/1318020).
+- 3. Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно.
+<details>
+<summary> = Теория = </summary>
+	# Systemd — шпаргалка
+
+## 🔹 Что такое systemd
+**systemd** — это init-система Linux, которая:
+- управляет сервисами и демонами,
+- настраивает автозапуск,
+- собирает логи (`journald`),
+- работает с таймерами (аналог cron),
+- контролирует ресурсы (cgroups).
+
+---
+
+## 🔹 Основные команды (`systemctl`)
+
+### Управление сервисами
+sudo systemctl start nginx      # запустить
+sudo systemctl stop nginx       # остановить
+sudo systemctl restart nginx    # перезапустить
+sudo systemctl reload nginx     # перезагрузить конфиг
+
+### Автозагрузка
+sudo systemctl enable nginx     # включить автозапуск
+sudo systemctl disable nginx    # выключить автозапуск
+
+### Проверка статуса
+systemctl status nginx
+
+🔹 Логи
+journalctl -u nginx.service     # логи сервиса nginx
+journalctl -f                   # "tail -f" для всех логов
+journalctl --since "10 min ago" # логи за последние 10 минут
+
+🔹 Юнит-файл (пример сервиса)
+/etc/systemd/system/myapp.service:
+
+ [Unit]
+Description=My Test App
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/myapp/app.py
+WorkingDirectory=/opt/myapp
+Restart=always
+User=www-data
+
+[Install]
+WantedBy=multi-user.target
+
+🔹 Таймер (аналог cron)
+Пример запуска скрипта раз в час.
+Сервис /etc/systemd/system/myscript.service:
+
+[Unit]
+Description=Run script
+
+[Service]
+ExecStart=/usr/local/bin/myscript.sh
+Таймер /etc/systemd/system/myscript.timer:
+
+[Unit]
+Description=Run script every hour
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+
+### Активация:
+sudo systemctl enable --now myscript.timer
+
+⚡ Итог
+	•	systemctl — управление сервисами
+	•	journalctl — просмотр логов
+	•	unit-файлы — конфигурация сервисов
+	•	timers — альтернатива cron
+
+
+
+</details>
