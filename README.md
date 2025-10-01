@@ -2346,7 +2346,7 @@ Initialized empty Git repository in /usr/share/nginx/html/repo/.git/
 
 </details>
 
-- **Включаем отображение меню Grub**
+# 1.Включаем отображение меню Grub
 
 - **root@ol-apl-ubuntu:~# vim /etc/default/grub** # Для отображения меню нужно отредактировать конфигурационный файл
 - "/etc/default/grub" 40L, 1538B                                                                 1,1           All
@@ -2358,3 +2358,63 @@ Initialized empty Git repository in /usr/share/nginx/html/repo/.git/
 - GRUB_CMDLINE_LINUX_DEFAULT=""
 - GRUB_CMDLINE_LINUX=""
 - ...
+- **root@ol-apl-ubuntu:~# update-grub** # обновляем конфигурацию GRUB
+- Sourcing file `/etc/default/grub'
+- Generating grub configuration file ...
+- Found linux image: /boot/vmlinuz-6.8.0-84-generic
+- Found initrd image: /boot/initrd.img-6.8.0-84-generic
+- Found linux image: /boot/vmlinuz-6.8.0-83-generic
+- Found initrd image: /boot/initrd.img-6.8.0-83-generic
+- Warning: os-prober will not be executed to detect other bootable partitions.
+- Systems on them will not be added to the GRUB boot configuration.
+- Check GRUB_DISABLE_OS_PROBER documentation entry.
+- Adding boot menu entry for UEFI Firmware Settings ...
+- done
+- **root@ol-apl-ubuntu:~# reboot** # проверяем, меню GRUB появилось
+- нажимаем "e" (edit) когда при загрузке появляется меню GRUB, попадаем в окно, где мы можем изменить параметры загрузки
+-
+# 2. Попасть в систему без пароля несколькими способами:
+
+- **Способ 1. init=/bin/bash**
+- В конце строки, начинающейся с linux, добавляем init=/bin/bash
+- 
+- и нажимаем сtrl-x для загрузки в систему
+- Вы попали в систему. Но есть один нюанс. Рутовая файловая
+система при этом монтируется в режиме Read-Only. Если вы хотите перемонтировать ее в режим Read-Write, можно воспользоваться командой:
+- **root@(none):/# mount -o remount,rw /
+- **root@(none):/# vim 123 # создаем файл 123, редактируем, записывыем и проверяем: ЕСТЬ права на запись!
+- 
+- **Способ 2. Recovery mode**
+- В меню загрузчика на первом уровне выбрать второй пункт (Advanced options…), далее загрузить пункт меню с указанием recovery mode в названии. 
+- Получим меню режима восстановления.
+- В этом меню сначала включаем поддержку сети **(network)** для того, чтобы файловая система перемонтировалась в режим read/write (либо это можно сделать вручную).
+- Далее выбираем пункт **root** и попадаем в консоль с пользователем root. Если вы ранее устанавливали пароль для пользователя root (по умолчанию его нет), то необходимо его ввести. 
+В этой консоли можно производить любые манипуляции с системой. РАБОТАЕТ!!
+- **root@ol-apl-ubuntu:˜# pw**
+- /root
+- **root@ol-apl-ubuntu:˜# vim 222** # редактируем и проверяем, удаляем
+- **root@ol-apl-ubuntu:˜# vim /etc/group** # редактируем для примера...
+
+- # 3. Установить систему с LVM, после чего переименовать VG
+- 
+- **spg@ol-apl-ubuntu:~$ sudo -i**
+- [sudo] password for spg:
+- **root@ol-apl-ubuntu:~# vgs** # смотрим текущее состояние системы
+- VG        #PV #LV #SN Attr   VSize   VFree
+- **ubuntu-vg   1   1   0 wz--n- <28.00g 14.00g**
+
+- **root@ol-apl-ubuntu:~# vgrename ubuntu-vg ubuntu-otus** # переименовываем Volume Group
+- Volume group "ubuntu-vg" successfully renamed to "ubuntu-otus"
+- 
+- **root@ol-apl-ubuntu:~# vim /boot/grub/grub.cfg** #Далее правим /boot/grub/grub.cfg. Везде заменяем старое название VG на новое (в файле дефис меняется на два дефиса ubuntu--vg ubuntu--otus).
+- **root@ol-apl-ubuntu:~# reboot**
+
+- Broadcast message from root@ol-apl-ubuntu on pts/1 (Wed 2025-10-01 09:22:27 UTC):
+
+- The system will reboot now!
+
+- **root@ol-apl-ubuntu:~# vgs**
+-  VG          #PV #LV #SN Attr   VSize   VFree
+-  **ubuntu-otus**   1   1   0 wz--n- <28.00g 14.00g
+
+
