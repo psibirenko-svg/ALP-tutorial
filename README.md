@@ -2554,3 +2554,19 @@ WantedBy=multi-user.target
 
 
 </details>
+
+- 1.
+- **root@ol-apl-ubuntu:~# cat /etc/default/watchlog
+- root@ol-apl-ubuntu:~# cat /etc/default/watchlog
+- # Configuration file for my watchlog service
+- # Place it to /etc/default
+
+- # File and word in that file that we will be monit
+- WORD="ALERT"
+- LOG=/var/log/watchlog.log**
+
+- cat /var/log/syslog > /var/log/watchlog.log # И потом в строки кое-где добавляем ключевое слово ‘ALERT’
+- 
+- 
+
+
