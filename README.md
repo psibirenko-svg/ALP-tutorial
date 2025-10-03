@@ -2621,7 +2621,8 @@ WantedBy=multi-user.target
 - 2025-10-01T17:06:42.716960+03:00 ol-apl-ubuntu root: Wed Oct  1 05:06:42 PM MSK 2025: I found word, Master!
 
 - 
-- ## Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта
+- ## 2. Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта
+- 
 - **root@ol-apl-ubuntu:~# apt install spawn-fcgi php php-cgi php-cli  apache2 libapache2-mod-fcgid -y** # Устанавливаем spawn-fcgi и необходимые для него пакеты
 - **root@ol-apl-ubuntu:~# cat > /etc/spawn-fcgi/fcgi.conf**
 - -bash: /etc/spawn-fcgi/fcgi.conf: No such file or directory
@@ -2655,14 +2656,90 @@ WantedBy=multi-user.target
 - **root@ol-apl-ubuntu:~# systemctl start spawn-fcgi**
 - **root@ol-apl-ubuntu:~# systemctl status spawn-fcgi**
 - ● spawn-fcgi.service - Spawn-fcgi startup service by Otus
--      Loaded: loaded (/etc/systemd/system/spawn-fcgi.service; disabled; preset: enabled)
--      Active: active (running) since Fri 2025-10-03 11:19:00 MSK; 10s ago
--    Main PID: 37457 (php-cgi)
--       Tasks: 33 (limit: 2268)
--      Memory: 14.5M (peak: 14.5M)
--         CPU: 38ms
--      CGroup: /system.slice/spawn-fcgi.service
--              ├─37457 /usr/bin/php-cgi
--              ├─37458 /usr/bin/php-cgi
--              ├─37459 /usr/bin/php-cgi
+- Loaded: loaded (/etc/systemd/system/spawn-fcgi.service; disabled; preset: enabled)
+- Active: active (running) since Fri 2025-10-03 11:19:00 MSK; 10s ago
+- Main PID: 37457 (php-cgi)
+- Tasks: 33 (limit: 2268)
+- Memory: 14.5M (peak: 14.5M)
+- CPU: 38ms
+- CGroup: /system.slice/spawn-fcgi.service
+-  ├─37457 /usr/bin/php-cgi
+-  ├─37458 /usr/bin/php-cgi
+-  ├─37459 /usr/bin/php-cgi
+-  ...
 
+-  ## 3. Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно
+
+- **root@ol-apl-ubuntu:~# apt install nginx -y** # Установим Nginx из стандартного репозитория
+- **root@ol-apl-ubuntu:~# cat > /etc/systemd/system/nginx@.service** # Для запуска нескольких экземпляров сервиса модифицируем исходный service для использования различной конфигурации, а также PID-файлов. Для этого создадим новый Unit для работы с шаблонами
+# Stop dance for nginx
+# =======================
+#
+# ExecStop sends SIGSTOP (graceful stop) to the nginx process.
+# If, after 5s (--retry QUIT/5) nginx is still running, systemd takes control
+# and sends SIGTERM (fast shutdown) to the main process.
+# After another 5s (TimeoutStopSec=5), and if nginx is alive, systemd sends
+# SIGKILL to all the remaining processes in the process group (KillMode=mixed).
+#
+# nginx signals reference doc:
+# http://nginx.org/en/docs/control.html
+#
+[Unit]
+Description=A high performance web server and a reverse proxy server
+Documentation=man:nginx(8)
+After=network.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx-%I.pid
+ExecStartPre=/usr/sbin/nginx -t -c /etc/nginx/nginx-%I.conf -q -g 'daemon on; master_process on;'
+ExecStart=/usr/sbin/nginx -c /etc/nginx/nginx-%I.conf -g 'daemon on; master_process on;'
+ExecReload=/usr/sbin/nginx -c /etc/nginx/nginx-%I.conf -g 'daemon on; master_process on;' -s reload
+ExecStop=-/sbin/start-stop-daemon --quiet --stop --retry QUIT/5 --pidfile /run/nginx-%I.pid
+TimeoutStopSec=5
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
+- **root@ol-apl-ubuntu:~# vim /etc/systemd/system/nginx@.service** # проверяем
+- **root@ol-apl-ubuntu:~# cp -p  /etc/nginx/nginx.conf /etc/nginx/nginx-fist.conf** # создем два файла конфигурации (/etc/nginx/nginx-first.conf, /etc/nginx/nginx-second.conf).  из стандартного конфига /etc/nginx/nginx.conf, с модификацией путей до PID-файлов и разделением по портам
+- **@ol-apl-ubuntu:~# cp -p  /etc/nginx/nginx.conf /etc/nginx/nginx-second.conf**
+- **@ol-apl-ubuntu:~# vim /etc/nginx/nginx-fist.conf**
+- ...
+- pid /run/**nginx-first.pid**;
+- ...
+- http {
+-
+-        ##
+-        # Basic Settings
+-        ##
+-
+-       sendfile on;
+-        tcp_nopush on;
+-       types_hash_max_size 2048;
+-        # server_tokens off;
+-        server {
+-                listen 9001;
+-        }
+- ...
+- #include /etc/nginx/sites-enabled/*;
+- **@ol-apl-ubuntu:~# vim /etc/nginx/nginx-fist.conf**
+- - ...
+- pid /run/**nginx-second.pid**;
+- ...
+- http {
+-
+-        ##
+-        # Basic Settings
+-        ##
+-
+-       sendfile on;
+-        tcp_nopush on;
+-       types_hash_max_size 2048;
+-        # server_tokens off;
+-        server {
+-                listen 9002;
+-        }
+- ...
+- - #include /etc/nginx/sites-enabled/*;
+  - 
