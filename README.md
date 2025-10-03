@@ -2594,7 +2594,7 @@ WantedBy=multi-user.target
 - Description=Run watchlog script every 30 second
 
 - [Timer]
-- # Run every 30 second
+- #Run every 30 second
 - OnUnitActiveSec=30
 - Unit=watchlog.service
 
