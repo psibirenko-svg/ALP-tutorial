@@ -2604,7 +2604,7 @@ WantedBy=multi-user.target
 - **root@ol-apl-ubuntu:~# systemctl start watchlog.timer** # запускаем таймер
 - **root@ol-apl-ubuntu:~# systemctl start watchlog.service** # таймер не работал пока не запустил сервис (?)
 - **root@ol-apl-ubuntu:~# tail -f 1000 /var/log/syslog  | grep word** #  и время указанное в timer не точно работает...
-- **root@ol-apl-ubuntu:~# vi /etc/systemd/system/watchlog.timer** # после 30 поставил "s" -seconds, ничего не изменилось (таймер срабатывает раз в минуту)
+- **root@ol-apl-ubuntu:~# vi /etc/systemd/system/watchlog.timer** # после 30 поставил "s" -seconds, ничего не изменилось (таймер срабатывает не точно раз в 30 секунд)
 - **root@ol-apl-ubuntu:~# sudo systemctl daemon-reload**
 - **root@ol-apl-ubuntu:~# sudo systemctl enable --now /etc/systemd/system/watchlog.timer**
 - **root@ol-apl-ubuntu:~# tail -f 1000 /var/log/syslog  | grep word**
@@ -2619,4 +2619,50 @@ WantedBy=multi-user.target
 - 2025-10-01T17:04:32.719106+03:00 ol-apl-ubuntu root: Wed Oct  1 05:04:32 PM MSK 2025: I found word, Master!
 - 2025-10-01T17:05:42.721282+03:00 ol-apl-ubuntu root: Wed Oct  1 05:05:42 PM MSK 2025: I found word, Master!
 - 2025-10-01T17:06:42.716960+03:00 ol-apl-ubuntu root: Wed Oct  1 05:06:42 PM MSK 2025: I found word, Master!
-- # 
+
+- 
+- ## Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта
+- **root@ol-apl-ubuntu:~# apt install spawn-fcgi php php-cgi php-cli  apache2 libapache2-mod-fcgid -y** # Устанавливаем spawn-fcgi и необходимые для него пакеты
+- **root@ol-apl-ubuntu:~# cat > /etc/spawn-fcgi/fcgi.conf**
+- -bash: /etc/spawn-fcgi/fcgi.conf: No such file or directory
+
+- **root@ol-apl-ubuntu:~# mkdir /etc/spawn-fcgi** # создаем файл с настройками для будущего сервиса
+- **root@ol-apl-ubuntu:~# cat > /etc/spawn-fcgi/fcgi.conf**
+- #You must set some working options before the "spawn-fcgi" service will work.
+- #If SOCKET points to a file, then this file is cleaned up by the init script.
+- 
+- #See spawn-fcgi(1) for all possible options.
+- 
+- #Example :
+- SOCKET=/var/run/php-fcgi.sock
+- OPTIONS="-u www-data -g www-data -s $SOCKET -S -M 0600 -C 32 -F 1 -- /usr/bin/php-cgi"
+- **root@ol-apl-ubuntu:~# vim /etc/spawn-fcgi/fcgi.conf** # проверяем
+- **root@ol-apl-ubuntu:~# cat > /etc/systemd/system/spawn-fcgi.service** # юнит-файл
+- [Unit]
+- Description=Spawn-fcgi startup service by Otus
+- After=network.target
+
+- [Service]
+- Type=simple
+- PIDFile=/var/run/spawn-fcgi.pid
+- EnvironmentFile=/etc/spawn-fcgi/fcgi.conf
+- ExecStart=/usr/bin/spawn-fcgi -n $OPTIONS
+- KillMode=process
+
+- [Install]
+- WantedBy=multi-user.target
+- **oot@ol-apl-ubuntu:~# vim  /etc/systemd/system/spawn-fcgi.service** # проверяем
+- **root@ol-apl-ubuntu:~# systemctl start spawn-fcgi**
+- **root@ol-apl-ubuntu:~# systemctl status spawn-fcgi**
+- ● spawn-fcgi.service - Spawn-fcgi startup service by Otus
+-      Loaded: loaded (/etc/systemd/system/spawn-fcgi.service; disabled; preset: enabled)
+-      Active: active (running) since Fri 2025-10-03 11:19:00 MSK; 10s ago
+-    Main PID: 37457 (php-cgi)
+-       Tasks: 33 (limit: 2268)
+-      Memory: 14.5M (peak: 14.5M)
+-         CPU: 38ms
+-      CGroup: /system.slice/spawn-fcgi.service
+-              ├─37457 /usr/bin/php-cgi
+-              ├─37458 /usr/bin/php-cgi
+-              ├─37459 /usr/bin/php-cgi
+
