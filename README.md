@@ -2702,7 +2702,7 @@ KillMode=mixed
 [Install]
 WantedBy=multi-user.target
 - **root@ol-apl-ubuntu:~# vim /etc/systemd/system/nginx@.service** # проверяем
-- **root@ol-apl-ubuntu:~# cp -p  /etc/nginx/nginx.conf /etc/nginx/nginx-fist.conf** # создем два файла конфигурации (/etc/nginx/nginx-first.conf, /etc/nginx/nginx-second.conf).  из стандартного конфига /etc/nginx/nginx.conf, с модификацией путей до PID-файлов и разделением по портам
+- **root@ol-apl-ubuntu:~# cp -p  /etc/nginx/nginx.conf /etc/nginx/nginx-first.conf** # создем два файла конфигурации (/etc/nginx/nginx-first.conf, /etc/nginx/nginx-second.conf).  из стандартного конфига /etc/nginx/nginx.conf, с модификацией путей до PID-файлов и разделением по портам
 - **@ol-apl-ubuntu:~# cp -p  /etc/nginx/nginx.conf /etc/nginx/nginx-second.conf**
 - **@ol-apl-ubuntu:~# vim /etc/nginx/nginx-fist.conf**
 - ...
@@ -2710,16 +2710,19 @@ WantedBy=multi-user.target
 - ...
 - http {
 -
--        ##
--        # Basic Settings
--        ##
+- ##
+- #Basic Settings
+- ##
 -
--       sendfile on;
--        tcp_nopush on;
--       types_hash_max_size 2048;
--        # server_tokens off;
--        server {
--                listen 9001;
+- sendfile on;
+- tcp_nopush on;
+- types_hash_max_size 2048;
+- #server_tokens off;
+- server {
+- listen **9001**;
+- }
+- ...
+- - #include /etc/nginx/sites-enabled/*;
 -        }
 - ...
 - #include /etc/nginx/sites-enabled/*;
@@ -2729,17 +2732,47 @@ WantedBy=multi-user.target
 - ...
 - http {
 -
--        ##
--        # Basic Settings
--        ##
+- ##
+- #Basic Settings
+- ##
 -
--       sendfile on;
--        tcp_nopush on;
--       types_hash_max_size 2048;
--        # server_tokens off;
--        server {
--                listen 9002;
--        }
+- sendfile on;
+- tcp_nopush on;
+- types_hash_max_size 2048;
+- #server_tokens off;
+- server {
+- listen **9002**;
+- }
 - ...
 - - #include /etc/nginx/sites-enabled/*;
-  - 
+-
+- **root@ol-apl-ubuntu:/etc/nginx# systemctl start nginx@first**
+- **root@ol-apl-ubuntu:/etc/nginx# systemctl start nginx@second**
+- **root@ol-apl-ubuntu:/etc/nginx# systemctl status nginx@second**
+- ● nginx@second.service - A high performance web server and a reverse proxy server
+- Loaded: loaded (/etc/systemd/system/nginx@.service; disabled; preset: enabled)
+-   Active: active (running) since Fri 2025-10-03 14:22:35 MSK; 17min ago
+-   Docs: man:nginx(8)
+-   Process: 39470 ExecStartPre=/usr/sbin/nginx -t -c /etc/nginx/nginx-second.conf -q -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+-   Process: 39475 ExecStart=/usr/sbin/nginx -c /etc/nginx/nginx-second.conf -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+-   Main PID: 39477 (nginx)
+-   Tasks: 2 (limit: 2268)
+-   Memory: 1.7M (peak: 1.9M)
+-   CPU: 11ms
+-   CGroup: /system.slice/system-nginx.slice/nginx@second.service
+-   ├─39477 "nginx: master process /usr/sbin/nginx -c /etc/nginx/nginx-second.conf -g daemon on; master_process on;"
+-   └─39478 "nginx: worker process"
+
+- Oct 03 14:22:35 ol-apl-ubuntu systemd[1]: Starting nginx@second.service - A high performance web server and a reverse proxy server...
+- Oct 03 14:22:35 ol-apl-ubuntu systemd[1]: Started nginx@second.service - A high performance web server and a reverse proxy server.
+- **root@ol-apl-ubuntu:/etc/nginx# ss -tnulp | grep nginx** # смотрим какие порты слушаются:
+- tcp   LISTEN 0      511               0.0.0.0:9001      0.0.0.0:*    users:(("nginx",pid=39765,fd=5),("nginx",pid=39764,fd=5))
+- tcp   LISTEN 0      511               0.0.0.0:9002      0.0.0.0:*    users:(("nginx",pid=39478,fd=5),("nginx",pid=39477,fd=5))
+
+- **root@ol-apl-ubuntu:/etc/nginx# ps afx | grep nginx** # смотрим список процессов
+-   39591 pts/1    Tl     0:00                          \_ vim nginx-first.conf
+-   39813 pts/1    S+     0:00                          \_ grep --color=auto nginx
+-   39477 ?        Ss     0:00 nginx: master process /usr/sbin/nginx -c /etc/nginx/nginx-second.conf -g daemon on; master_process on;
+-   39478 ?        S      0:00  \_ nginx: worker process
+-   39764 ?        Ss     0:00 nginx: master process /usr/sbin/nginx -c /etc/nginx/nginx-first.conf -g daemon on; master_process on;
+-   39765 ?        S      0:00  \_ nginx: worker process
