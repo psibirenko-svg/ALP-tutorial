@@ -2538,7 +2538,7 @@ Persistent=true
 
 ## 🔹 Структура Unit-файла
 Пример `myapp.service`:
-```ini
+
 [Unit]
 Description=My Application
 After=network.target
@@ -2552,21 +2552,71 @@ User=www-data
 [Install]
 WantedBy=multi-user.target
 
-
 </details>
 
-- 1.
-- **root@ol-apl-ubuntu:~# cat /etc/default/watchlog
-- root@ol-apl-ubuntu:~# cat /etc/default/watchlog
-- # Configuration file for my watchlog service
-- # Place it to /etc/default
+ - ## 1. Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова (файл лога и ключевое слово должны задаваться в /etc/default).
 
-- # File and word in that file that we will be monit
-- WORD="ALERT"
-- LOG=/var/log/watchlog.log**
+- **root@ol-apl-ubuntu:~# cat > /etc/default/watchlog**
+- #Configuration file for my watchlog service
+- #Place it to /etc/default
 
-- cat /var/log/syslog > /var/log/watchlog.log # И потом в строки кое-где добавляем ключевое слово ‘ALERT’
-- 
-- 
+- #File and word in that file that we will be monit
+- WORD="**ALERT**"
+- LOG=/var/log/watchlog.log
 
+- **root@ol-apl-ubuntu:~# cat /var/log/syslog > /var/log/watchlog.log** # И потом в строки кое-где добавляем ключевое слово ‘**ALERT**’
+- **root@ol-apl-ubuntu:~# cat > /opt/watchlog.sh**
+#!/bin/bash
 
+- WORD=$1
+- LOG=$2
+- DATE=`date`
+
+- if grep $WORD $LOG &> /dev/null
+- then
+- logger "$DATE: I found word, Master!" # Команда logger отправляет лог в системный журнал.
+- else
+- exit 0
+- fi
+
+- **root@ol-apl-ubuntu:~# vim /opt/watchlog.sh**
+- **root@ol-apl-ubuntu:~# chmod +x /opt/watchlog.sh**
+- **root@ol-apl-ubuntu:~# cat > /etc/systemd/system/watchlog.service** # Создадим юнит для сервиса
+- [Unit]
+- Description=My watchlog service
+
+- [Service]
+- Type=oneshot
+- EnvironmentFile=/etc/default/watchlog
+- ExecStart=/opt/watchlog.sh $WORD $LOG
+- **root@ol-apl-ubuntu:~# cat > /etc/systemd/system/watchlog.timer** # Создадим юнит для таймера
+- [Unit]
+- Description=Run watchlog script every 30 second
+
+- [Timer]
+- # Run every 30 second
+- OnUnitActiveSec=30
+- Unit=watchlog.service
+
+- [Install]
+- WantedBy=multi-user.target
+
+- **root@ol-apl-ubuntu:~# systemctl start watchlog.timer** # запускаем таймер
+- **root@ol-apl-ubuntu:~# systemctl start watchlog.service** # таймер не работал пока не запустил сервис (?)
+- **root@ol-apl-ubuntu:~# tail -f 1000 /var/log/syslog  | grep word** #  и время указанное в timer не точно работает...
+- **root@ol-apl-ubuntu:~# vi /etc/systemd/system/watchlog.timer** # после 30 поставил "s" -seconds, ничего не изменилось (таймер срабатывает раз в минуту)
+- **root@ol-apl-ubuntu:~# sudo systemctl daemon-reload**
+- **root@ol-apl-ubuntu:~# sudo systemctl enable --now /etc/systemd/system/watchlog.timer**
+- **root@ol-apl-ubuntu:~# tail -f 1000 /var/log/syslog  | grep word**
+- tail: cannot open '1000' for reading: No such file or directory
+- 2025-10-01T16:57:44.553189+03:00 ol-apl-ubuntu root: Wed Oct  1 04:57:44 PM MSK 2025: I found word, Master!
+- 2025-10-01T16:58:42.720890+03:00 ol-apl-ubuntu root: Wed Oct  1 04:58:42 PM MSK 2025: I found word, Master!
+- 2025-10-01T16:59:52.724261+03:00 ol-apl-ubuntu root: Wed Oct  1 04:59:52 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:00:52.719809+03:00 ol-apl-ubuntu root: Wed Oct  1 05:00:52 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:01:52.720875+03:00 ol-apl-ubuntu root: Wed Oct  1 05:01:52 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:02:52.722077+03:00 ol-apl-ubuntu root: Wed Oct  1 05:02:52 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:03:42.719089+03:00 ol-apl-ubuntu root: Wed Oct  1 05:03:42 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:04:32.719106+03:00 ol-apl-ubuntu root: Wed Oct  1 05:04:32 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:05:42.721282+03:00 ol-apl-ubuntu root: Wed Oct  1 05:05:42 PM MSK 2025: I found word, Master!
+- 2025-10-01T17:06:42.716960+03:00 ol-apl-ubuntu root: Wed Oct  1 05:06:42 PM MSK 2025: I found word, Master!
+- # 
