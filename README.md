@@ -3037,11 +3037,77 @@ rm -f "$LOCKFILE"
 - === Коды ответов ===
 - 3 304
 - 2 404
-
+---
+- ## Переодичность запуска через CRON
 - **root@ol-apl-ubuntu:/usr/local/bin# crontab -e** #  прописываем в CRON
 - 0 * * * * → каждый час в нулевую минуту
 - /usr/local/bin/report.sh → путь к скрипту
 - >> /var/log/report.log 2>&1 → перенаправление вывода и ошибок в лог
 
 - 0 * * * * /usr/local/bin/my_reporti2.sh >> /var/log/my_report.log 2>&1
+---
+- ## Переодичность запуска через сервис по таймеру (материалы предыдущего ДЗ)
+- **root@ol-apl-ubuntu:/usr/local/bin# vim /etc/systemd/system/my_report.service**
+- [Unit]
+- Description=My watchlog service
 
+- [Service]
+- Type=oneshot
+- EnvironmentFile=/var/log/nginx/example.local.access.log
+- ExecStart=/usr/local/bin/my_report2.sh
+
+
+- **root@ol-apl-ubuntu:/usr/local/bin# vim /etc/systemd/system/my_report.timere**
+- Unit]
+- Description=Run my_report2 script every 60 second
+
+- [Timer]
+- #Run every 60 second
+- OnUnitActiveSec=60
+- Unit=my_report.service
+
+- [Install]
+- WantedBy=multi-user.target
+
+
+
+- **root@ol-apl-ubuntu:/usr/local/bin# mail -u spg**
+- 30 root               Fri Oct 10 13:42  29/901   Web report ol-apl-ubuntu (Fri Oct 10 01:42:45 PM MSK 2025)
+- ? quit
+- Held 30 messages in /var/mail/spg
+- root@ol-apl-ubuntu:/usr/local/bin# systemctl start my_report.service
+- root@ol-apl-ubuntu:/usr/local/bin# systemctl start my_report.timer
+- root@ol-apl-ubuntu:/usr/local/bin# systemctl daemon-reload
+- root@ol-apl-ubuntu:/usr/local/bin# systemctl enable --now /etc/systemd/system/my_report.timer
+- Created symlink /etc/systemd/system/multi-user.target.wants/my_report.timer → /etc/systemd/system/my_report.timer.>N  31 root               Fri Oct 10 - - 14:45  26/868   Web report ol-apl-ubuntu (Fri Oct 10 02:45:00 PM MSK 2025)
+- **root@ol-apl-ubuntu:/usr/local/bin# mail -u spg**
+- >N  31 root               Fri Oct 10 14:45  26/868   Web report ol-apl-ubuntu (Fri Oct 10 02:45:00 PM MSK 2025)
+- ? 31
+- Return-Path: <root@ol-apl-ubuntu.garant.ru>
+- X-Original-To: spg@garant.ru
+- Delivered-To: spg@garant.ru
+- Received: by ol-apl-ubuntu.garant.ru (Postfix, from userid 0)
+- 	id BC69465811; Fri, 10 Oct 2025 14:45:00 +0300 (MSK)
+- Subject: Web report ol-apl-ubuntu (Fri Oct 10 02:45:00 PM MSK 2025)
+- To: <spg@garant.ru>
+- User-Agent: mail (GNU Mailutils 3.17)
+- Date: Fri, 10 Oct 2025 14:45:00 +0300
+- Message-Id: <20251010114500.BC69465811@ol-apl-ubuntu.garant.ru>
+- From: root <root@ol-apl-ubuntu.garant.ru>
+
+- Отчёт о веб-трафике с сервера ol-apl-ubuntu
+- Период: Fri Oct 10 02:33:38 PM MSK 2025 — Fri Oct 10 02:45:00 PM MSK 2025
+
+- === Топ-10 IP-адресов ===
+- 2 10.0.77.13
+
+- === Топ-10 запрашиваемых URL ===
+- 1 /styles.css
+- 1 /contact.html
+
+- === Ошибки (HTTP 4xx/5xx) ===
+
+- === Коды ответов ===
+- 2 304
+
+- **Работает**
