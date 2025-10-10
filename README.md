@@ -2967,13 +2967,13 @@ rm -f "$LOCKFILE"
 - **Период: Tue Oct  7 12:14:15 PM MSK 2025 — Fri Oct 10 11:19:55 AM MSK 2025**
 
 - === Топ-10 IP-адресов ===
--      46 10.0.77.13
--       7 10.0.77.5
+- 46 10.0.77.13
+- 7  10.0.77.5
 
 - === Топ-10 запрашиваемых URL ===
-- 12/about.html
-- 11 /about.html
-- 9 /index.html
+- 20/about.html
+- 16 /about.html
+- 12 /index.html
 - 5 /contact.html
 
 - === Ошибки (HTTP 4xx/5xx) ===
@@ -3021,8 +3021,9 @@ rm -f "$LOCKFILE"
 - **Период: Fri Oct 10 11:25:54 AM MSK 2025 — Fri Oct 10 11:28:52 AM MSK 2025**
 
 - === Топ-10 IP-адресов ===
-      5 10.0.77.13
-
+- 12 10.0.77.13
+- 7  10.0.77.5
+- 
 - === Топ-10 запрашиваемых URL ===
 - 8 /about.html
 - 6 /contact.html
@@ -3034,12 +3035,13 @@ rm -f "$LOCKFILE"
 - 10.0.77.13 - - [10/Oct/2025:11:28:42 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0"
 
 - === Коды ответов ===
--       3 304
--       2 404
+- 3 304
+- 2 404
 
-- **Письмо-отчет**
-- 
+- **root@ol-apl-ubuntu:/usr/local/bin# crontab -e** #  прописываем в CRON
+- 0 * * * * → каждый час в нулевую минуту
+- /usr/local/bin/report.sh → путь к скрипту
+- >> /var/log/report.log 2>&1 → перенаправление вывода и ошибок в лог
 
+- 0 * * * * /usr/local/bin/my_reporti2.sh >> /var/log/my_report.log 2>&1
 
-
-123
