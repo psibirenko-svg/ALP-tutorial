@@ -2863,7 +2863,175 @@ awk '/ERROR|CRITICAL/ {print $0}' /var/log/app.log # Выводит строки
 - # Ошибки
 - grep -E "error|crit|alert" /var/log/nginx/error.log
 
-
-
-
 </details>
+
+- ## Скрипт
+- **root@ol-apl-ubuntu:/usr/local/bin# cat my_report2.sh**
+- #!/bin/bash
+- # Скрипт: my_report.sh
+- # Написать скрипт, который формирует отчёт и отправляет его на заданную почту.
+- # Ключевые моменты скрипта:
+- #	1.Блокировка через flock предотвращает одновременный запуск нескольких копий.
+- #	2.STATEFILE хранит время последнего запуска, чтобы учитывать только новые строки лога.
+- #	3.AWK-парсер извлекает дату из формата [07/Oct/2025:10:43:56 +0300] и сравнивает её с последним запуском.
+- #	4.Топ IP и URL считаются через awk, sort, uniq -c.
+- #	5.Ошибки и HTTP-коды подсчитываются отдельно.
+- #	6.Отправка через mail автоматически шлёт отчёт на e-mail.
+- #	7.TMPFILE + очистка — аккуратное временное хранение отчёта.
+
+
+- # === Настройки ===
+- LOGFILE="/var/log/nginx/example.local.access.log" # Путь к лог-файлу веб-сервера
+- STATEFILE="/var/tmp/web_report_state" # Файл для хранения времени последнего запуска
+- LOCKFILE="/var/tmp/web_report.lock"  # Файл блокировки, чтобы не запускать одновременно несколько копий
+- MAIL_TO="spg@garant.ru" # Почта, куда отправляется отчёт
+- HOSTNAME=$(hostname) # Имя хоста для включения в отчёт
+
+- # === Проверка на одновременный запуск ===
+- exec 9>"$LOCKFILE" # Открываем дескриптор 9 на LOCKFILE
+- if ! flock -n 9; then # Пытаемся захватить блокировку без ожидания
+-    echo "[$(date)] Уже запущено, выходим."
+-     exit 1
+- fi
+
+- # === Время последнего запуска ===
+- if [ -f "$STATEFILE" ]; then
+-     LAST_RUN=$(cat "$STATEFILE") # Читаем время последнего запуска
+- else
+-     LAST_RUN=0 # Если файл отсутствует — первый запуск
+- fi
+- CURRENT_TIME=$(date +%s) # Текущее время в формате UNIX timestamp
+
+# === Извлечение новыx строк из лога (# Берём только строки, созданные после последнего запуска)===
+NEWLINES=$(awk -v last="$LAST_RUN" '
+    match($0, /\[([0-9]{2})\/([A-Za-z]{3})\/([0-9]{4}):([0-9]{2}:[0-9]{2}:[0-9]{2}) ([+\-][0-9]{4})\]/, m) {
+        day = m[1]; mon = m[2]; year = m[3]; time = m[4]; tz = m[5];
+        formatted = day " " mon " " year " " time " " tz # Преобразуем для date
+        cmd = "date -d \"" formatted "\" +%s" # Преобразуем в UNIX timestamp
+        cmd | getline t
+        close(cmd)
+        if (t > last) print $0 # Если новее LAST_RUN, выводим
+    }
+' "$LOGFILE")
+# Если новых строк нет, заканчиваем работу
+if [ -z "$NEWLINES" ]; then
+    echo "[$(date)] Нет новых строк в логе, отчёт не требуется."
+    echo "$CURRENT_TIME" > "$STATEFILE"
+    exit 0
+fi
+
+# === Формируем отчёт ===
+TMPFILE=$(mktemp) # Временный файл для отчёта
+{
+    echo "Отчёт о веб-трафике с сервера $HOSTNAME"
+    echo "Период: $(date -d "@$LAST_RUN") — $(date -d "@$CURRENT_TIME")"
+    echo
+    echo "=== Топ-10 IP-адресов ==="
+    echo "$NEWLINES" | awk '{print $1}' | sort | uniq -c | sort -nr | head -10
+    echo
+    echo "=== Топ-10 запрашиваемых URL ==="
+    echo "$NEWLINES" | awk '{for (i=1;i<=NF;i++) if ($i ~ /^"?GET|POST|HEAD$/) print $(i+1)}' | sort | uniq -c | sort -nr | head -10
+    echo
+    echo "=== Ошибки (HTTP 4xx/5xx) ==="
+    echo "$NEWLINES" | awk '$9 ~ /^[45][0-9][0-9]$/' | tail -20
+    echo
+    echo "=== Коды ответов ==="
+    echo "$NEWLINES" | awk '{print $9}' | grep -E '^[0-9]{3}$' | sort | uniq -c | sort -nr
+} > "$TMPFILE"
+
+# === Отправляем отчёт по почте ===
+mail -s "Web report $HOSTNAME ($(date))" "$MAIL_TO" < "$TMPFILE"
+
+# === Обновляем время последнего запуска ===
+echo "$CURRENT_TIME" > "$STATEFILE"
+
+# === Очистка ===
+rm -f "$TMPFILE"
+flock -u 9
+rm -f "$LOCKFILE"
+
+- 
+- **Письмо-отчет**
+- Subject: Web report ol-apl-ubuntu (Fri Oct 10 11:19:55 AM MSK 2025)
+- To: <spg@garant.ru>
+- User-Agent: mail (GNU Mailutils 3.17)
+- Date: Fri, 10 Oct 2025 11:19:55 +0300
+- Message-Id: <20251010081955.E350E65811@ol-apl-ubuntu.garant.ru>
+- From: root <root@ol-apl-ubuntu.garant.ru>
+
+- Отчёт о веб-трафике с сервера ol-apl-ubuntu
+- **Период: Tue Oct  7 12:14:15 PM MSK 2025 — Fri Oct 10 11:19:55 AM MSK 2025**
+
+- === Топ-10 IP-адресов ===
+-      46 10.0.77.13
+-       7 10.0.77.5
+
+- === Топ-10 запрашиваемых URL ===
+- 12/about.html
+- 11 /about.html
+- 9 /index.html
+- 5 /contact.html
+
+- === Ошибки (HTTP 4xx/5xx) ===
+- 10.0.77.13 - - [10/Oct/2025:10:54:37 +0300] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 134 "-" "com.apple.WebKit.Networking/21622.1.22.11.15Network/5569.1.3 macOS/26.0.1"
+- 10.0.77.13 - - [10/Oct/2025:10:54:37 +0300] "GET /apple-touch-icon.png HTTP/1.1" 404 134 "-" "com.apple.WebKit.Networking/21622.1.22.11.15 Network/5569.1.3 macOS/26.0.1"
+- 10.0.77.13 - - [10/Oct/2025:10:54:37 +0300] "GET /favicon.ico HTTP/1.1" 404 134 "-" "com.apple.WebKit.Networking/21622.1.22.11.15 Network/5569.1.3  macOS/26.0.1"
+- 10.0.77.13 - - [10/Oct/2025:11:11:51 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+- 10.0.77.13 - - [10/Oct/2025:11:12:45 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+- 10.0.77.13 - - [10/Oct/2025:11:18:46 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+- 10.0.77.13 - - [10/Oct/2025:11:19:01 +0300] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 134 "-" "com.apple.WebKit.Networking/21622.1.22.11.15 Network/5569.1.3 macOS/26.0.1"
+- 10.0.77.13 - - [10/Oct/2025:11:19:01 +0300] "GET /apple-touch-icon.png HTTP/1.1" 404 134 "-" "com.apple.WebKit.Networking/21622.1.22.11.15 Network/5569.1.3 macOS/26.0.1"
+- 10.0.77.13 - - [10/Oct/2025:11:19:01 +0300] "GET /favicon.ico HTTP/1.1" 404 134 "-" "com.apple.WebKit.Networking/21622.1.22.11.15 Network/5569.1.3 macOS/26.0.1"
+- 10.0.77.5 - - [10/Oct/2025:11:19:05 +0300] "GET /favicon.ico HTTP/1.1" 404 134 "http://10.0.77.142/about.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0"
+- 10.0.77.13 - - [10/Oct/2025:11:19:18 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+- 10.0.77.13 - - [10/Oct/2025:11:19:20 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+- 10.0.77.13 - - [10/Oct/2025:11:19:35 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0"
+- 10.0.77.13 - - [10/Oct/2025:11:19:38 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0"
+- 10.0.77.13 - - [10/Oct/2025:11:19:39 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0"
+- 10.0.77.13 - - [10/Oct/2025:11:19:39 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0"
+
+- === Коды ответов ===
+- 19 200
+- 18 304
+- 16 404
+- **root@ol-apl-ubuntu:/usr/local/bin# ./my_report2.sh** # повторно запускаем скрипт без обращений к тестовому сайту
+- [Fri Oct 10 11:25:54 AM MSK 2025] Нет новых строк в логе, отчёт не требуется.
+- **root@ol-apl-ubuntu:/usr/local/bin# ./my_report2.sh** # еще раз запускаем скрипт после обращений к тестовому сайту
+- **root@ol-apl-ubuntu:/usr/local/bin# mail -u spg** # смотрим отчет в почте
+- - **Письмо-отчет**
+- >N  26 root               Fri Oct 10 11:28  27/1267  Web report ol-apl-ubuntu (Fri Oct 10 11:28:52 AM MSK 2025)
+- ? 26
+- Return-Path: <root@ol-apl-ubuntu.garant.ru>
+- X-Original-To: spg@garant.ru
+- Delivered-To: spg@garant.ru
+- Received: by ol-apl-ubuntu.garant.ru (Postfix, from userid 0)
+- 	id C979665964; Fri, 10 Oct 2025 11:28:52 +0300 (MSK)
+- Subject: Web report ol-apl-ubuntu (Fri Oct 10 11:28:52 AM MSK 2025)
+- To: <spg@garant.ru>
+- User-Agent: mail (GNU Mailutils 3.17)
+- Date: Fri, 10 Oct 2025 11:28:52 +0300
+- Message-Id: <20251010082852.C979665964@ol-apl-ubuntu.garant.ru>
+- From: root <root@ol-apl-ubuntu.garant.ru>
+
+- Отчёт о веб-трафике с сервера ol-apl-ubuntu
+- **Период: Fri Oct 10 11:25:54 AM MSK 2025 — Fri Oct 10 11:28:52 AM MSK 2025**
+
+- === Топ-10 IP-адресов ===
+      5 10.0.77.13
+
+- === Топ-10 запрашиваемых URL ===
+- 8 /about.html
+- 6 /contact.html
+- 4 /index.html
+- 1 /about.htmlhttp://10.0.77.142/about.html
+
+- === Ошибки (HTTP 4xx/5xx) ===
+- 10.0.77.13 - - [10/Oct/2025:11:28:30 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+- 10.0.77.13 - - [10/Oct/2025:11:28:42 +0300] "GET /%3C?php HTTP/1.1" 404 134 "http://10.0.77.142/contact.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0"
+
+- === Коды ответов ===
+-       3 304
+-       2 404
+
+- **Письмо-отчет**
+- 
