@@ -2953,7 +2953,7 @@ echo "$CURRENT_TIME" > "$STATEFILE"
 rm -f "$TMPFILE"
 flock -u 9
 rm -f "$LOCKFILE"
-bash
+```
 - 
 - **Письмо-отчет**
 - Subject: Web report ol-apl-ubuntu (Fri Oct 10 11:19:55 AM MSK 2025)
