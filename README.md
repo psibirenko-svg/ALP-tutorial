@@ -2864,6 +2864,14 @@ awk '/ERROR|CRITICAL/ {print $0}' /var/log/app.log # Выводит строки
 - grep -E "error|crit|alert" /var/log/nginx/error.log
 
 </details>
+## 🚀 Как запустить проект
+
+Скопируй и выполни команды ниже:
+
+```bash
+sudo apt update
+sudo apt install nginx -y
+sudo systemctl enable nginx --now
 
 - ## Скрипт
 - **root@ol-apl-ubuntu:/usr/local/bin# cat my_report2.sh**
