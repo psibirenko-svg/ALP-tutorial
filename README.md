@@ -3228,3 +3228,60 @@ while (my $pid = readdir($proc)) {
 closedir($proc);
 
 ```
+
+```bash
+
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use File::Basename;
+
+# Минимальный аналог lsof на Perl
+# Показывает: COMMAND PID USER FD NAME
+
+opendir(my $proc, "/proc") or die "Не могу открыть /proc: $!";
+
+printf "%-15s %6s %-8s %3s %s\n", "COMMAND", "PID", "USER", "FD", "NAME";
+
+while (my $pid = readdir($proc)) {
+    next unless $pid =~ /^\d+$/;              # Только числовые PID
+    my $base = "/proc/$pid";
+
+    # Имя команды (из /proc/<pid>/comm)
+    my $comm = "";
+    if (open my $c, '<', "$base/comm") {
+        chomp($comm = <$c>);
+        close $c;
+    } else {
+        next;
+    }
+
+    # Имя пользователя (по uid из /proc/<pid>/status)
+    my $user = "";
+    if (open my $s, '<', "$base/status") {
+        while (<$s>) {
+            if (/^Uid:\s+(\d+)/) {
+                my $uid = $1;
+                $user = getpwuid($uid) // $uid;
+                last;
+            }
+        }
+        close $s;
+    }
+
+    my $fd_dir = "$base/fd";
+    next unless -d $fd_dir;
+
+    opendir(my $fdh, $fd_dir) or next;
+    while (my $fd = readdir($fdh)) {
+        next if $fd eq '.' or $fd eq '..';
+        my $link = readlink("$fd_dir/$fd");
+        next unless defined $link;
+        printf "%-15s %6d %-8s %3s %s\n", $comm, $pid, $user, $fd, $link;
+    }
+    closedir($fdh);
+}
+closedir($proc);
+
+
+```
