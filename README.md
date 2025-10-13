@@ -3202,6 +3202,7 @@ rm -f "$LOCKFILE"
 ---
 
 🧠 Полезные приёмы **awk** для анализа **/proc**
+
 📊 1. Использовать /proc/meminfo — анализ памяти
 - **Показать общий объём и свободную память:**
 
@@ -3298,7 +3299,81 @@ echo "=== UPTIME ==="
 awk '{printf "Uptime: %.2f hours\n", $1/3600}' /proc/uptime
 ```
 ---
+🧩 proc_monitor — мини-мониторинг из /proc # информативный Bash-скрипт
 
+```bash  
+#!/usr/bin/env bash
+#
+# proc_monitor — системная сводка на основе /proc
+# Автор: ты :)
+# Зависимости: только bash, awk, sleep
+#
+
+# === Цвета для красоты ===
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+CYAN="\033[1;36m"
+RESET="\033[0m"
+
+while true; do
+  clear
+  echo -e "${CYAN}==== SYSTEM STATUS ($(date +"%F %T")) ====${RESET}"
+
+  # ---- CPU ----
+cpu_usage=$(awk '
+  /^cpu / {
+    u1=$2+$3+$4; t1=$2+$3+$4+$5+$6+$7+$8
+    system("sleep 1")
+    getline < "/proc/stat"
+    u2=$2+$3+$4; t2=$2+$3+$4+$5+$6+$7+$8
+    printf "%d", 100*(u2-u1)/(t2-t1)
+  }' /proc/stat)
+echo -e "${GREEN}CPU usage:${RESET} ${cpu_usage}%"
+
+  # ---- MEMORY ----
+  awk '
+    /MemTotal:/ {total=$2}
+    /MemAvailable:/ {avail=$2}
+    END {
+      used=total-avail;
+      printf "\033[1;32mMemory:\033[0m %.1f%% used (%d / %d MB)\n", 100*used/total, used/1024, total/1024
+    }
+  ' /proc/meminfo
+
+  # ---- LOAD AVG ----
+  awk '{printf "\033[1;32mLoad avg:\033[0m 1min=%s 5min=%s 15min=%s\n", $1, $2, $3}' /proc/loadavg
+
+  # ---- UPTIME ----
+  awk '{h=int($1/3600); m=int(($1%3600)/60); printf "\033[1;32mUptime:\033[0m %dh %dm\n", h, m}' /proc/uptime
+
+  # ---- PROCESSES ----
+  procs=$(ls -d /proc/[0-9]* 2>/dev/null | wc -l)
+  echo -e "${GREEN}Processes:${RESET} $procs"
+
+  # ---- TOP 5 по памяти ----
+  echo -e "\n${YELLOW}Top 5 processes by memory:${RESET}"
+  printf "%-8s %-20s %10s\n" "PID" "COMMAND" "RSS(KB)"
+  for pid in /proc/[0-9]*; do
+    status="$pid/status"
+    [ -r "$status" ] || continue
+    rss=$(awk '/VmRSS:/ {print $2}' "$status")
+    comm=$(<"$pid/comm")
+    [ -n "$rss" ] && printf "%-8d %-20s %10d\n" "$(basename "$pid")" "$comm" "$rss"
+  done | sort -k3 -nr | head -n 5
+
+  # ---- DISK ----
+  echo -e "\n${YELLOW}Disk activity (/proc/diskstats):${RESET}"
+  awk '{if ($3 ~ /^sd|nvme|vd/) printf "%-6s reads=%-8s writes=%-8s\n", $3, $4, $8}' /proc/diskstats
+
+  # ---- NET ----
+  echo -e "\n${YELLOW}Network traffic (/proc/net/dev):${RESET}"
+  awk 'NR>2 {printf "%-8s RX=%-10.0fKB TX=%-10.0fKB\n", $1, $2/1024, $10/1024}' /proc/net/dev
+
+  echo
+  sleep 7
+done
+```
 
 </details>
 
