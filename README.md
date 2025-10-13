@@ -3203,11 +3203,102 @@ rm -f "$LOCKFILE"
 
 🧠 Полезные приёмы **awk** для анализа **/proc**
 📊 1. Использовать /proc/meminfo — анализ памяти
-**Показать общий объём и свободную память:**
+- **Показать общий объём и свободную память:**
 
 ```bash
 awk '/MemTotal|MemFree|Buffers|Cached/ {print}' /proc/meminfo
 ```
+
+- **Посчитать использование памяти в процентах:**
+
+```bash
+awk '/MemTotal/ {total=$2} /MemAvailable/ {avail=$2} END {printf "Memory used: %.1f%%\n", 100*(1-avail/total)}' /proc/meminfo
+```
+
+💻 2. /proc/cpuinfo — информация о процессоре
+- **Показать все модели CPU:**
+
+```bash  
+awk -F': ' '/model name/ {print $2}' /proc/cpuinfo
+```
+
+- **Посчитать количество логических ядер:**
+
+```bash  
+awk '/^processor/ {n++} END {print "CPU cores:", n}' /proc/cpuinfo
+```
+
+🚀 3. /proc/loadavg — загрузка системы
+- **Просто форматированный вывод:**
+
+```bash  
+awk '{printf "Load average: 1min=%s 5min=%s 15min=%s\n", $1, $2, $3}' /proc/loadavg
+```
+
+🔧 4. /proc/uptime — время работы системы
+- **Сделать человекопонятный вывод аптайма:**
+
+```bash  
+aawk '{h=int($1/3600); m=int(($1%3600)/60); s=int($1%60); printf "Uptime: %dh %dm %ds\n", h, m, s}' /proc/uptime
+```
+
+🧩 5. /proc/[pid]/status — анализ процессов
+- **Например, вывести всех процессов с использованием памяти > 100 000 KB:**
+
+```bash  
+for pid in /proc/[0-9]*; do
+  awk -v pid=$(basename "$pid") '/VmRSS:/ {if ($2>100000) printf "%-6s %s KB\n", pid, $2}' "$pid/status" 2>/dev/null
+done
+```
+
+🧱 6. /proc/[pid]/fd — подсчёт открытых файлов
+
+```bash  
+for pid in /proc/[0-9]*; do
+  user=$(awk '/^Uid:/ {print $2}' "$pid/status" 2>/dev/null | xargs -I{} getent passwd {} | cut -d: -f1)
+  [ -d "$pid/fd" ] && count=$(ls "$pid/fd" 2>/dev/null | wc -l)
+  [ -n "$count" ] && echo "$pid $user $count"
+done | awk '{if($3>50) printf "PID=%s USER=%s OPEN_FD=%s\n", $1,$2,$3}'
+```
+
+🧮 7. /proc/net/dev — статистика сетевых интерфейсов
+- **Посчитать входящий/исходящий трафик:**
+
+```bash  
+awk 'NR>2 {print $1, "RX=" $2/1024 "KB", "TX=" $10/1024 "KB"}' /proc/net/dev
+```
+
+🔋 8. /proc/stat — использование CPU
+- **Посчитать общий процент загрузки CPU за секунду:**
+
+```bash  
+awk '/^cpu / {u=$2; n=$3; s=$4; i=$5; total=u+n+s+i; printf "%d %d\n", u+s, total}' /proc/stat > /tmp/cpu1
+sleep 1
+awk '/^cpu / {u=$2; n=$3; s=$4; i=$5; total=u+n+s+i; printf "%d %d\n", u+s, total}' /proc/stat > /tmp/cpu2
+awk 'NR==FNR{u1=$1;t1=$2;next}{u2=$1;t2=$2}END{printf "CPU usage: %.1f%%\n", 100*(u2-u1)/(t2-t1)}' /tmp/cpu1 /tmp/cpu2
+```
+
+🔥 10. /proc/swaps — использование swap
+
+```bash  
+awk 'NR>1 {printf "%s: %s/%s kB used\n", $1, $4, $3}' /proc/swaps
+```
+
+🧾 Бонус: всё сразу в виде короткого системного отчёта
+
+```bash  
+echo "=== CPU ==="
+awk -F': ' '/model name/ {print $2; exit}' /proc/cpuinfo
+awk '/^cpu / {printf "Load: %.1f%%\n", 100*($2+$4)/($2+$4+$5)}' /proc/stat
+
+echo "=== MEM ==="
+awk '/MemTotal|MemFree|Buffers|Cached/ {print}' /proc/meminfo
+
+echo "=== UPTIME ==="
+awk '{printf "Uptime: %.2f hours\n", $1/3600}' /proc/uptime
+```
+---
+
 
 </details>
 
