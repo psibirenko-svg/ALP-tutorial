@@ -3201,6 +3201,7 @@ rm -f "$LOCKFILE"
 
 
 </details>
+
 ```bash
 #!/usr/bin/env perl
 use strict;
@@ -3225,4 +3226,5 @@ while (my $pid = readdir($proc)) {
     closedir($fdh);
 }
 closedir($proc);
+
 ```
