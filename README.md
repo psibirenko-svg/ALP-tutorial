@@ -3112,7 +3112,7 @@ rm -f "$LOCKFILE"
 
 - **Работает**
 
-- ## 12 урок
+## 12 урок
 **Домашнее задание** <ins>"Работа с процессами"</ins>
 
 -  Цель: Работать с процессами;
@@ -3128,6 +3128,56 @@ rm -f "$LOCKFILE"
   
 <details>
 <summary> = Теория = </summary>
+
+📂 Структура каталога /proc
+🧩 1. Общесистемная информация
+
+- **/proc/cpuinfo** - Информация о процессоре: модель, частота, количество ядер, флаги.
+- **/proc/meminfo**  - Подробности об использовании оперативной памяти.
+- **/proc/uptime** - Время работы системы с момента загрузки.
+- **/proc/loadavg** - Средняя нагрузка системы за 1, 5 и 15 минут.
+- **/proc/version** - Версия ядра и компилятора.
+- **/proc/cmdline** - Параметры, переданные ядру при загрузке.
+- **/proc/modules** - Загруженные модули ядра.
+- **/proc/filesystems** - Поддерживаемые файловые системы.
+- **/proc/partitions** - Таблица разделов на устройствах.
+- **/proc/diskstats** - Статистика чтения/записи для каждого блока.
+- **/proc/interrupts** - Счётчики аппаратных прерываний.
+- **/proc/swaps** - Используемые swap-разделы.
+- **/proc/mounts** - Точки монтирования и используемые файловые системы.
+- **/proc/ioports** - Аппаратные порты ввода/вывода.
+- **/proc/iomem** - Карта распределения физической памяти.
+- **/proc/net/** - Подкаталог с информацией о сетевых интерфейсах и соединениях.
+- **/proc/sys/** - Интерфейс настройки параметров ядра (sysctl).
+
+👤 2. Каталоги процессов
+- Каждый запущенный процесс имеет свой каталог /proc/[pid]/, где [pid] — его числовой идентификатор.
+- Например: /proc/1234/
+
+- **/proc/[pid]/cmdline** - Команда и аргументы, с которыми процесс был запущен.
+- **/proc/[pid]/cwd** - Ссылка на текущий рабочий каталог процесса.
+- **/proc/[pid]/environ** - Переменные окружения.
+- **/proc/[pid]/exe** - Симлинк на исполняемый файл.
+- **/proc/[pid]/fd/** - Дескрипторы открытых файлов.
+- **/proc/[pid]/maps** - Карта памяти процесса.
+- **/proc/[pid]/mem** - Содержимое памяти процесса (только для чтения root).
+- **/proc/[pid]/stat** - Статистика: состояние, использование CPU и памяти, приоритет и т. д.
+- **/proc/[pid]/status** - Удобочитаемая сводка по процессу (UID, VmRSS, состояние, приоритет).
+- **/proc/[pid]/task/** - Потоки (threads) этого процесса.
+- **/proc/[pid]/io** - Счётчики ввода/вывода.
+- **/proc/[pid]/net/** - Сетевые соединения, связанные с этим процессом.
+- **/proc/[pid]/mounts** - Список смонтированных ФС, видимых процессом (namespace).
+
+⚙️ 3. Системные подкаталоги
+
+- **/proc/bus/** - Информация о шинах (PCI, USB и др.).
+- **/proc/driver/** - Информация от конкретных драйверов устройств.
+- **/proc/sys/** - Дерево параметров ядра, управляемых через sysctl. Пример: /proc/sys/net/ipv4/ip_forward.
+- **/proc/tty/** - Терминалы и их драйверы.
+- **/proc/acpi/** - (Если включено) — информация об энергопотреблении, батарее, ACPI событиях.
+- **/proc/scsi/** - Информация о SCSI-устройствах.
+
+
 	
 # 🧰 lsof — List Open Files
 
@@ -3377,82 +3427,101 @@ done
 
 </details>
 
-```bash
-#!/usr/bin/env perl
-use strict;
-use warnings;
-use File::Basename;
+---
 
-# Минимальный аналог lsof: показывает PID, дескриптор и файл
+## Домашнее задание
 
-opendir(my $proc, "/proc") or die "Не могу открыть /proc: $!";
-while (my $pid = readdir($proc)) {
-    next unless $pid =~ /^\d+$/;              # только числовые PID
-    my $fd_dir = "/proc/$pid/fd";
-    next unless -d $fd_dir;
+- **root@ol-apl-ubuntu:/usr/local/bin# cat /proc/cpuinfo** # инфо о процессоре
+- processor	: 0
+- vendor_id	: GenuineIntel
+- cpu family	: 6
+- model		: 85
+- model name	: Intel(R) Xeon(R) Gold 6238R CPU @ 2.20GHz
+- stepping	: 7
+- microcode	: 0x5003707
+- cpu MHz		: 2194.843
+- cache size	: 39424 KB
+- physical id	: 0
+- siblings	: 1
+- core id		: 0
+- cpu cores	: 1
 
-    opendir(my $fdh, $fd_dir) or next;        # может быть недоступен (нет прав)
-    while (my $fd = readdir($fdh)) {
-        next if $fd eq '.' or $fd eq '..';
-        my $link = readlink("$fd_dir/$fd");
-        next unless defined $link;
-        printf "%6d %3s -> %s\n", $pid, $fd, $link;
-    }
-    closedir($fdh);
-}
-closedir($proc);
+- **root@ol-apl-ubuntu:/usr/local/bin# grep Mem /proc/meminfo** # Инфо о памяти
+- MemTotal:        2015348 kB
+- MemFree:          795792 kB
+- MemAvailable:    1578184 kB
 
-```
+- **root@ol-apl-ubuntu:/usr/local/bin# cat /proc/swaps** # использование SWAP
+- Filename				Type		Size		Used		Priority
+- /swap.img                               file		2097148		0		-2
 
-```bash
+- **root@ol-apl-ubuntu:/usr/local/bin# cat /proc/net/dev сетевые** # инетерфейсы
+- Inter-|   Receive                                                |  Transmit
+- face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+- lo:  168351    1785    0    0    0     0          0         0   168351    1785    0    0    0     0       0          0
+- ens192: 189391314 1782688    0  712    0     0          0      5071 39149174  324460    0    0    0     0       0          0
 
-#!/usr/bin/env perl
-use strict;
-use warnings;
-use File::Basename;
+- **root@ol-apl-ubuntu:/usr/local/bin# cat /proc/mounts** # монтирование файловой системы
+- sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
+- proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+- udev /dev devtmpfs rw,nosuid,relatime,size=967776k,nr_inodes=241944,mode=755,inode64 0 0
+- devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0
+- tmpfs /run tmpfs rw,nosuid,nodev,noexec,relatime,size=201536k,mode=755,inode64 0 0
+- /dev/mapper/ubuntu--otus-ubuntu--lv / ext4 rw,relatime 0 0
+- ...
+
+
 
 # Минимальный аналог lsof на Perl
 # Показывает: COMMAND PID USER FD NAME
+- **root@ol-apl-ubuntu:/usr/local/bin# vim my_lsof2.pl**
 
-opendir(my $proc, "/proc") or die "Не могу открыть /proc: $!";
+```bash
 
-printf "%-15s %6s %-8s %3s %s\n", "COMMAND", "PID", "USER", "FD", "NAME";
+#!/usr/bin/env perl
+use strict; # жёсткий режим проверки синтаксиса.
+use warnings; # вывод предупреждений о потенциальных ошибках
+use File::Basename; # использовать имя скрипта
 
-while (my $pid = readdir($proc)) {
+opendir(my $proc, "/proc") or die "Не могу открыть /proc: $!"; # работа с каталогом /proc
+
+printf "%-15s %6s %-8s %3s %s\n", "COMMAND", "PID", "USER", "FD", "NAME"; # вывод "шапки"
+
+while (my $pid = readdir($proc)) { # читаем из каталога /proc пиды
     next unless $pid =~ /^\d+$/;              # Только числовые PID
-    my $base = "/proc/$pid";
+    my $base = "/proc/$pid"; # получаем обрабатываемый каталог пида
 
-    # Имя команды (из /proc/<pid>/comm)
-    my $comm = "";
-    if (open my $c, '<', "$base/comm") {
-        chomp($comm = <$c>);
+    # Имя команды, читаем имя команды (процесса) из каталога /proc/<pid>/comm
+    my $comm = ""; #объявляем переменную
+    if (open my $c, '<', "$base/comm") { # открываем для чтения каталог comm в выбранном каталоге пида
+        chomp($comm = <$c>); # читает первую строку и записывает в переменную
         close $c;
-    } else {
+    } else { # если не удалось считать (файл закрылся) идем дальше (next)
         next;
     }
 
     # Имя пользователя (по uid из /proc/<pid>/status)
-    my $user = "";
-    if (open my $s, '<', "$base/status") {
+    my $user = ""; #объявляем переменную
+    if (open my $s, '<', "$base/status") { # читаем строчки из status
         while (<$s>) {
-            if (/^Uid:\s+(\d+)/) {
-                my $uid = $1;
-                $user = getpwuid($uid) // $uid;
+            if (/^Uid:\s+(\d+)/) { # ищем "Uid"
+                my $uid = $1; 
+                $user = getpwuid($uid) // $uid; # записываем в переменную
                 last;
             }
         }
         close $s;
     }
 
-    my $fd_dir = "$base/fd";
+    my $fd_dir = "$base/fd"; 
     next unless -d $fd_dir;
 
-    opendir(my $fdh, $fd_dir) or next;
-    while (my $fd = readdir($fdh)) {
-        next if $fd eq '.' or $fd eq '..';
-        my $link = readlink("$fd_dir/$fd");
-        next unless defined $link;
-        printf "%-15s %6d %-8s %3s %s\n", $comm, $pid, $user, $fd, $link;
+    opendir(my $fdh, $fd_dir) or next; # если каталога fd нет (например, процесс уже завершён), пропускаем
+    while (my $fd = readdir($fdh)) {  # перебираем все элементы каталога  — номера файловых дескрипторов
+        next if $fd eq '.' or $fd eq '..'; # пропускаем служебные записи
+        my $link = readlink("$fd_dir/$fd"); # читаем символическую ссылку, на которую указывает дескриптор
+        next unless defined $link; # пропускаем, если не прочиталась
+        printf "%-15s %6d %-8s %3s %s\n", $comm, $pid, $user, $fd, $link; # выводим наши переменные (построчно в цикле пока есть)
     }
     closedir($fdh);
 }
@@ -3460,3 +3529,31 @@ closedir($proc);
 
 
 ```
+- **root@ol-apl-ubuntu:/usr/local/bin# ./my_lsof2.pl | tail -100** # выполним скипт и покажем конец вывода
+- vim              32022 root       2 /dev/pts/1
+- vim              32022 root       4 /var/www/example.local/html/.contact.html.swp (deleted)
+- mail             32174 root       0 /dev/pts/1
+- mail             32174 root       1 /dev/pts/1
+- mail             32174 root       2 /dev/pts/1
+- mail             32175 root       0 /dev/pts/1
+- mail             32175 root       1 /dev/pts/1
+- mail             32175 root       2 /dev/pts/1
+- pickup          365090 postfix    0 /dev/null
+- pickup          365090 postfix    1 /dev/null
+- pickup          365090 postfix    2 /dev/null
+- pickup          365090 postfix    3 pipe:[15403]
+- pickup          365090 postfix    4 pipe:[15403]
+- pickup          365090 postfix    5 socket:[15327]
+- pickup          365090 postfix    6 socket:[15325]
+- pickup          365090 postfix    7 socket:[1458538]
+- pickup          365090 postfix    8 anon_inode:[eventpoll]
+- pickup          365090 postfix    9 pipe:[1458552]
+- pickup          365090 postfix   10 pipe:[1458552]
+- perl            366007 root       0 /dev/pts/1
+- perl            366007 root       1 pipe:[1465543]
+- perl            366007 root       2 /dev/pts/1
+- perl            366007 root       3 /proc
+- perl            366007 root       4 /proc/366007/fd
+- tail            366008 root       0 pipe:[1465543]
+- tail            366008 root       1 /dev/pts/1
+- tail            366008 root       2 /dev/pts/1
