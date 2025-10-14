@@ -3530,7 +3530,7 @@ closedir($proc);
 
 ```
 ```bash
-root@ol-apl-ubuntu:/usr/local/bin# ./my_lsof2.pl | { head -n 1; tail -n 20; }
+root@ol-apl-ubuntu:/usr/local/bin# ./my_lsof2.pl | { head -n 1; tail -n 20; } # вывод первой (шапки) и последних 20 строк результата работы
 COMMAND            PID USER      FD NAME
 pickup          386139 postfix    0 /dev/null
 pickup          386139 postfix    1 /dev/null
