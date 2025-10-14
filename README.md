@@ -3529,31 +3529,26 @@ closedir($proc);
 
 
 ```
-- **root@ol-apl-ubuntu:/usr/local/bin# ./my_lsof2.pl | tail -100** # выполним скипт и покажем конец вывода
-- vim              32022 root       2 /dev/pts/1
-- vim              32022 root       4 /var/www/example.local/html/.contact.html.swp (deleted)
-- mail             32174 root       0 /dev/pts/1
-- mail             32174 root       1 /dev/pts/1
-- mail             32174 root       2 /dev/pts/1
-- mail             32175 root       0 /dev/pts/1
-- mail             32175 root       1 /dev/pts/1
-- mail             32175 root       2 /dev/pts/1
-- pickup          365090 postfix    0 /dev/null
-- pickup          365090 postfix    1 /dev/null
-- pickup          365090 postfix    2 /dev/null
-- pickup          365090 postfix    3 pipe:[15403]
-- pickup          365090 postfix    4 pipe:[15403]
-- pickup          365090 postfix    5 socket:[15327]
-- pickup          365090 postfix    6 socket:[15325]
-- pickup          365090 postfix    7 socket:[1458538]
-- pickup          365090 postfix    8 anon_inode:[eventpoll]
-- pickup          365090 postfix    9 pipe:[1458552]
-- pickup          365090 postfix   10 pipe:[1458552]
-- perl            366007 root       0 /dev/pts/1
-- perl            366007 root       1 pipe:[1465543]
-- perl            366007 root       2 /dev/pts/1
-- perl            366007 root       3 /proc
-- perl            366007 root       4 /proc/366007/fd
-- tail            366008 root       0 pipe:[1465543]
-- tail            366008 root       1 /dev/pts/1
-- tail            366008 root       2 /dev/pts/1
+
+- **root@ol-apl-ubuntu:/usr/local/bin# ./my_lsof2.pl | { head -n 1; tail -n 20; }** # вывод первой и последних 20 строк результата работы
+- COMMAND            PID USER      FD NAME
+- pickup          386139 postfix    0 /dev/null
+- pickup          386139 postfix    1 /dev/null
+- pickup          386139 postfix    2 /dev/null
+- pickup          386139 postfix    3 pipe:[15403]
+- pickup          386139 postfix    4 pipe:[15403]
+- pickup          386139 postfix    5 socket:[15327]
+- pickup          386139 postfix    6 socket:[15325]
+- pickup          386139 postfix    7 socket:[1626153]
+- pickup          386139 postfix    8 anon_inode:[eventpoll]
+- pickup          386139 postfix    9 pipe:[1626166]
+- pickup          386139 postfix   10 pipe:[1626166]
+- perl            387639 root       0 /dev/pts/1
+- perl            387639 root       1 pipe:[1638256]
+- perl            387639 root       2 /dev/pts/1
+- perl            387639 root       3 /proc
+- perl            387639 root       4 /proc/387639/fd
+- bash            387640 root       0 pipe:[1638256]
+- bash            387640 root       1 /dev/pts/1
+- bash            387640 root       2 /dev/pts/1
+- bash            387640 root     255 /dev/pts/1
