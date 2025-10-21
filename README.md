@@ -3738,6 +3738,9 @@ root@ol-apl-ubuntu:/usr/local/bin#
 
 - **[root@AlmaLinux ~]# getenforce** # режим работы SELinux
 - **Enforcing** # Данный режим означает, что SELinux будет блокировать запрещенную активность.
-
 - 
+## 1. Разрешим в SELinux работу nginx на порту TCP 4881 c помощью переключателей setsebool
+- http://10.0.77.182:4881
+- <img width="523" height="99" alt="Screenshot 2025-10-21 at 14 46 13" src="https://github.com/user-attachments/assets/7bb19e61-0fe4-4b91-9bc4-8f0e263c6649" />
+
 - 
