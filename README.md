@@ -3673,3 +3673,71 @@ root@ol-apl-ubuntu:/usr/local/bin#
 
 
 </details>
+
+---
+## Домашняя работа
+- **[root@AlmaLinux ~]# systemctl start nginx**
+- **[root@AlmaLinux ~]# systemctl status nginx**
+- **● nginx.service - The nginx HTTP and reverse proxy server
+- Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+- Active: active (running) since Tue 2025-10-21 14:05:19 MSK; 6min ago
+- Process: 11133 ExecStartPre=/usr/bin/rm -f /run/nginx.pid (code=exited, status=0/SUCCESS)
+- Process: 11134 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+- Process: 11135 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+- Main PID: 11136 (nginx)
+- Tasks: 2 (limit: 48850)
+- Memory: 1.9M
+- CPU: 16ms
+- CGroup: /system.slice/nginx.service
+-  └─11136 "nginx: master process /usr/sbin/nginx"
+-  └─11137 "nginx: worker process"
+
+- Oct 21 14:05:19 AlmaLinux systemd[1]: Starting The nginx HTTP and reverse proxy server...
+- Oct 21 14:05:19 AlmaLinux nginx[11134]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+- Oct 21 14:05:19 AlmaLinux nginx[11134]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+- Oct 21 14:05:19 AlmaLinux systemd[1]: Started The nginx HTTP and reverse proxy server.
+- **[root@AlmaLinux ~]# systemctl status firewalld** # проверяем FireWall
+- ● firewalld.service - firewalld - dynamic firewall daemon
+- Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; preset: enabled)
+- Active: **active (running)** since Tue 2025-10-21 13:52:32 MSK; 28min ago # запущен :(
+- Docs: man:firewalld(1)
+- Main PID: 808 (firewalld)
+- Tasks: 2 (limit: 48850)
+- Memory: 42.4M
+- CPU: 401ms
+- CGroup: /system.slice/firewalld.service
+- └─808 /usr/bin/python3 -s /usr/sbin/firewalld --nofork --nopid
+
+- Oct 21 13:52:31 AlmaLinux systemd[1]: Starting firewalld - dynamic firewall daemon...
+- Oct 21 13:52:32 AlmaLinux systemd[1]: Started firewalld - dynamic firewall daemon.
+- **[root@AlmaLinux ~]# systemctl stop firewalld** # гасим FireWall
+- **[root@AlmaLinux ~]# systemctl status firewalld** # проверяем
+- ○ firewalld.service - firewalld - dynamic firewall daemon
+- Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; preset: enabled)
+- Active: **inactive (dead)** since Tue 2025-10-21 14:22:14 MSK; 2s ago # потух :)
+- Duration: 29min 42.334s
+- Docs: man:firewalld(1)
+- Process: 808 ExecStart=/usr/sbin/firewalld --nofork --nopid $FIREWALLD_ARGS (code=exited, status=0/SUCCESS)
+- Main PID: 808 (code=exited, status=0/SUCCESS)
+- CPU: 459ms
+- 
+- **[root@AlmaLinux ~]# nginx -t** # проверяем конфигурацию nginx
+- nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+- nginx: configuration file /etc/nginx/nginx.conf test is successful
+- **[root@AlmaLinux ~]# sestatus** # проверяем статус SELinux
+- SELinux status:                 enabled
+- SELinuxfs mount:                /sys/fs/selinux
+- SELinux root directory:         /etc/selinux
+- Loaded policy name:             targeted
+- Current mode:                   enforcing
+- Mode from config file:          enforcing
+- Policy MLS status:              enabled
+- Policy deny_unknown status:     allowed
+- Memory protection checking:     actual (secure)
+- Max kernel policy version:      33
+
+- **[root@AlmaLinux ~]# getenforce** # режим работы SELinux
+- **Enforcing** # Данный режим означает, что SELinux будет блокировать запрещенную активность.
+
+- 
+- 
