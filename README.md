@@ -3743,4 +3743,33 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - http://10.0.77.182:4881
 - <img width="523" height="99" alt="Screenshot 2025-10-21 at 14 46 13" src="https://github.com/user-attachments/assets/7bb19e61-0fe4-4b91-9bc4-8f0e263c6649" />
 
+- **[root@AlmaLinux ~]# grep 1761049017.029:219 /var/log/audit/audit.log | audit2why**
+- -bash: audit2why: command not found
+- **[root@AlmaLinux ~]# dnf install policycoreutils-python-utils -y**
+- Complete!
+- **[root@AlmaLinux ~]# which audit2why**
+- /bin/audit2why
+
+
+---
+## 2. Разрешим в SELinux работу nginx на порту TCP 4881 c помощью добавления нестандартного порта в имеющийся тип:
+-
+- **[root@AlmaLinux ~]# semanage port -l | grep http**
+- http_cache_port_t              tcp      8080, 8118, 8123, 10001-10010
+- http_cache_port_t              udp      3130
+- http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
+- pegasus_http_port_t            tcp      5988
+- pegasus_https_port_t           tcp      5989
+
+<img width="614" height="172" alt="Screenshot 2025-10-21 at 15 36 58" src="https://github.com/user-attachments/assets/a33953a0-e895-4048-b1b6-aa3eb9904aa0" />
+
+- [root@AlmaLinux ~]# semanage port -a -t http_port_t -p tcp 4881
+- [root@AlmaLinux ~]# semanage port -l | grep  http_port_t
+- http_port_t                    tcp      **4881**, 80, 81, 443, 488, 8008, 8009, 8443, 9000
+- pegasus_http_port_t            tcp      5988
 - 
+
+
+
+
+-   
