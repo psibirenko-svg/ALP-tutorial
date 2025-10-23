@@ -3740,15 +3740,42 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - **Enforcing** # Данный режим означает, что SELinux будет блокировать запрещенную активность.
 - 
 ## 1. Разрешим в SELinux работу nginx на порту TCP 4881 c помощью переключателей setsebool
+- **[root@AlmaLinux ~]# vi /etc/nginx/nginx.conf**
+- server {
+-         listen       80;
+-         listen       4881; # добавим порт
+---
+- **[root@AlmaLinux ~]# setenforce 0** # отключим блокирование в SELinux
+
+- 
 - http://10.0.77.182:4881
+
+
 - <img width="523" height="99" alt="Screenshot 2025-10-21 at 14 46 13" src="https://github.com/user-attachments/assets/7bb19e61-0fe4-4b91-9bc4-8f0e263c6649" />
 
-- **[root@AlmaLinux ~]# grep 1761049017.029:219 /var/log/audit/audit.log | audit2why**
-- -bash: audit2why: command not found
-- **[root@AlmaLinux ~]# dnf install policycoreutils-python-utils -y**
-- Complete!
-- **[root@AlmaLinux ~]# which audit2why**
-- /bin/audit2why
+- **[root@AlmaLinux ~]# grep 4881 /var/log/audit/audit.log**
+- type=AVC msg=audit(**1761217234.568:48**): avc:  denied  { name_bind } for  pid=1004 comm="nginx" src=4881 - - - - scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0
+- [root@AlmaLinux ~]# **grep 1761217234.568:48** /var/log/audit/audit.log | audit2why
+- type=AVC msg=audit(1761217234.568:48): avc:  denied  { name_bind } for  pid=1004 comm="nginx" src=4881 - scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0
+
+- Was caused by:
+- The boolean nis_enabled was set incorrectly.
+- Description:
+- Allow nis to enabled
+
+- Allow access by executing:
+- # setsebool -P nis_enabled 1
+- **[root@AlmaLinux ~]# setsebool -P nis_enabled on**
+- **[root@AlmaLinux ~]# systemctl restart nginx**
+- **[root@AlmaLinux ~]# systemctl status nginx**
+- ● nginx.service - The nginx HTTP and reverse proxy server
+- Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+- Active: active (running) since Thu 2025-10-23 14:19:31 MSK; 8s ago
+	
+- http://10.0.77.182:4881
+
+- <img width="790" height="312" alt="Screenshot 2025-10-23 at 14 06 59" src="https://github.com/user-attachments/assets/edb7c5f8-57a6-4b3e-bf9e-5666e5034eb7" />
+
 
 
 ---
