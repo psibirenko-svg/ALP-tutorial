@@ -3769,7 +3769,10 @@ root@ol-apl-ubuntu:/usr/local/bin#
 	
 - **http://10.0.77.182:4881** # проверим, слушает ли nginx порт 4881
 - <img width="790" height="312" alt="Screenshot 2025-10-23 at 14 06 59" src="https://github.com/user-attachments/assets/edb7c5f8-57a6-4b3e-bf9e-5666e5034eb7" />
-
+- **[root@AlmaLinux ~]# getsebool -a | grep nis_enabled**
+- nis_enabled --> on
+- **[root@AlmaLinux ~]# setsebool -P nis_enabled off** # вернем все обратно
+- 
 
 
 ---
