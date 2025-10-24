@@ -3758,7 +3758,7 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - Allow nis to enabled
 
 - Allow access by executing:
-- # setsebool -P nis_enabled 1 # нам нужно поменять параметр nis_enabled
+  ### setsebool -P nis_enabled 1 # нам нужно поменять параметр nis_enabled
 - 
 - **[root@AlmaLinux ~]# setsebool -P nis_enabled on** # Включим параметр nis_enabled
 - **[root@AlmaLinux ~]# systemctl restart nginx** # перезапустим nginx
