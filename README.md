@@ -3676,7 +3676,7 @@ root@ol-apl-ubuntu:/usr/local/bin#
 
 ---
 ## Домашняя работа
-- прописываем в конф файд nginx дополнитнльный порт 4881, так как у нас не готовый стенд
+- прописываем в конф файл nginx дополнительный порт 4881, так как у нас не готовый стенд
 - **[root@AlmaLinux ~]# systemctl start nginx**
 - **[root@AlmaLinux ~]# systemctl status nginx**
 - **● nginx.service - The nginx HTTP and reverse proxy server
@@ -3750,7 +3750,6 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - **[root@AlmaLinux ~]# grep 1761217234.568:48** /var/log/audit/audit.log | audit2why # Утилита audit2why покажет почему трафик блокируется 
  и перезапустим nginx: setsebool -P nis_enabled on
 
-- 
 - type=AVC msg=audit(1761217234.568:48): avc:  denied  { name_bind } for  pid=1004 comm="nginx" src=4881 - scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0
 
 - Was caused by:
@@ -3775,8 +3774,6 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - **[root@AlmaLinux ~]# setsebool -P nis_enabled off** # вернем все обратно
 - 
 
-
----
 ## 2. Разрешим в SELinux работу nginx на порту TCP 4881 c помощью добавления нестандартного порта в имеющийся тип:
 -
 - **[root@AlmaLinux ~]# semanage port -l | grep http**
@@ -3796,7 +3793,6 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - ● nginx.service - The nginx HTTP and reverse proxy server
 - Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
 - Active: active (running) since Thu 2025-10-23 15:21:47 MSK; 10ms ago
-
 
 <img width="646" height="459" alt="Screenshot 2025-10-23 at 15 24 34" src="https://github.com/user-attachments/assets/9fcfda94-239f-42f0-b382-af438cbf35b0" />
 
@@ -3829,11 +3825,14 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - ● nginx.service - The nginx HTTP and reverse proxy server
 - Loaded: loaded (/usr/lib/systemd/system/nginx.service; **enabled**; **preset: disabled**)
 - Active: **active** (running) since Fri 2025-10-24 10:06:41 MSK; 40s ago
-# http://10.0.77.182:4881 доступна:
+  ### http://10.0.77.182:4881 доступна:
+
 - <img width="579" height="270" alt="Screenshot 2025-10-24 at 10 09 45" src="https://github.com/user-attachments/assets/2acb963f-0568-4d1a-815f-55db2d831767" />
+
 - **[root@AlmaLinux ~]# semodule -l** # просмотр всех установленных модулей
 - **[root@AlmaLinux ~]# semodule -r nginx** # удаление установленного модуля nginx
 - libsemanage.semanage_direct_remove_key: Removing last nginx module (no other nginx module exists at another priority).
+
 - <img width="594" height="119" alt="Screenshot 2025-10-24 at 10 16 56" src="https://github.com/user-attachments/assets/00213e67-0c25-406b-ba88-7059db7a4f6f" />
 
 
