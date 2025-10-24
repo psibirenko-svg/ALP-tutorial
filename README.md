@@ -3676,6 +3676,7 @@ root@ol-apl-ubuntu:/usr/local/bin#
 
 ---
 ## Домашняя работа
+- прописываем в конф файд nginx дополнитнльный порт 4881, так как у нас не готовый стенд
 - **[root@AlmaLinux ~]# systemctl start nginx**
 - **[root@AlmaLinux ~]# systemctl status nginx**
 - **● nginx.service - The nginx HTTP and reverse proxy server
@@ -3791,8 +3792,49 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - [root@AlmaLinux ~]# semanage port -l | grep  http_port_t
 - http_port_t                    tcp      **4881**, 80, 81, 443, 488, 8008, 8009, 8443, 9000
 - pegasus_http_port_t            tcp      5988
-- 
+- **[root@AlmaLinux ~]# systemctl restart nginx && systemctl status nginx**
+- ● nginx.service - The nginx HTTP and reverse proxy server
+- Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+- Active: active (running) since Thu 2025-10-23 15:21:47 MSK; 10ms ago
 
+
+<img width="646" height="459" alt="Screenshot 2025-10-23 at 15 24 34" src="https://github.com/user-attachments/assets/9fcfda94-239f-42f0-b382-af438cbf35b0" />
+
+- **[root@AlmaLinux ~]# semanage port -d -t http_port_t -p tcp 4881**
+- **[root@AlmaLinux ~]# semanage port -l | grep http**
+- http_cache_port_t              tcp      8080, 8118, 8123, 10001-10010
+- http_cache_port_t              udp      3130
+- http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
+- pegasus_http_port_t            tcp      5988
+- pegasus_https_port_t           tcp      5989
+- **[root@AlmaLinux ~]# systemctl restart nginx && systemctl status nginx**
+
+- <img width="931" height="496" alt="Screenshot 2025-10-23 at 15 26 55" src="https://github.com/user-attachments/assets/77c836b2-3ea6-439d-a4c8-9bc2f0213451" />
+
+## 3. Разрешим в SELinux работу nginx на порту TCP 4881 c помощью формирования и установки модуля SELinux:
+- **[root@AlmaLinux ~]# systemctl start nginx**
+- Job for nginx.service failed because the control process exited with error code.
+- See "systemctl status nginx.service" and "journalctl -xeu nginx.service" for details.
+# Nginx не запускается, так как SELinux продолжает его блокировать. 
+- **[root@AlmaLinux ~]# grep nginx /var/log/audit/audit.log** # Посмотрим логи SELinux, которые относятся к Nginx: 
+- type=SERVICE_START msg=audit(1761287760.047:221): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=nginx comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=failed'UID="root" AUID="unset"
+- **[root@AlmaLinux ~]# grep nginx /var/log/audit/audit.log | audit2allow -M nginx** # Воспользуемся утилитой - audit2allow для того, чтобы на основе логов SELinux сделать модуль, разрешающий работу nginx на нестандартном порту
+- ******************** IMPORTANT ***********************
+- To make this policy package active, execute:
+
+- semodule -i nginx.pp # и как его применить, чтобы разрешить нестандартный порт
+- **[root@AlmaLinux ~]# semodule -i nginx.pp** # применяем
+- **[root@AlmaLinux ~]# systemctl start nginx** # запускаем nginx
+- **[root@AlmaLinux ~]# systemctl status nginx** # проверяем
+- ● nginx.service - The nginx HTTP and reverse proxy server
+- Loaded: loaded (/usr/lib/systemd/system/nginx.service; **enabled**; **preset: disabled**)
+- Active: **active** (running) since Fri 2025-10-24 10:06:41 MSK; 40s ago
+# http://10.0.77.182:4881 доступна:
+- <img width="579" height="270" alt="Screenshot 2025-10-24 at 10 09 45" src="https://github.com/user-attachments/assets/2acb963f-0568-4d1a-815f-55db2d831767" />
+- **[root@AlmaLinux ~]# semodule -l** # просмотр всех установленных модулей
+- **[root@AlmaLinux ~]# semodule -r nginx** # удаление установленного модуля nginx
+- libsemanage.semanage_direct_remove_key: Removing last nginx module (no other nginx module exists at another priority).
+- <img width="594" height="119" alt="Screenshot 2025-10-24 at 10 16 56" src="https://github.com/user-attachments/assets/00213e67-0c25-406b-ba88-7059db7a4f6f" />
 
 
 
