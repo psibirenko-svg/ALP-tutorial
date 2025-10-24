@@ -3811,7 +3811,7 @@ root@ol-apl-ubuntu:/usr/local/bin#
 - **[root@AlmaLinux ~]# systemctl start nginx**
 - Job for nginx.service failed because the control process exited with error code.
 - See "systemctl status nginx.service" and "journalctl -xeu nginx.service" for details.
-# Nginx не запускается, так как SELinux продолжает его блокировать. 
+### Nginx не запускается, так как SELinux продолжает его блокировать. 
 - **[root@AlmaLinux ~]# grep nginx /var/log/audit/audit.log** # Посмотрим логи SELinux, которые относятся к Nginx: 
 - type=SERVICE_START msg=audit(1761287760.047:221): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=nginx comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=failed'UID="root" AUID="unset"
 - **[root@AlmaLinux ~]# grep nginx /var/log/audit/audit.log | audit2allow -M nginx** # Воспользуемся утилитой - audit2allow для того, чтобы на основе логов SELinux сделать модуль, разрешающий работу nginx на нестандартном порту
