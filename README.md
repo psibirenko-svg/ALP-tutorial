@@ -4121,3 +4121,28 @@ retry_files_enabled = False
     "ping": "pong"
 }
 ```
+
+- **root@ansibleserver:~/project# ansible  nginx -m command -a "uname -r"**
+```bash
+10.0.77.142 | CHANGED | rc=0 >>
+6.8.0-86-generic
+```
+
+- **root@ansibleserver:~/project# ansible  nginx -m systemd -a name=firewalld**
+```bash
+10.0.77.142 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.12"
+    },
+    "changed": false,
+    "name": "firewalld",
+    "status": {
+        "ActiveEnterTimestampMonotonic": "0",
+        "ActiveExitTimestampMonotonic": "0",
+        "ActiveState": "inactive",
+```
+
+- ****
+```bash
+
+```
