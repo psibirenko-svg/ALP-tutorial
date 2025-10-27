@@ -3896,6 +3896,19 @@ sudo dnf install ansible -y
 - Проверка версии
 - ansible --version
 ```
+## Installing Ansible on Ubuntu
+
+- Ubuntu provides Ansible packages through a Personal Package Archive (PPA) that contains more recent versions than the standard repositories.
+
+- Ubuntu builds are available in a PPA here.
+
+- Configure the PPA on your system and install Ansible:
+
+- $ sudo apt update
+- $ sudo apt install software-properties-common
+- $ sudo add-apt-repository --yes --update ppa:ansible/ansible
+- $ sudo apt install ansible
+
 
 📁 Структура проекта Ansible
 Пример типовой структуры:
@@ -4041,10 +4054,44 @@ ansible-doc -l				Список доступных модулей
 - 4	Расширяемость — через модули и роли.
 - 5	Контроль изменений — можно безопасно тестировать через --check.
 
-  📚 Полезные ссылки
-🌐 Документация Ansible
-🧩 Коллекции модулей Ansible Galaxy
-🧠 Best Practices Guide
+
 💬 “Ansible делает сложное простым, а рутинное — автоматическим.”
 
 </details>
+
+---
+- **root@ansibleserver:~# ansible --version**
+- ansible [core 2.19.3]
+-   config file = /etc/ansible/ansible.cfg
+-   configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+-   ansible python module location = /usr/lib/python3/dist-packages/ansible
+-   ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
+-   executable location = /usr/bin/ansible
+-   python version = 3.12.3 (main, Aug 14 2025, 17:47:21) [GCC 13.3.0] (/usr/bin/python3)
+-   jinja version = 3.1.2
+-   pyyaml version = 6.0.1 (with libyaml v0.2.5)
+
+- **root@ansibleserver:~/project/inventory# pwd**
+/root/project/inventory
+- **root@ansibleserver:~/project/inventory# vi hosts.ini**
+```bash
+[nginx]
+10.0.77.142 ansible_user=spg ansible_ssh_private_key_file=/root/.ssh/id_rsa
+```
+- **root@ansibleserver:~/project/inventory# ssh-keygen -t rsa -b 4096 -C "ansible@ansibleserver"**
+- Generating public/private rsa key pair.
+- **root@ansibleserver:~/project/inventory# ls -l /root/.ssh/id_rsa***
+- -rw------- 1 root root 3389 Oct 27 13:09 /root/.ssh/id_rsa
+- -rw-r--r-- 1 root root  747 Oct 27 13:09 /root/.ssh/id_rsa.pub
+- **root@ansibleserver:~/project/inventory# ssh-copy-id -i /root/.ssh/id_rsa.pub spg@10.0.77.142**
+- **root@ansibleserver:~/project/inventory# ansible  nginx -i /root/project/inventory/hosts.ini -m ping**
+- [WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but - future installation of another Python interpreter could cause a different interpreter to be discovered. - See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more - information.
+ ```bash
+  10.0.77.142 | SUCCESS => {
+    "ansible_facts": {
+         "discovered_interpreter_python": "/usr/bin/python3.12"
+     },
+     "changed": false,
+    "ping": "pong"
+}
+```
