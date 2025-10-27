@@ -4085,13 +4085,39 @@ ansible-doc -l				Список доступных модулей
 - -rw-r--r-- 1 root root  747 Oct 27 13:09 /root/.ssh/id_rsa.pub
 - **root@ansibleserver:~/project/inventory# ssh-copy-id -i /root/.ssh/id_rsa.pub spg@10.0.77.142**
 - **root@ansibleserver:~/project/inventory# ansible  nginx -i /root/project/inventory/hosts.ini -m ping**
-- [WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but - future installation of another Python interpreter could cause a different interpreter to be discovered. - See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more - information.
+- ***[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but - future installation of another Python interpreter could cause a different interpreter to be discovered. - See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more - information.***
  ```bash
   10.0.77.142 | SUCCESS => {
     "ansible_facts": {
          "discovered_interpreter_python": "/usr/bin/python3.12"
      },
      "changed": false,
+    "ping": "pong"
+}
+```
+
+- **root@ansibleserver:~/project# vi ansible.cfg**
+```bash
+[defaults]
+inventory = inventory/hosts.ini
+remote_user = spg
+host_key_checking = False
+retry_files_enabled = False
+```
+
+- **root@ansibleserver:~/project/inventory# vi hosts.ini**
+```bash
+[nginx]
+10.0.77.142 ansible_port=22 ansible_ssh_private_key_file=/root/.ssh/id_rsa
+```
+- **root@ansibleserver:~/project# ansible  nginx -i /root/project/inventory/hosts.ini -m ping**
+***[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more information.***
+```bash  
+10.0.77.142 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.12"
+    },
+    "changed": false,
     "ping": "pong"
 }
 ```
