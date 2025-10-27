@@ -4111,7 +4111,7 @@ retry_files_enabled = False
 10.0.77.142 ansible_port=22 ansible_ssh_private_key_file=/root/.ssh/id_rsa
 ```
 - **root@ansibleserver:~/project# ansible  nginx -i /root/project/inventory/hosts.ini -m ping**
-***[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more information.***
+- ***[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more information.***
 ```bash  
 10.0.77.142 | SUCCESS => {
     "ansible_facts": {
