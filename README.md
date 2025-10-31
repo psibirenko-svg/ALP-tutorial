@@ -4240,7 +4240,7 @@ PLAY RECAP *********************************************************************
 10.0.77.142                : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 ## Работает
-- **root@ansibleserver:~/project# cat nginx.yml**
+- **root@ansibleserver:~/project# cat nginx.yml** # в результате
 ```bash
 ---
 - name: NGINX | Install and configure NGINX
@@ -4286,7 +4286,7 @@ PLAY RECAP *********************************************************************
         name: nginx
         state: reloaded
   ```
-- **root@ansibleserver:~/project# cat templates/nginx.config.j2**
+- **root@ansibleserver:~/project# cat templates/nginx.config.j2** # шаблон (template:)
 ```bash
 # {{ ansible_managed }}
 events {
@@ -4304,7 +4304,7 @@ http {
     }
 }
 ```
-- **root@ansibleserver:~/project# ansible-playbook nginx.yml**
+- **root@ansibleserver:~/project# ansible-playbook nginx.yml** # Запускаем получившийся файл nginx.yml. 
 ```bash
 PLAY [NGINX | Install and configure NGINX] ******************************************************
 
@@ -4327,3 +4327,30 @@ changed: [10.0.77.142]
 PLAY RECAP **************************************************************************************
 10.0.77.142                : ok=5    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
+- **root@ansibleserver:~/project# curl http://10.0.77.142:8080** # ПРОВЕРЯЕМ
+```bash 
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+##установлен, работает, слушает порт 8080
