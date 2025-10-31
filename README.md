@@ -4201,3 +4201,43 @@ PLAY: command not found
 10.0.77.142: command not found
 ```
 ## Что-то не работает ДЗ...
+- **root@ansibleserver:~/project# cat inventory/hosts.ini** # пробуем прописать пользователя на машину @ansibleclient
+```bash
+[nginx]
+10.0.77.142 ansible_user=spg ansible_port=22 ansible_ssh_private_key_file=/root/.ssh/id_rsa
+```
+- **root@ansibleserver:~/project# ansible-playbook nginx.yml**
+```bash
+PLAY [NGINX | Install and configure NGINX] ******************************************************
+
+TASK [Gathering Facts] **************************************************************************
+[ERROR]: Task failed: Missing sudo password
+fatal: [10.0.77.142]: FAILED! => {"changed": false, "msg": "Task failed: Missing sudo password"}
+
+PLAY RECAP **************************************************************************************
+10.0.77.142                : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0
+```
+- **root@ansibleserver:~/project# cat inventory/hosts.ini** # пробуем прописать и пароль пользователя на машину @ansibleclient
+```bash
+[nginx]
+10.0.77.142 ansible_user=spg ansible_become_password=******* ansible_port=22 ansible_ssh_private_key_file=/root/.ssh/id_rsa
+```
+- **root@ansibleserver:~/project# ansible-playbook nginx.yml** 
+```bash
+PLAY [NGINX | Install and configure NGINX] ******************************************************
+
+TASK [Gathering Facts] **************************************************************************
+[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more information.
+ok: [10.0.77.142]
+
+TASK [update] ***********************************************************************************
+changed: [10.0.77.142]
+
+TASK [NGINX | Install NGINX] ********************************************************************
+changed: [10.0.77.142]
+
+PLAY RECAP **************************************************************************************
+10.0.77.142                : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+## Работает
+
