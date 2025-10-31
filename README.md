@@ -4143,6 +4143,61 @@ retry_files_enabled = False
 ```
 
 - ****
+- **root@ansibleserver:~/project# vi nginx.ym** # начинаем писать плейбук для установки NGINX
 ```bash
+---
+- name: NGINX | Install and configure NGINX
+  hosts: nginx
+  # become: true # мне не нужно, так как использую ключи (10.0.77.142 ansible_user=spg ansible_ssh_private_key_file=/root/.ssh/id_rsa)
+ 
+  tasks:
+    - name: update
+      apt:
+        update_cache=yes
 
+    - name: NGINX | Install NGINX
+      apt:
+        name : nginx
+        state: latest
 ```
+- ***root@ansibleserver:~/project# ansible-playbook nginx.yml**
+```bash
+PLAY [NGINX | Install and configure NGINX] ******************************************************
+
+TASK [Gathering Facts] **************************************************************************
+[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more information.
+ok: [10.0.77.142]
+
+TASK [update] ***********************************************************************************
+[ERROR]: Task failed: Module failed: Failed to lock apt for exclusive operation: Failed to lock directory /var/lib/apt/lists/: E:Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)
+Origin: /root/project/nginx.yml:7:7
+
+5
+6   tasks:
+7     - name: update
+        ^ column 7
+
+fatal: [10.0.77.142]: FAILED! => {"changed": false, "msg": "Failed to lock apt for exclusive operation: Failed to lock directory /var/lib/apt/lists/: E:Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)"}
+
+PLAY RECAP **************************************************************************************
+10.0.77.142                : ok=1    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0
+ed=0    ignored=0
+PLAY: command not found
+Command 'Install' not found, did you mean:
+  command 'install' from deb coreutils (9.4-3ubuntu6.1)
+Try: apt install <deb name>
+TASK: command not found
+[WARNING]:: command not found
+ok:: command not found
+TASK: command not found
+-bash: syntax error near unexpected token `('
+Origin:: command not found
+5: command not found
+6: command not found
+7: command not found
+^: command not found
+fatal:: command not found
+PLAY: command not found
+10.0.77.142: command not found
+```
+## Что-то не работает ДЗ...
