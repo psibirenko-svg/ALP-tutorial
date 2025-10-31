@@ -4274,17 +4274,17 @@ PLAY RECAP *********************************************************************
       tags:
         - nginx-configuration
 
-    handlers:
-      - name: restart nginx
-        systemd:
-          name: nginx
-          state: restarted
-          enabled: yes
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
 
-      - name: reload nginx
-        systemd:
-          name: nginx
-          state: reloaded
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
   ```
 - **root@ansibleserver:~/project# cat templates/nginx.config.j2**
 ```bash
@@ -4303,4 +4303,27 @@ http {
         }
     }
 }
+```
+- **root@ansibleserver:~/project# ansible-playbook nginx.yml**
+```bash
+PLAY [NGINX | Install and configure NGINX] ******************************************************
+
+TASK [Gathering Facts] **************************************************************************
+[WARNING]: Host '10.0.77.142' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.19/reference_appendices/interpreter_discovery.html for more information.
+ok: [10.0.77.142]
+
+TASK [update] ***********************************************************************************
+changed: [10.0.77.142]
+
+TASK [NGINX | Install NGINX] ********************************************************************
+ok: [10.0.77.142]
+
+TASK [NGINX | Create NGINX config file from template] *******************************************
+changed: [10.0.77.142]
+
+RUNNING HANDLER [restart nginx] *****************************************************************
+changed: [10.0.77.142]
+
+PLAY RECAP **************************************************************************************
+10.0.77.142                : ok=5    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
