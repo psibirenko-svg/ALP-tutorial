@@ -4240,4 +4240,67 @@ PLAY RECAP *********************************************************************
 10.0.77.142                : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 ## Работает
+- **root@ansibleserver:~/project# cat nginx.yml**
+```bash
+---
+- name: NGINX | Install and configure NGINX
+  hosts: nginx
+  become: true
+  vars:
+    nginx_listen_port: 8080
 
+  tasks:
+    - name: update
+      apt:
+        update_cache=yes
+      tags:
+        - update apt
+
+    - name: NGINX | Install NGINX
+      apt:
+        name : nginx
+        state: latest
+      notify:
+        - restart nginx
+      tags:
+        - nginx-package
+
+    - name: NGINX | Create NGINX config file from template
+      template:
+        src: templates/nginx.config.j2
+        dest: /etc/nginx/nginx.conf
+      notify:
+        - restart nginx
+      tags:
+        - nginx-configuration
+
+    handlers:
+      - name: restart nginx
+        systemd:
+          name: nginx
+          state: restarted
+          enabled: yes
+
+      - name: reload nginx
+        systemd:
+          name: nginx
+          state: reloaded
+  ```
+- **root@ansibleserver:~/project# cat templates/nginx.config.j2**
+```bash
+# {{ ansible_managed }}
+events {
+    worker_connections 1024;
+}
+
+http {
+    server {
+        listen       {{ nginx_listen_port }} default_server;
+        server_name  default_server;
+        root         /usr/share/nginx/html;
+
+        location / {
+        }
+    }
+}
+```
