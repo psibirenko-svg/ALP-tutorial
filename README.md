@@ -4354,3 +4354,39 @@ Commercial support is available at
 </html>
 ```
 ## установлен, работает, слушает порт 8080
+
+
+
+---
+
+spg@spg-mac ~ % which vagrant
+/usr/local/bin/vagrant
+
+spg@spg-mac ~ % which virtualbox
+/usr/local/bin/virtualbox
+
+spg@spg-mac ~ % which vagrant   
+/usr/local/bin/vagrant
+
+spg@spg-mac ~ % vagrant -v
+Vagrant 2.4.9
+
+spg@spg-mac ~ % virtualbox -h
+Oracle VirtualBox Manager v7.2.0
+Copyright (C) 2005-2025 Oracle and/or its affiliates
+
+spg@spg-mac ~ % VBoxManage --version         
+7.2.0r170228
+
+spg@spg-mac ~ % vagrant box list
+There are no installed boxes! Use `vagrant box add` to add some.
+
+spg@spg-mac ~ % ls -hal Downloads/focal-server-cloudimg-amd64-vagrant.box
+-rwx------  1 spg  staff   587M Nov  1 09:52 Downloads/focal-server-cloudimg-amd64-vagrant.box
+
+spg@spg-mac ~ % vagrant box add Downloads/focal-server-cloudimg-amd64-vagrant.box --name ubuntu/test
+==> box: Box file was not detected as metadata. Adding it directly...
+==> box: Adding box 'ubuntu/test' (v0) for provider: (arm64)
+    box: Unpacking necessary files from: file:///Users/spg/Downloads/focal-server-cloudimg-amd64-vagrant.box
+==> box: Successfully added box 'ubuntu/test' (v0) for '(arm64)'!
+
