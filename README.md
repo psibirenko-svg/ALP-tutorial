@@ -4389,4 +4389,36 @@ spg@spg-mac ~ % vagrant box add Downloads/focal-server-cloudimg-amd64-vagrant.bo
 ==> box: Adding box 'ubuntu/test' (v0) for provider: (arm64)
     box: Unpacking necessary files from: file:///Users/spg/Downloads/focal-server-cloudimg-amd64-vagrant.box
 ==> box: Successfully added box 'ubuntu/test' (v0) for '(arm64)'!
+----
+## Windows
+- **PS C:\Users\spg> vagrant -v**
+- Vagrant 2.4.9
+- **PS C:\Users\spg\.VirtualBox> cat selectorwindow.log**
+- 00:00:00.427401 VirtualBox GUI VM Selector Window 7.2.4 r170995 win.amd64 (Oct 17 2025 12:31:09) release log
+- 00:00:00.427405 Log opened 2025-11-10T06:55:22.896040200Z
+- 00:00:00.427406 Build Type: release
+- 00:00:00.427407 OS Product: Windows 10
+- 00:00:00.427527 OS Release: 10.0.19045.3693
+- 00:00:00.427528 OS Service Pack:
+- 00:00:00.449061 DMI Product Name: MS-7673
+- 00:00:00.454285 DMI Product Version: 1.0
+- 00:00:00.454302 Firmware type: BIOS
+- 00:00:00.454311 Host RAM: 8162MB (7.9GB) total, 4642MB (4.5GB) available
+- 00:00:00.454318 Executable: C:\Program Files\Oracle\VirtualBox\VirtualBox.exe
+- 00:00:00.454319 Process ID: 11888
+- 00:00:00.454319 Package type: WINDOWS_64BITS_GENERIC
+- 00:00:00.454320 Windows Features:
+- 00:00:00.454321   Core Isolation (Memory Integrity): Not supported
+- 00:00:00.466500 Qt version: 6.8.0
+- 00:00:00.468161 GUI: UIMediumEnumerator: Initial medium-enumeration finished!
+- 00:00:00.545723 GUI: UIMediumEnumerator: Medium-enumeration started...
+- 00:00:02.852674 GUI: UIMediumEnumerator: Medium-enumeration finished!
+- **PS C:\Users\spg\.VirtualBox> cd ../**
+- **PS C:\Users\spg> mkdir Vagrant_win**
+- Каталог: C:\Users\spg
+```bash
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10.11.2025     10:12                Vagrant_win
+```
 
