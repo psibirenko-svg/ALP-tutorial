@@ -4460,3 +4460,115 @@ as well.
 If the box appears to be booting properly, you may want to increase
 the timeout ("config.vm.boot_timeout") value.
 ```
+ ## Новая машина быстрая
+ PS C:\Users\spg> vboxmanage --version
+7.2.4r170995
+PS C:\Users\spg> vagrant -v
+Vagrant 2.4.9
+PS C:\Users\spg> cd C:\vagrant\
+PS C:\vagrant> ls
+```bash
+
+    Каталог: C:\vagrant
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10.11.2025     15:45                ubuntu
+
+```
+PS C:\vagrant> cd .\ubuntu\
+PS C:\vagrant\ubuntu> ls
+```bash
+
+    Каталог: C:\vagrant\ubuntu
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10.11.2025     15:45                .vagrant
+d-----        10.11.2025     15:45                boxes
+-a----        10.11.2025     12:41            387 Vagrantfile
+-a----        10.11.2025     10:55           1142 Vagrantfile22
+-a----        10.11.2025     11:22           2480 Vagrantfile_main
+
+```
+PS C:\vagrant\ubuntu> vagrant box list
+There are no installed boxes! Use `vagrant box add` to add some.
+PS C:\vagrant\ubuntu> vagrant box add ubuntu/jammy64 "C:\vagrant\ubuntu\boxes\jammy-server-cloudimg-amd64-vagrant.box" --provider virtualbox
+```bash
+==> box: Box file was not detected as metadata. Adding it directly...
+==> box: Adding box 'ubuntu/jammy64' (v0) for provider: virtualbox (i386)
+    box: Unpacking necessary files from: file:///C:/vagrant/ubuntu/boxes/jammy-server-cloudimg-amd64-vagrant.box
+    box:
+==> box: Successfully added box 'ubuntu/jammy64' (v0) for 'virtualbox (i386)'!
+```
+## Создаем ВМ
+PS C:\vagrant\ubuntu> vagrant up
+```bash
+Bringing machine 'default' up with 'virtualbox' provider...
+==> default: Importing base box 'ubuntu/jammy64'...
+==> default: Matching MAC address for NAT networking...
+==> default: Setting the name of the VM: ubuntu-with-disks
+Vagrant is currently configured to create VirtualBox synced folders with
+the `SharedFoldersEnableSymlinksCreate` option enabled. If the Vagrant
+guest is not trusted, you may want to disable this option. For more
+information on this option, please refer to the VirtualBox manual:
+
+  https://www.virtualbox.org/manual/ch04.html#sharedfolders
+
+This option can be disabled globally with an environment variable:
+
+  VAGRANT_DISABLE_VBOXSYMLINKCREATE=1
+
+or on a per folder basis within the Vagrantfile:
+
+  config.vm.synced_folder '/host/path', '/guest/path', SharedFoldersEnableSymlinksCreate: false
+==> default: Clearing any previously set network interfaces...
+==> default: Preparing network interfaces based on configuration...
+    default: Adapter 1: nat
+==> default: Forwarding ports...
+    default: 22 (guest) => 2222 (host) (adapter 1)
+==> default: Running 'pre-boot' VM customizations...
+==> default: Booting VM...
+==> default: Waiting for machine to boot. This may take a few minutes...
+    default: SSH address: 127.0.0.1:2222
+    default: SSH username: vagrant
+    default: SSH auth method: private key
+    default:
+    default: Vagrant insecure key detected. Vagrant will automatically replace
+    default: this with a newly generated keypair for better security.
+    default:
+    default: Inserting generated public key within guest...
+    default: Removing insecure key from the guest if it's present...
+    default: Key inserted! Disconnecting and reconnecting using new SSH key...
+==> default: Machine booted and ready!
+==> default: Checking for guest additions in VM...
+    default: The guest additions on this VM do not match the installed version of
+    default: VirtualBox! In most cases this is fine, but in rare cases it can
+    default: prevent things such as shared folders from working properly. If you see
+    default: shared folder errors, please make sure the guest additions within the
+    default: virtual machine match the version of VirtualBox you have installed on
+    default: your host and reload your VM.
+    default:
+    default: Guest Additions Version: 6.0.0 r127566
+    default: VirtualBox Version: 7.2
+==> default: Setting hostname...
+==> default: Mounting shared folders...
+    default: C:/vagrant/ubuntu => /vagrant
+```
+- **PS C:\vagrant\ubuntu> cat .\Vagrantfile**
+```bash
+Vagrant.configure("2") do |config|
+  # Базовый образ
+  config.vm.box = "ubuntu/jammy64"        # образ виртуальной машины Ubuntu 22.04
+  # Имя и базовые ресурсы ВМ
+  config.vm.hostname = "ubuntu-test"
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "ubuntu-with-disks"
+    vb.memory = 1024
+    vb.cpus = 2
+  end
+end
+```
+  
