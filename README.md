@@ -4559,6 +4559,7 @@ or on a per folder basis within the Vagrantfile:
 ```
 - **PS C:\vagrant\ubuntu> cat .\Vagrantfile**
 ```bash
+
 Vagrant.configure("2") do |config|
   # Базовый образ
   config.vm.box = "ubuntu/jammy64"        # образ виртуальной машины Ubuntu 22.04
@@ -4569,6 +4570,72 @@ Vagrant.configure("2") do |config|
     vb.memory = 1024
     vb.cpus = 2
   end
+
+  # Вместо NAT включаем мост (bridge)
+  config.vm.network "public_network"
+  # Меняем SSH-порт гостевой системы (на 2222)
+  # Обычно Vagrant сам пробрасывает 22 -> 2222, но можно указать явно:
+  config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh"
+
+  # Проброс HTTP — порт 80 гостя на 8080 хоста
+  config.vm.network "forwarded_port", guest: 80, host: 8080, id: "http"
+
+  # Дополнительно можно увеличить таймаут загрузки
+  config.vm.boot_timeout = 600
 end
+
 ```
-  
+- **PS C:\vagrant\ubuntu> vagrant destroy -f**
+- ==> default: Destroying VM and associated drives...
+- **PS C:\vagrant\ubuntu> vagrant up**
+``bash
+Bringing machine 'default' up with 'virtualbox' provider...
+==> default: Importing base box 'ubuntu/jammy64'...
+==> default: Matching MAC address for NAT networking...
+==> default: Setting the name of the VM: ubuntu-with-disks
+==> default: Clearing any previously set network interfaces...
+==> default: Preparing network interfaces based on configuration...
+    default: Adapter 1: nat
+    default: Adapter 2: bridged
+==> default: Forwarding ports...
+    default: 22 (guest) => 2222 (host) (adapter 1)
+    default: 80 (guest) => 8080 (host) (adapter 1)
+==> default: Running 'pre-boot' VM customizations...
+==> default: Booting VM...
+==> default: Waiting for machine to boot. This may take a few minutes...
+    default: SSH address: 127.0.0.1:2222
+    default: SSH username: vagrant
+    default: SSH auth method: private key
+    default:
+    default: Vagrant insecure key detected. Vagrant will automatically replace
+    default: this with a newly generated keypair for better security.
+    default:
+    default: Inserting generated public key within guest...
+    default: Removing insecure key from the guest if it's present...
+    default: Key inserted! Disconnecting and reconnecting using new SSH key...
+==> default: Machine booted and ready!
+==> default: Checking for guest additions in VM...
+    default: The guest additions on this VM do not match the installed version of
+    default: VirtualBox! In most cases this is fine, but in rare cases it can
+    default: prevent things such as shared folders from working properly. If you see
+    default: shared folder errors, please make sure the guest additions within the
+    default: virtual machine match the version of VirtualBox you have installed on
+    default: your host and reload your VM.
+    default:
+    default: Guest Additions Version: 6.0.0 r127566
+    default: VirtualBox Version: 7.2
+==> default: Setting hostname...
+==> default: Configuring and enabling network interfaces...
+==> default: Mounting shared folders...
+    default: C:/vagrant/ubuntu => /vagrant
+``
+- **PS C:\vagrant\ubuntu> vagrant port**
+``bash
+The forwarded ports for the machine are listed below. Please note that
+these values may differ from values configured in the Vagrantfile if the
+provider supports automatic port collision detection and resolution.
+
+    80 (guest) => 8080 (host)
+    22 (guest) => 2222 (host)
+
+``
