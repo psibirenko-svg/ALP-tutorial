@@ -4588,7 +4588,8 @@ end
 - **PS C:\vagrant\ubuntu> vagrant destroy -f**
 - ==> default: Destroying VM and associated drives...
 - **PS C:\vagrant\ubuntu> vagrant up**
-``bash
+
+```bash
 Bringing machine 'default' up with 'virtualbox' provider...
 ==> default: Importing base box 'ubuntu/jammy64'...
 ==> default: Matching MAC address for NAT networking...
@@ -4628,9 +4629,11 @@ Bringing machine 'default' up with 'virtualbox' provider...
 ==> default: Configuring and enabling network interfaces...
 ==> default: Mounting shared folders...
     default: C:/vagrant/ubuntu => /vagrant
-``
+
+```
 - **PS C:\vagrant\ubuntu> vagrant port**
-``bash
+
+```bash
 The forwarded ports for the machine are listed below. Please note that
 these values may differ from values configured in the Vagrantfile if the
 provider supports automatic port collision detection and resolution.
@@ -4638,4 +4641,5 @@ provider supports automatic port collision detection and resolution.
     80 (guest) => 8080 (host)
     22 (guest) => 2222 (host)
 
-``
+
+```
