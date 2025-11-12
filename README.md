@@ -4814,3 +4814,26 @@ Filesystem      Size  Used Avail Use% Mounted on
 /dev/sda1        39G  1.8G   37G   5% /
 /dev/sda1        39G  1.8G   37G   5% /
 ```
+- **vagrant@ubuntu-jammy:~$ ip a- **
+```bash
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 02:53:41:1d:bc:3a brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 metric 100 brd 10.0.2.255 scope global dynamic enp0s3
+       valid_lft 83826sec preferred_lft 83826sec
+    inet6 fd17:625c:f037:2:53:41ff:fe1d:bc3a/64 scope global dynamic mngtmpaddr noprefixroute
+       valid_lft 86338sec preferred_lft 14338sec
+    inet6 fe80::53:41ff:fe1d:bc3a/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:8b:72:a9 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.77.161/24 brd 10.0.77.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe8b:72a9/64 scope link
+       valid_lft forever preferred_lft forever
+ ``` 
