@@ -4785,9 +4785,11 @@ Vagrant.configure("2") do |config|
 end
 ```
 - **Контрольные выводы работы скрипта:**
-- 
+
 
 <img width="1409" height="791" alt="Screenshot 2025-11-12 at 14 36 03" src="https://github.com/user-attachments/assets/f3baa5a1-15ca-4e6f-8a3e-c3beb6591760" />
+
+
 - **vagrant@ubuntu-jammy:~$ ss -tulnp | grep 80**
 ```bash
 tcp   LISTEN 0      511             0.0.0.0:80        0.0.0.0:*
