@@ -4496,7 +4496,7 @@ as well.
 If the box appears to be booting properly, you may want to increase
 the timeout ("config.vm.boot_timeout") value.
 ```
- ## Новая машина быстрая
+ ## Перешел на новую машину под ОС Windows (ресурсоемкое ДЗ)
  PS C:\Users\spg> vboxmanage --version
 7.2.4r170995
 PS C:\Users\spg> vagrant -v
@@ -4713,8 +4713,7 @@ Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 - TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       8072 # VirtualBox действительно слушает порт и перенаправляет его в гостевую ОС
 - TCP    10.0.77.141:50581      10.0.1.191:8080        CLOSE_WAIT      7940
 
-## Перешел на новый ПК под Windows
-- **Vagrantfile**
+## Vagrantfile
 ```bash
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
