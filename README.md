@@ -4358,31 +4358,57 @@ Commercial support is available at
 
 
 ---
+## 18 урок VAGRANT!
+**Домашнее задание** <ins>"Расширенная настройка дисков и сетей"</ins>
 
-spg@spg-mac ~ % which vagrant
-/usr/local/bin/vagrant
+-  Цель: научиться добавлять диски и настраивать сетевые соединения;
 
-spg@spg-mac ~ % which virtualbox
-/usr/local/bin/virtualbox
+🎯**Задание**
+- 1. Подготовка окружения:
 
-spg@spg-mac ~ % which vagrant   
-/usr/local/bin/vagrant
+- Убедитесть, что установле VirtualBox и Vagrant.
+- Создайте директорию для проекта.
+- 2. Создать базовую виртуальную машину:
+- Использовать можно любой образ.
+- Настроите память ВМ: 1024 МБ.
+- 3. Добавление дисков:
+- Добавьте пару виртуальных диска размером 1 ГБ каждый.
+- 4. Настройка сети:
+- Настройте проброс 80 порта с гостевой системы на порт 8080 хостовой системы.
+- 5. ## Провижининг:
 
-spg@spg-mac ~ % vagrant -v
-Vagrant 2.4.9
+## Напишите провижининг, который:
+- Форматирует добавленные диски в файловую систему ext4.
+- Создает точки монтирования /mnt/disk1 и /mnt/disk2.
+- Монтирует диски в указанные директории.
+- Добавляет записи в /etc/fstab для автоматического монтирования при загрузке.
 
-spg@spg-mac ~ % virtualbox -h
-Oracle VirtualBox Manager v7.2.0
-Copyright (C) 2005-2025 Oracle and/or its affiliates
+## Результаты на MacOS M4 (Apple Silicon :)
 
-spg@spg-mac ~ % VBoxManage --version         
-7.2.0r170228
+- **spg@spg-mac ~ % which vagrant**
+- /usr/local/bin/vagrant
 
-spg@spg-mac ~ % vagrant box list
-There are no installed boxes! Use `vagrant box add` to add some.
+- **spg@spg-mac ~ % which virtualbox**
+- /usr/local/bin/virtualbox
 
-spg@spg-mac ~ % ls -hal Downloads/focal-server-cloudimg-amd64-vagrant.box
--rwx------  1 spg  staff   587M Nov  1 09:52 Downloads/focal-server-cloudimg-amd64-vagrant.box
+- **spg@spg-mac ~ % which vagrant **  
+- /usr/local/bin/vagrant
+
+- **spg@spg-mac ~ % vagrant -v**
+- Vagrant 2.4.9
+
+- **spg@spg-mac ~ % virtualbox -h**
+- Oracle VirtualBox Manager v7.2.0
+- Copyright (C) 2005-2025 Oracle and/or its affiliates
+
+- **pg@spg-mac ~ % VBoxManage --version**         
+- 7.2.0r170228
+
+- **spg@spg-mac ~ % vagrant box list**
+- There are no installed boxes! Use `vagrant box add` to add some.
+
+- **spg@spg-mac ~ % ls -hal Downloads/focal-server-cloudimg-amd64-vagrant.box**
+- -rwx------  1 spg  staff   587M Nov  1 09:52 Downloads/focal-server-cloudimg-amd64-vagrant.box
 
 spg@spg-mac ~ % vagrant box add Downloads/focal-server-cloudimg-amd64-vagrant.box --name ubuntu/test
 ==> box: Box file was not detected as metadata. Adding it directly...
@@ -4390,7 +4416,17 @@ spg@spg-mac ~ % vagrant box add Downloads/focal-server-cloudimg-amd64-vagrant.bo
     box: Unpacking necessary files from: file:///Users/spg/Downloads/focal-server-cloudimg-amd64-vagrant.box
 ==> box: Successfully added box 'ubuntu/test' (v0) for '(arm64)'!
 ----
-## Windows
+##  Вывод после недели попыток выполнить ДЗ на маке с М4:
+- VirtualBox - не работает;
+- Lima - забросили поддержку;
+- Qemu - нет box-ов под arm64;
+- Parallels Desktop - только платные, 14 -дневного триала уже нет;
+- VMware Fusion - Vagrant Plugin: vagrant-vmware-desktop - платный;
+- Rosetta2 - не хватает времени попробовать...
+  
+ 
+## ДЗ под Windows c VirtualBox
+
 - **PS C:\Users\spg> vagrant -v**
 - Vagrant 2.4.9
 - **PS C:\Users\spg\.VirtualBox> cat selectorwindow.log**
@@ -4676,7 +4712,103 @@ Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 - **PS C:\vagrant\ubuntu> netstat -ano | findstr "8080"**
 - TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       8072 # VirtualBox действительно слушает порт и перенаправляет его в гостевую ОС
 - TCP    10.0.77.141:50581      10.0.1.191:8080        CLOSE_WAIT      7940
+
+## Перешел на новый ПК под Windows
+- **Vagrantfile**
+```bash
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+
+#  config.vm.provider :virtualbox
+
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "ubuntu-jammy-vm"   # Задаем имя виртуальной машины
+    vb.memory = 1024              # Устанавливаем 1024 MB оперативной памяти
+    vb.cpus = 2                   # Устанавливаем 2 процессора (ядра)
+  end
+
+
+  config.vm.disk :disk, size: "1GB", name: "extra_storage1"
+  config.vm.disk :disk, size: "1GB", name: "extra_storage2"
+
+  config.vm.network "private_network", ip: "10.0.77.161"
+  config.vm.network "forwarded_port", guest: 80, host: 8080, id: "http"
+
+# --- Provisioning: разметка и монтирование дисков ---
+  config.vm.provision "shell", inline: <<-SHELL
+    # Обновляем список дисков
+    DISKS=("sdb" "sdc")
+    MOUNTPOINTS=("/mnt/disk1" "/mnt/disk2")
+
+    for i in ${!DISKS[@]}; do
+      DISK=/dev/${DISKS[$i]}
+      MOUNT=${MOUNTPOINTS[$i]}
+
+      # Разметка, если диск не размечен
+      if ! blkid $DISK; then
+        echo "Creating partition on $DISK"
+        echo -e "o\nn\np\n1\n\n\nw" | fdisk $DISK
+        partprobe $DISK
+      fi
+
+      # Форматирование, если нет файловой системы
+      if ! blkid ${DISK}1; then
+        echo "Formatting ${DISK}1 as ext4"
+        mkfs.ext4 ${DISK}1
+      fi
+
+      # Создаем точку монтирования
+      mkdir -p $MOUNT
+
+      # Монтируем и добавляем в /etc/fstab
+      UUID=$(blkid -s UUID -o value ${DISK}1)
+      grep -q $UUID /etc/fstab || echo "UUID=$UUID $MOUNT ext4 defaults 0 2" >> /etc/fstab
+      mount $MOUNT
+    done
+
+ # Обновляем список пакетов
+    sudo apt-get update
+
+    # Устанавливаем Nginx
+    sudo apt-get install -y nginx
+
+    # Запускаем Nginx
+    sudo systemctl start nginx
+
+    # Включаем Nginx на старте системы
+    sudo systemctl enable nginx
+
+    # Проверяем статус сервиса Nginx
+    sudo systemctl status nginx
+
+  SHELL
+end
+```
+- **Контрольные выводы работы скрипта:**
 - 
+
 <img width="1409" height="791" alt="Screenshot 2025-11-12 at 14 36 03" src="https://github.com/user-attachments/assets/f3baa5a1-15ca-4e6f-8a3e-c3beb6591760" />
-
-
+- **vagrant@ubuntu-jammy:~$ ss -tulnp | grep 80**
+```bash
+tcp   LISTEN 0      511             0.0.0.0:80        0.0.0.0:*
+tcp   LISTEN 0      511                [::]:80           [::]:*
+```
+- **vagrant@ubuntu-jammy:~$ lsblk**
+```bash
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+loop0    7:0    0 63.8M  1 loop /snap/core20/2669
+loop1    7:1    0 91.4M  1 loop /snap/lxd/35819
+loop2    7:2    0 50.9M  1 loop /snap/snapd/25577
+sda      8:0    0   40G  0 disk
+└─sda1   8:1    0   40G  0 part /
+sdb      8:16   0   10M  0 disk
+sdc      8:32   0    1G  0 disk
+└─sdc1   8:33   0 1023M  0 part
+sdd      8:48   0    1G  0 disk
+```
+- **vagrant@ubuntu-jammy:~$ df -h /mnt/***
+```bash
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        39G  1.8G   37G   5% /
+/dev/sda1        39G  1.8G   37G   5% /
+```
