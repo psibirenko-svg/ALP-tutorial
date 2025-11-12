@@ -4643,3 +4643,40 @@ provider supports automatic port collision detection and resolution.
 
 
 ```
+- **PS C:\vagrant\ubuntu> vagrant ssh-config**
+```bash
+Host default
+  HostName 127.0.0.1
+  User vagrant
+  Port 2222
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  IdentityFile C:/vagrant/ubuntu/.vagrant/machines/default/virtualbox/private_key
+  IdentitiesOnly yes
+  LogLevel FATAL
+  PubkeyAcceptedKeyTypes +ssh-rsa
+  HostKeyAlgorithms +ssh-rsa
+```
+
+- **PS C:\vagrant\ubuntu> ssh -p 2222 -i .vagrant\machines\default\virtualbox\private_key vagrant@127.0.0.1**
+```bash
+The authenticity of host '[127.0.0.1]:2222 ([127.0.0.1]:2222)' can't be established.
+ED25519 key fingerprint is SHA256:7KZXz2N4uxRwSzGkXd6B01otNEVIDWBw7fOw3NaKrZs.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+...
+```
+
+- **vagrant@ubuntu-test:~$ uname -a**
+- Linux ubuntu-test 5.15.0-161-generic #171-Ubuntu SMP Sat Oct 11 08:17:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+- **PS C:\vagrant\ubuntu> netstat -ano | findstr "2222"**
+- TCP    0.0.0.0:2222           0.0.0.0:0              LISTENING       8072 # VirtualBox действительно слушает порт и перенаправляет его в гостевую ОС
+- **PS C:\vagrant\ubuntu> netstat -ano | findstr "8080"**
+- TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       8072 # VirtualBox действительно слушает порт и перенаправляет его в гостевую ОС
+- TCP    10.0.77.141:50581      10.0.1.191:8080        CLOSE_WAIT      7940
+- 
+<img width="1409" height="791" alt="Screenshot 2025-11-12 at 14 36 03" src="https://github.com/user-attachments/assets/f3baa5a1-15ca-4e6f-8a3e-c3beb6591760" />
+
+
