@@ -4979,8 +4979,8 @@ NAME="Ubuntu"
 VERSION_ID="24.04"
 VERSION="24.04.3 LTS (Noble Numbat)"
 ```
-- **root@dockers:~# apt-get install ca-certificates curl** # устанавливаем curl
 ```bash
+root@dockers:~# apt-get install ca-certificates curl** # устанавливаем curl
 Reading package lists... Done
 Building dependency tree... Done
 Reading state information... Done
