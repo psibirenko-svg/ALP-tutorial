@@ -4991,14 +4991,17 @@ curl set to manually installed.
 0 upgraded, 0 newly installed, 0 to remove and 34 not upgraded.
 ```
 - **добавляем официальный репозиторий Docker**
+```bash
 root@dockers:~# install -m 0755 -d /etc/apt/keyrings # даем права на папку для скачивания
 root@dockers:~# curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc # скачиваем публичный GPG-ключ Docker
-- **root@dockers:~# echo \
+root@dockers:~# echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
   tee /etc/apt/sources.list.d/docker.list > /dev/null**
-- **root@dockers:~# apt-get update**
-- Get:9 https://download.docker.com/linux/ubuntu noble InRelease [48.5 kB]
-  
+root@dockers:~# apt-get update
+ Get:9 https://download.docker.com/linux/ubuntu noble InRelease [48.5 kB]
+```  
 - **Устанавливаем Docker**
-- 
+```bash
+
+```
