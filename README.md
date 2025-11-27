@@ -5003,5 +5003,28 @@ root@dockers:~# apt-get update
 ```  
 - **Устанавливаем Docker**
 ```bash
+root@dockers:~# apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+root@dockers:~# systemctl status docker
+● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since Thu 2025-11-27 12:54:50 UTC; 1min 48s ago
+TriggeredBy: ● docker.socket
+       Docs: https://docs.docker.com
+   Main PID: 2540 (dockerd)
+      Tasks: 9
+     Memory: 25.7M (peak: 26.0M)
+        CPU: 247ms
+     CGroup: /system.slice/docker.service
+             └─2540 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
 
+Nov 27 12:54:49 dockers dockerd[2540]: time="2025-11-27T12:54:49.749605663Z" level=info msg="Restoring containers: start."
+Nov 27 12:54:49 dockers dockerd[2540]: time="2025-11-27T12:54:49.777785419Z" level=info msg="Deleting nftables IPv4 rules>
+Nov 27 12:54:49 dockers dockerd[2540]: time="2025-11-27T12:54:49.781815965Z" level=info msg="Deleting nftables IPv6 rules>
+Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.007050378Z" level=info msg="Loading containers: done."
+Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.012753459Z" level=info msg="Docker daemon" commit=461269>
+Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.012835626Z" level=info msg="Initializing buildkit"
+Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.044034511Z" level=info msg="Completed buildkit initializ>
+Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.051089113Z" level=info msg="Daemon has completed initial>
+Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.051221457Z" level=info msg="API listen on /run/docker.so>
+Nov 27 12:54:50 dockers systemd[1]: Started docker.service - Docker Application Container Engine.
 ```
