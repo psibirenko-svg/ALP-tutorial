@@ -4972,3 +4972,33 @@ services:
 - можно запускать, останавливать, удалять
 - работает изолированно: свои процессы, сеть, ФС
 
+- **root@dockers:~# uname -a**
+```bash
+PRETTY_NAME="Ubuntu 24.04.3 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.3 LTS (Noble Numbat)"
+```
+- **root@dockers:~# apt-get install ca-certificates curl** # устанавливаем curl
+```bash
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+ca-certificates is already the newest version (20240203).
+ca-certificates set to manually installed.
+curl is already the newest version (8.5.0-2ubuntu10.6).
+curl set to manually installed.
+0 upgraded, 0 newly installed, 0 to remove and 34 not upgraded.
+```
+- **добавляем официальный репозиторий Docker**
+root@dockers:~# install -m 0755 -d /etc/apt/keyrings # даем права на папку для скачивания
+root@dockers:~# curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc # скачиваем публичный GPG-ключ Docker
+- **root@dockers:~# echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null**
+- **root@dockers:~# apt-get update**
+- Get:9 https://download.docker.com/linux/ubuntu noble InRelease [48.5 kB]
+  
+- **Устанавливаем Docker**
+- 
