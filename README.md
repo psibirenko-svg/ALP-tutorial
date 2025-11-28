@@ -5031,4 +5031,113 @@ Nov 27 12:54:50 dockers systemd[1]: Started docker.service - Docker Application 
 ```
 - **root@dockers:~# docker compose version** # проверяем установлен ли докер compose и какой версии
 - Docker Compose version v2.40.3 # все хорошо
-- 
+
+- **root@dockers:~/docproject# ls**
+Dockerfile  html  nginx.conf
+- **root@dockers:~/docproject# vi Dockerfile**
+```bash
+FROM alpine:3.20
+
+# Устанавливаем nginx
+RUN apk add --no-cache nginx
+
+# Создаем директорию для HTML
+RUN mkdir -p /var/www/html
+
+# Копируем свои файлы сайта
+COPY ./html /var/www/html
+
+# Копируем кастомный конфиг nginx
+COPY ./nginx.conf /etc/nginx/nginx.conf
+
+# Открываем порт
+EXPOSE 80
+
+# Запускаем nginx в foreground режиме
+CMD ["nginx", "-g", "daemon off;"]
+```
+- **root@dockers:~/docproject# vi nginx.conf**
+```bash
+user nginx;
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    sendfile on;
+    keepalive_timeout 65;
+
+    server {
+        listen 80;
+        server_name _;
+
+        root /var/www/html;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+```
+- **root@dockers:~/docproject/html# vi index.html**
+```bash
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Домашнее задание</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f3faff;
+            padding-top: 60px;
+        }
+        h1 {
+            color: #0d63af;
+            font-size: 48px;
+        }
+        img {
+            width: 300px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Домашнее задание</h1>
+    <img src="https://www.docker.com/wp-content/uploads/2022/03/vertical-logo-monochromatic.png" alt="Docker Whale">
+</body>
+</html>
+```
+
+root@dockers:~/docproject# docker build -t my-nginx-alpine .
+[+] Building 4.3s (10/10) FINISHED                                                                         docker:default
+ => [internal] load build definition from Dockerfile                                                                 0.0s
+ => => transferring dockerfile: 505B                                                                                 0.0s
+ => [internal] load metadata for docker.io/library/alpine:3.20                                                       1.9s
+ => [internal] load .dockerignore                                                                                    0.0s
+ => => transferring context: 2B                                                                                      0.0s
+ => [1/5] FROM docker.io/library/alpine:3.20@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e0195  0.6s
+ => => resolve docker.io/library/alpine:3.20@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e0195  0.0s
+ => => sha256:5311e7f182d02360a7194aa2995849bcdf04795c39a0ffdcf413eae625865970 3.63MB / 3.63MB                       0.5s
+ => => extracting sha256:5311e7f182d02360a7194aa2995849bcdf04795c39a0ffdcf413eae625865970                            0.1s
+ => [internal] load build context                                                                                    0.0s
+ => => transferring context: 559B                                                                                    0.0s
+ => [2/5] RUN apk add --no-cache nginx                                                                               1.2s
+ => [3/5] RUN mkdir -p /var/www/html                                                                                 0.2s
+ => [4/5] COPY ./html /var/www/html                                                                                  0.0s
+ => [5/5] COPY ./nginx.conf /etc/nginx/nginx.conf                                                                    0.0s
+ => exporting to image                                                                                               0.3s
+ => => exporting layers                                                                                              0.2s
+ => => exporting manifest sha256:e7016a019e6a1aee4cbfb1cd2ad06bc84067c095ec6df24b6202587c3ed65570                    0.0s
+ => => exporting config sha256:62c963faa7e9046c91bd7c8213a6b97593b2ea4aa202b5f0fe13d3e249563e6d                      0.0s
+ => => exporting attestation manifest sha256:3e626b399a02b7ce42cf2a9c83aeac582e337842115d058d60f2035e74f5043c        0.0s
+ => => exporting manifest list sha256:86f7f8e4dc42f5c5e40c20398a3c99a20ae75b9fda33883f86882f474574a4fc               0.0s
+ => => naming to docker.io/library/my-nginx-alpine:latest                                                            0.0s
+ => => unpacking to docker.io/library/my-nginx-alpine:latest
