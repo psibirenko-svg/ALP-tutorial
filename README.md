@@ -5028,3 +5028,6 @@ Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.051089113Z" lev
 Nov 27 12:54:50 dockers dockerd[2540]: time="2025-11-27T12:54:50.051221457Z" level=info msg="API listen on /run/docker.so>
 Nov 27 12:54:50 dockers systemd[1]: Started docker.service - Docker Application Container Engine.
 ```
+- **root@dockers:~# docker compose version** # проверяем установлен ли докер compose и какой версии
+- Docker Compose version v2.40.3 # все хорошо
+- 
