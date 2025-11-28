@@ -5166,12 +5166,24 @@ fbb79b0b9f65   my-nginx-alpine   "nginx -g 'daemon of…"   23 seconds ago   Up 
 ```
 <img width="868" height="590" alt="Screenshot 2025-11-28 at 15 38 08" src="https://github.com/user-attachments/assets/658f719a-1424-420f-9ed6-0ea7638d71d0" />
 
-- **root@dockers:~/docproject# docker tag my-nginx-alpine pavels/nginx-demo:latest**
+- **root@dockers:~/docproject# docker tag my-nginx-alpine psibirenko/nginx-demo:latest**
 - **root@dockers:~/docproject# docker images**
-```bash                                                                                                          i Info →   U  In Use
-IMAGE                      ID             DISK USAGE   CONTENT SIZE   EXTRA
-hello-world:latest         f7931603f70e       20.3kB         3.96kB    U
-my-nginx-alpine:latest     54fd5354770f       14.4MB         4.26MB    U
-pavels/nginx-demo:latest   54fd5354770f       14.4MB         4.26MB    U
-root@dockers:~/docproject#
+```bash                                                                                                                                                                                                                    i Info →   U  In Use
+IMAGE                          ID             DISK USAGE   CONTENT SIZE   EXTRA
+hello-world:latest             f7931603f70e       20.3kB         3.96kB    U
+my-nginx-alpine:latest         54fd5354770f       14.4MB         4.26MB    U
+pavels/nginx-demo:latest       54fd5354770f       14.4MB         4.26MB    U
+psibirenko/nginx-demo:latest   54fd5354770f       14.4MB         4.26MB    U
 ```
+- **root@dockers:~/docproject# docker push psibirenko/nginx-demo:latest**
+```bash
+The push refers to repository [docker.io/psibirenko/nginx-demo]
+ef88f82276c6: Pushed
+56bbfe682db9: Pushed
+68f000e86b74: Pushed
+5311e7f182d0: Pushed
+012202b96bd6: Pushed
+4fa074e02d96: Pushed
+latest: digest: sha256:54fd5354770f2fb49d02ea5e3806be2321d470262f67ac69fcba743c71d935ee size: 856
+```
+## https://hub.docker.com/r/psibirenko/nginx-demo/tags
