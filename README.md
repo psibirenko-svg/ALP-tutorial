@@ -5116,7 +5116,8 @@ http {
 </html>
 ```
 
-root@dockers:~/docproject# docker build -t my-nginx-alpine .
+- **root@dockers:~/docproject# docker build -t my-nginx-alpine**
+```bash
 [+] Building 4.3s (10/10) FINISHED                                                                         docker:default
  => [internal] load build definition from Dockerfile                                                                 0.0s
  => => transferring dockerfile: 505B                                                                                 0.0s
@@ -5141,3 +5142,27 @@ root@dockers:~/docproject# docker build -t my-nginx-alpine .
  => => exporting manifest list sha256:86f7f8e4dc42f5c5e40c20398a3c99a20ae75b9fda33883f86882f474574a4fc               0.0s
  => => naming to docker.io/library/my-nginx-alpine:latest                                                            0.0s
  => => unpacking to docker.io/library/my-nginx-alpine:latest
+```
+- **root@dockers:~/docproject# docker run -d -p 8080:80 my-nginx-alpine**
+- fbb79b0b9f651d05c95435b82a7641a0d958fd61be5441bc2c7e0b6d7b3b3cc5
+- **root@dockers:~/docproject# docker ps**
+```bash
+CONTAINER ID   IMAGE             COMMAND                  CREATED          STATUS          PORTS                                     NAMES
+fbb79b0b9f65   my-nginx-alpine   "nginx -g 'daemon of…"   12 seconds ago   Up 11 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   exciting_lewin
+```
+- **root@dockers:~/docproject# docker ps -a**
+```bash
+CONTAINER ID   IMAGE             COMMAND                  CREATED          STATUS                    PORTS                                     NAMES
+fbb79b0b9f65   my-nginx-alpine   "nginx -g 'daemon of…"   23 seconds ago   Up 22 seconds             0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   exciting_lewin
+9f52d28943c0   hello-world       "/hello"                 23 hours ago     Exited (0) 23 hours ago                                             great_keldysh
+```
+- **root@dockers:~/docproject# ip a**
+```bash
+...
+2: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 00:50:56:b3:87:45 brd ff:ff:ff:ff:ff:ff
+    altname enp11s0
+    inet 10.0.77.182/24 metric 100 brd 10.0.77.255 scope global dynamic ens192
+```
+<img width="868" height="590" alt="Screenshot 2025-11-28 at 15 38 08" src="https://github.com/user-attachments/assets/658f719a-1424-420f-9ed6-0ea7638d71d0" />
+
