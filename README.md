@@ -5166,3 +5166,12 @@ fbb79b0b9f65   my-nginx-alpine   "nginx -g 'daemon of…"   23 seconds ago   Up 
 ```
 <img width="868" height="590" alt="Screenshot 2025-11-28 at 15 38 08" src="https://github.com/user-attachments/assets/658f719a-1424-420f-9ed6-0ea7638d71d0" />
 
+- **root@dockers:~/docproject# docker tag my-nginx-alpine pavels/nginx-demo:latest**
+- **root@dockers:~/docproject# docker images**
+```bash                                                                                                          i Info →   U  In Use
+IMAGE                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+hello-world:latest         f7931603f70e       20.3kB         3.96kB    U
+my-nginx-alpine:latest     54fd5354770f       14.4MB         4.26MB    U
+pavels/nginx-demo:latest   54fd5354770f       14.4MB         4.26MB    U
+root@dockers:~/docproject#
+```
