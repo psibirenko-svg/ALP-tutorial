@@ -5297,6 +5297,7 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 
 <img width="1438" height="961" alt="Screenshot 2025-12-01 at 16 17 57" src="https://github.com/user-attachments/assets/f8f66dba-29c4-4778-a57d-9fbdda775f6b" />
 
+## Дальше можно мониторить проблемы и тенденции, настраивать карты сетей с контролем доступности узлов и пр.
 
 
 
