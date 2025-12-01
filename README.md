@@ -5191,7 +5191,7 @@ latest: digest: sha256:54fd5354770f2fb49d02ea5e3806be2321d470262f67ac69fcba743c7
 ## 23 урок ZABBIX
 **Домашнее задание** <ins>"Настройка мониторинга в zabbix"</ins>
 
-**Цель**: онаучиться настраивать дашборд;
+**Цель**: Научиться настраивать дашборд
 
 🎯**Задание**
 - Настроить дашборд с 4-мя графиками:
@@ -5199,3 +5199,63 @@ latest: digest: sha256:54fd5354770f2fb49d02ea5e3806be2321d470262f67ac69fcba743c7
 - процессор;
 - диск;
 - сеть.
+
+✅ Выполнение.
+- **Установка PostgreSQL** # Нужно для установки Zabbix
+- **root@zabbixproject:~# systemctl status postgresql**
+- Unit postgresql.service could not be found.
+- **root@zabbixproject:~# apt update**
+- **root@zabbixproject:~# apt install -y wget gnupg lsb-release # Устанавливаем зависимости**
+- **root@zabbixproject:~# wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | tee /etc/apt/trusted.gpg.d/postgresql.gpg > /dev/null** # добавляем официальный репозиторий PostgreSQL
+- **root@zabbixproject:~# echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+  | sudo tee /etc/apt/sources.list.d/pgdg.list** # добавляем источник
+- deb http://apt.postgresql.org/pub/repos/apt noble-pgdg main
+- **root@zabbixproject:~# sudo apt install -y postgresql postgresql-contrib** # устанавливаем PostgreSQL
+- **root@zabbixproject:~# systemctl status postgresql** # проверяем
+```bash
+● postgresql.service - PostgreSQL RDBMS
+     Loaded: loaded (/usr/lib/systemd/system/postgresql.service; enabled; preset: enabled)
+     Active: active (exited) since Mon 2025-12-01 07:20:21 UTC; 2min 40s ago
+   Main PID: 3818 (code=exited, status=0/SUCCESS)
+        CPU: 916us
+
+Dec 01 07:20:21 zabbixproject systemd[1]: Starting postgresql.service - PostgreSQL RDBMS...
+Dec 01 07:20:21 zabbixproject systemd[1]: Finished postgresql.service - PostgreSQL RDBMS.
+```
+- ## Установка и конфигураци ZABBIX для моей платформы: Ubuntu 24.04 Noble, Server frontend agent 2, PostgreSQL, Nginx
+- ## a. Install Zabbix repository
+- **root@zabbixproject:~# wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb**
+```bash
+--2025-12-01 07:36:10--  https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
+Resolving repo.zabbix.com (repo.zabbix.com)... 178.128.6.101, 2604:a880:2:d0::2062:d001
+Connecting to repo.zabbix.com (repo.zabbix.com)|178.128.6.101|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 8092 (7.9K) [application/octet-stream]
+Saving to: ‘zabbix-release_latest_7.0+ubuntu24.04_all.deb’
+
+zabbix-release_latest_7.0+ubu 100%[===============================================>]   7.90K  --.-KB/s    in 0s
+
+2025-12-01 07:36:11 (371 MB/s) - ‘zabbix-release_latest_7.0+ubuntu24.04_all.deb’ saved [8092/8092]
+```
+- **root@zabbixproject:~# dpkg -i zabbix-release_latest_7.0+ubuntu24.04_all.deb**
+```bash
+Selecting previously unselected package zabbix-release.
+(Reading database ... 152523 files and directories currently installed.)
+Preparing to unpack zabbix-release_latest_7.0+ubuntu24.04_all.deb ...
+Unpacking zabbix-release (1:7.0-2+ubuntu24.04) ...
+Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
+```
+- **root@zabbixproject:~# apt update**
+- ## b. Install Zabbix server, frontend, agent2
+- **root@zabbixproject:~# apt install zabbix-server-pgsql zabbix-frontend-php php8.3-pgsql zabbix-nginx-conf zabbix-sql-scripts zabbix-agent2**
+- ## c. Install Zabbix agent 2 plugins
+- **root@zabbixproject:~# apt install zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql**
+- ## d. Create initial database
+- **root@zabbixproject:~# sudo -u postgres createuser --pwprompt zabbix**
+- Enter password for new role:
+- Enter it again:
+- **root@zabbixproject:~# sudo -u postgres createdb -O zabbix zabbix**
+- **root@zabbixproject:~# zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u zabbix psql zabbix**
+- ## f. Start Zabbix server and agent processes
+- **systemctl restart zabbix-server zabbix-agent2 nginx php8.3-fpm**
+- **systemctl enable zabbix-server zabbix-agent2 nginx php8.3-fpm**
