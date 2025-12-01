@@ -5222,7 +5222,7 @@ latest: digest: sha256:54fd5354770f2fb49d02ea5e3806be2321d470262f67ac69fcba743c7
 Dec 01 07:20:21 zabbixproject systemd[1]: Starting postgresql.service - PostgreSQL RDBMS...
 Dec 01 07:20:21 zabbixproject systemd[1]: Finished postgresql.service - PostgreSQL RDBMS.
 ```
-- ## Установка и конфигураци ZABBIX для моей платформы: Ubuntu 24.04 Noble, Server frontend agent 2, PostgreSQL, Nginx
+- ## Установка и конфигураци ZABBIX для моей платформы на сервере: Ubuntu 24.04 Noble, Server frontend agent 2, PostgreSQL, Nginx
 - ## a. Install Zabbix repository
 - **root@zabbixproject:~# wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb**
 ```bash
@@ -5257,5 +5257,47 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 - **root@zabbixproject:~# sudo -u postgres createdb -O zabbix zabbix**
 - **root@zabbixproject:~# zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u zabbix psql zabbix**
 - ## f. Start Zabbix server and agent processes
-- **systemctl restart zabbix-server zabbix-agent2 nginx php8.3-fpm**
-- **systemctl enable zabbix-server zabbix-agent2 nginx php8.3-fpm**
+- **root@zabbixproject:~# systemctl restart zabbix-server zabbix-agent2 nginx php8.3-fpm**
+- **root@zabbixproject:~# systemctl enable zabbix-server zabbix-agent2 nginx php8.3-fpm**
+- **root@zabbixproject:~# ss -tulpn | grep 10050** # слушает порт 10050
+- tcp   LISTEN 0      4096                    *:10050            *:*    users:(("zabbix_agent2",pid=868,fd=8))
+- **root@zabbixproject:~# vi /etc/zabbix/zabbix_server.conf** правим конфиг сервера:
+- ListenPort=10051
+- LogFile=/var/log/zabbix/zabbix_server.log
+- LogFileSize=0
+- DBUser=zabbix
+- DBPassword=Zww57df32!
+- 
+- ## Установка и конфигураци клиента ZABBIX на Linux машине
+- **root@ansibleclient:~# wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu24.04_all.deb** # скачиваем пакет
+- **root@ansibleclient:~# dpkg -i zabbix-release_7.0-2+ubuntu24.04_all.deb**
+- **root@ansibleclient:~# apt update**
+- **root@ansibleclient:~# apt install -y zabbix-agent2** # устанавливаем самого клиента
+- **root@ansibleclient:~# vi /etc/zabbix/zabbix_agent2.conf** # правим конфиг агента:
+- PidFile=/run/zabbix/zabbix_agent2.pid
+- LogFile=/var/log/zabbix/zabbix_agent2.log
+- LogFileSize=0
+- Server=10.0.77.182
+- ServerActive=10.0.77.182
+- Hostname=Zabbix agen142
+- PluginSocket=/run/zabbix/agent.plugin.sock
+  
+- **root@zabbixproject:~# zabbix_get -s 10.0.77.142 -p 10050 -k agent.ping** # проверка с сервера доступности клиента
+- 1 # доступен!
+
+## Настраиваем ZABBIX чез WEB: http://10.0.77.182:8080/zabbix.php?action=host.list
+
+<img width="1404" height="804" alt="Screenshot 2025-12-01 at 16 14 23" src="https://github.com/user-attachments/assets/72263caa-a053-4072-bfad-cdaedaeae619" />
+
+<img width="1252" height="708" alt="Screenshot 2025-12-01 at 16 15 15" src="https://github.com/user-attachments/assets/1e79880f-d52b-427a-819e-c1cbc9b1edf5" />
+
+<img width="1435" height="959" alt="Screenshot 2025-12-01 at 16 16 35" src="https://github.com/user-attachments/assets/84463044-55eb-41ea-ae21-674fa63729bd" />
+
+<img width="1455" height="682" alt="Screenshot 2025-12-01 at 16 17 04" src="https://github.com/user-attachments/assets/be314392-6443-49ae-a6a9-f1caf1487bf2" />
+
+<img width="1438" height="961" alt="Screenshot 2025-12-01 at 16 17 57" src="https://github.com/user-attachments/assets/f8f66dba-29c4-4778-a57d-9fbdda775f6b" />
+
+
+
+
+
