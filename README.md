@@ -5303,3 +5303,30 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 <img width="1477" height="964" alt="Screenshot 2025-12-01 at 16 47 31" src="https://github.com/user-attachments/assets/b549fbbd-9fc2-4cee-949a-3a09e6b12a8e" />
 
 
+## 24 урок ZABBIX
+**Домашнее задание** <ins>"PAM"</ins>
+
+**Цель**: научиться создавать пользователей и добавлять им ограничения;
+
+🎯 Что нужно сделать?
+
+- Ограничить доступ к системе для всех пользователей, кроме группы администраторов, в выходные дни (суббота и воскресенье), за исключением праздничных дней.
+
+
+⭐️ Задание повышенной сложности
+
+- Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
+
+✅ Выполнение.
+
+root@pamproject:~# docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+root@pamproject:~# su mouse
+mouse@pamproject:/root$ docker ps
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+mouse@pamproject:/root$ which docker
+/usr/bin/docker
+mouse@pamproject:/root$ exit
+exit
+root@pamproject:~# visudo -f /etc/sudoers.d/docker
+mouse ALL=(ALL) NOPASSWD: /usr/bin/docker
