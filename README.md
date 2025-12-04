@@ -5319,14 +5319,41 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 
 ✅ Выполнение.
 
-root@pamproject:~# docker ps
-CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-root@pamproject:~# su mouse
-mouse@pamproject:/root$ docker ps
-permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
-mouse@pamproject:/root$ which docker
-/usr/bin/docker
-mouse@pamproject:/root$ exit
-exit
-root@pamproject:~# visudo -f /etc/sudoers.d/docker
-mouse ALL=(ALL) NOPASSWD: /usr/bin/docker
+- **root@pamproject:~# docker ps**
+- CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+- **root@pamproject:~# su mouse**
+- **mouse@pamproject:/root$ docker ps**
+- **permission denied** while trying to connect to the docker API at unix:///var/run/docker.sock
+- **mouse@pamproject:/root$ which docker**
+- /usr/bin/docker
+- **mouse@pamproject:/root$ which systemctl**
+- /usr/bin/systemctl
+- **mouse@pamproject:/root$ exit**
+- exit
+- **spg@pamproject:~$ docker ps**
+- **permission denied** while trying to connect to the docker API at unix:///var/run/docker.sock
+- **spg@pamproject:~$ sudo -i**
+- [sudo] password for spg:
+- **root@pamproject:~# docker ps**
+- CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+- **root@pamproject:~# sudo usermod -aG docker mouse**
+- **root@pamproject:~# su - mouse**
+- **mouse@pamproject:~$ docker ps**
+- CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+- **mouse@pamproject:~$ id mouse**
+- uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users),**988(docker)**
+- **mouse@pamproject:~$ exit**
+logout
+- **root@pamproject:~# visudo -f /etc/sudoers.d/mouse-docker**
+- mouse ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart docker
+- **root@pamproject:~# visudo -c**
+- /etc/sudoers: parsed OK
+- /etc/sudoers.d/README: parsed OK
+- /etc/sudoers.d/mouse-docker: bad permissions, should be mode 0440
+- **root@pamproject:~# chmod 440 /etc/sudoers.d/mouse-docker**
+- **root@pamproject:~# su - mouse**
+- **mouse@pamproject:~$ systemctl restart docker**
+- **mouse@pamproject:~$**
+- **mouse@pamproject:~$ sudo systemctl stop docker**
+- [sudo] password for mouse:
+- Sorry, user mouse is not allowed to execute '/usr/bin/systemctl stop docker' as root on pamproject.
