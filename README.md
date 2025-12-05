@@ -5318,6 +5318,95 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 - Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
 
 ✅ Выполнение.
+- **root@pamproject:~# id mouse**
+uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users)
+- **root@pamproject:~# id spg**
+uid=1000(spg) gid=1000(spg) groups=1000(spg),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),101(lxd)
+- **root@pamproject:~# vi /etc/group**
+- **root@pamproject:~# sudo groupadd -f admin**
+- **root@pamproject:~# usermod spg -a -G admin && usermod root -a -G admin && usermod mouse -a -G admin**
+- **root@pamproject:~# id mouse**
+uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users),1003(admin)**
+- **root@pamproject:~# id spg**
+uid=1000(spg) gid=1000(spg) groups=1000(spg),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),101(lxd),1003(admin)
+- **root@pamproject:~# id dog**
+uid=1002(dog) gid=1002(dog) groups=1002(dog),100(users)
+- **➜  ~ ssh dog@10.0.77.182**
+```bash
+dog@10.0.77.182's password:
+Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-88-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Fri Dec  5 01:12:52 PM UTC 2025
+
+  System load:  0.0                Processes:               209
+  Usage of /:   18.6% of 13.67GB   Users logged in:         0
+  Memory usage: 1%                 IPv4 address for ens192: 10.0.77.182
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+32 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+Last login: Fri Dec  5 12:12:12 2025 from 10.0.77.13
+```
+- **➜  ~ ssh mouse@10.0.77.182**
+```bash
+mouse@10.0.77.182's password:
+Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-88-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Fri Dec  5 01:14:25 PM UTC 2025
+
+  System load:  0.0                Processes:               207
+  Usage of /:   18.7% of 13.67GB   Users logged in:         0
+  Memory usage: 1%                 IPv4 address for ens192: 10.0.77.182
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+32 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.
+```
+- **root@pamproject:~# vi /etc/pam.d/common-account** # включим модуль pam_time.so
+- account required                        pam_time.so 
+- **root@pamproject:~# vi /etc/security/time.conf** # настроим временные правила входа пользователей
+```bash
+###############################################
+#  Разрешить пользователям из группы sudo ВСЕГДА
+###############################################
+login;*;@sudo;Al0000-2400
+sshd;*;@sudo;Al0000-2400
+
+###################################################
+#  Разрешить всем пользователям в БУДНИЕ (Mo–Fr)
+###################################################
+login;*;*;Wk0000-2400
+sshd;*;*;Wk0000-2400
+```
+- **root@pamproject:~# apt install pamtester** # установим тестировщие PAM, чтобы не восстанавливать потом доступ к системе :)
+- 
+
 
 - ## Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
 
