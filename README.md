@@ -5319,41 +5319,39 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 
 ✅ Выполнение.
 
-- **root@pamproject:~# docker ps**
+- ## Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
+
+- **root@pamproject:~# docker ps** # проверим, что docker установлен для задания
 - CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-- **root@pamproject:~# su mouse**
-- **mouse@pamproject:/root$ docker ps**
+- **root@pamproject:~# su mouse** # перейдем в оболочку простого пользователя, которого создали заранее
+- **mouse@pamproject:/root$ docker ps** # убедимся, что прав за docker у него нет
 - **permission denied** while trying to connect to the docker API at unix:///var/run/docker.sock
-- **mouse@pamproject:/root$ which docker**
+- **mouse@pamproject:/root$ which docker** # посмотрим, где docker
 - /usr/bin/docker
-- **mouse@pamproject:/root$ which systemctl**
+- **mouse@pamproject:/root$ which systemctl** # посмотрим, где systemctl
 - /usr/bin/systemctl
-- **mouse@pamproject:/root$ exit**
+- **mouse@pamproject:/root$ exit** # вернемся в root
 - exit
-- **spg@pamproject:~$ docker ps**
-- **permission denied** while trying to connect to the docker API at unix:///var/run/docker.sock
-- **spg@pamproject:~$ sudo -i**
-- [sudo] password for spg:
-- **root@pamproject:~# docker ps**
+
+- **root@pamproject:~# sudo usermod -aG docker mouse** # добавим пользователя mouse в группу docker
+- **root@pamproject:~# su - mouse** # перейдем в оболочку простого пользователя mouse
+- **mouse@pamproject:~$ docker ps** # проверим доступ к docker (есть)
 - CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-- **root@pamproject:~# sudo usermod -aG docker mouse**
-- **root@pamproject:~# su - mouse**
-- **mouse@pamproject:~$ docker ps**
-- CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-- **mouse@pamproject:~$ id mouse**
+- **mouse@pamproject:~$ id mouse** # проверим членство пользователя mouse в группе к docker (есть)
 - uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users),**988(docker)**
-- **mouse@pamproject:~$ exit**
+- **mouse@pamproject:~$ exit** # первая часть выполнена
 logout
-- **root@pamproject:~# visudo -f /etc/sudoers.d/mouse-docker**
-- mouse ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart docker
-- **root@pamproject:~# visudo -c**
+- **root@pamproject:~# visudo -f /etc/sudoers.d/mouse-docker** # создадим индивидуальный файл для перезапуска doker из-под пользователя mouse
+- mouse ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart docker # с одной строкой разрешающей mouse только перезапускать docker без запроса пароля
+- **root@pamproject:~# visudo -c** # проверим конфигурацию sudoers
 - /etc/sudoers: parsed OK
 - /etc/sudoers.d/README: parsed OK
-- /etc/sudoers.d/mouse-docker: bad permissions, should be mode 0440
-- **root@pamproject:~# chmod 440 /etc/sudoers.d/mouse-docker**
-- **root@pamproject:~# su - mouse**
-- **mouse@pamproject:~$ systemctl restart docker**
+- /etc/sudoers.d/mouse-docker: bad permissions, should be mode 0440 # нужно подправить права доступа
+- **root@pamproject:~# chmod 440 /etc/sudoers.d/mouse-docker** # поправим
+- **root@pamproject:~# su - mouse** # перейде в mouse
+- **mouse@pamproject:~$ systemctl restart docker** # проверим права на перезапуск docker (есть)
 - **mouse@pamproject:~$**
-- **mouse@pamproject:~$ sudo systemctl stop docker**
+- **mouse@pamproject:~$ sudo systemctl stop docker** # а на stop например прав нет
 - [sudo] password for mouse:
 - Sorry, user mouse is not allowed to execute '/usr/bin/systemctl stop docker' as root on pamproject.
+- ## вторая часит задания выполнена
