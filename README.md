@@ -5388,6 +5388,33 @@ See https://ubuntu.com/esm or run: sudo pro status
 To run a command as administrator (user "root"), use "sudo <command>".
 See "man sudo_root" for details.
 ```
+- **mouse@pamproject:~$ cat /etc/group | grep admin**
+- admin:x:1003:spg,root,mouse
+- **root@pamproject:~# vim /usr/local/bin/login.sh**
+```bash
+#!/bin/bash
+#Первое условие: если день недели суббота или воскресенье
+if [ $(date +%a) = "Sat" ] || [ $(date +%a) = "Sun" ]; then
+ #Второе условие: входит ли пользователь в группу admin
+ if getent group admin | grep -qw "$PAM_USER"; then
+        #Если пользователь входит в группу admin, то он может подключиться
+        exit 0
+      else
+        #Иначе ошибка (не сможет подключиться)
+        exit 1
+    fi
+  #Если день не выходной, то подключиться может любой пользователь
+  else
+    exit 0
+fi
+```
+  
+- **root@pamproject:~# chmod +x /usr/local/bin/login.sh**
+
+
+
+
+
 - **root@pamproject:~# vi /etc/pam.d/common-account** # включим модуль pam_time.so
 - account required                        pam_time.so 
 - **root@pamproject:~# vi /etc/security/time.conf** # настроим временные правила входа пользователей
