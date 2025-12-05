@@ -5324,7 +5324,7 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 - **root@pamproject:~# docker ps** # проверим, что docker установлен для задания
 - CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 - **root@pamproject:~# su mouse** # перейдем в оболочку простого пользователя, которого создали заранее
-- **mouse@pamproject:/root$ docker ps** # убедимся, что прав за docker у него нет
+- **mouse@pamproject:/root$ docker ps** # убедимся, что прав на docker у него нет
 - **permission denied** while trying to connect to the docker API at unix:///var/run/docker.sock
 - **mouse@pamproject:/root$ which docker** # посмотрим, где docker
 - /usr/bin/docker
@@ -5340,7 +5340,7 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 - **mouse@pamproject:~$ id mouse** # проверим членство пользователя mouse в группе к docker (есть)
 - uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users),**988(docker)**
 - **mouse@pamproject:~$ exit** # первая часть выполнена
-logout
+- logout
 - **root@pamproject:~# visudo -f /etc/sudoers.d/mouse-docker** # создадим индивидуальный файл для перезапуска doker из-под пользователя mouse
 - mouse ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart docker # с одной строкой разрешающей mouse только перезапускать docker без запроса пароля
 - **root@pamproject:~# visudo -c** # проверим конфигурацию sudoers
