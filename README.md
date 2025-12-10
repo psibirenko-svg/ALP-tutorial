@@ -5319,115 +5319,16 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 - Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
 
 ✅ Выполнение.
-- **root@pamproject:~# id mouse**
-uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users)
-- **root@pamproject:~# id spg**
-uid=1000(spg) gid=1000(spg) groups=1000(spg),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),101(lxd)
-- **root@pamproject:~# vi /etc/group**
-- **root@pamproject:~# sudo groupadd -f admin**
-- **root@pamproject:~# usermod spg -a -G admin && usermod root -a -G admin && usermod mouse -a -G admin**
-- **root@pamproject:~# id mouse**
-uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),100(users),1003(admin)**
-- **root@pamproject:~# id spg**
-uid=1000(spg) gid=1000(spg) groups=1000(spg),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),101(lxd),1003(admin)
-- **root@pamproject:~# id dog**
-uid=1002(dog) gid=1002(dog) groups=1002(dog),100(users)
-- **➜  ~ ssh dog@10.0.77.182**
-```bash
-dog@10.0.77.182's password:
-Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-88-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
- System information as of Fri Dec  5 01:12:52 PM UTC 2025
-
-  System load:  0.0                Processes:               209
-  Usage of /:   18.6% of 13.67GB   Users logged in:         0
-  Memory usage: 1%                 IPv4 address for ens192: 10.0.77.182
-  Swap usage:   0%
-
-
-Expanded Security Maintenance for Applications is not enabled.
-
-32 updates can be applied immediately.
-To see these additional updates run: apt list --upgradable
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
-
-
-Last login: Fri Dec  5 12:12:12 2025 from 10.0.77.13
-```
-- **➜  ~ ssh mouse@10.0.77.182**
-```bash
-mouse@10.0.77.182's password:
-Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-88-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
- System information as of Fri Dec  5 01:14:25 PM UTC 2025
-
-  System load:  0.0                Processes:               207
-  Usage of /:   18.7% of 13.67GB   Users logged in:         0
-  Memory usage: 1%                 IPv4 address for ens192: 10.0.77.182
-  Swap usage:   0%
-
-
-Expanded Security Maintenance for Applications is not enabled.
-
-32 updates can be applied immediately.
-To see these additional updates run: apt list --upgradable
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
-
-
-To run a command as administrator (user "root"), use "sudo <command>".
-See "man sudo_root" for details.
-```
-- **mouse@pamproject:~$ cat /etc/group | grep admin**
-- admin:x:1003:spg,root,mouse
-- **root@pamproject:~# vim /usr/local/bin/login.sh**
-```bash
-#!/bin/bash
-#Первое условие: если день недели суббота или воскресенье
-if [ $(date +%a) = "Sat" ] || [ $(date +%a) = "Sun" ]; then
- #Второе условие: входит ли пользователь в группу admin
- if getent group admin | grep -qw "$PAM_USER"; then
-        #Если пользователь входит в группу admin, то он может подключиться
-        exit 0
-      else
-        #Иначе ошибка (не сможет подключиться)
-        exit 1
-    fi
-  #Если день не выходной, то подключиться может любой пользователь
-  else
-    exit 0
-fi
-```
-  
-- **root@pamproject:~# chmod +x /usr/local/bin/login.sh**
-
-
-
-
-
-
-- **root@pamproject:~# apt install pamtester** # установим тестировщика PAM, чтобы не восстанавливать потом доступ к системе :)
-- 
+## Все попытки заставить работать pam_time.so в Ubuntu 24.04 не привели к желаемому результату.
+Выводы:
 🔥 В Ubuntu 24.04 есть БАГ: pam_time.so не срабатывает в sshd
 Это зафиксировано в Launchpad и на форумах Ubuntu: Модуль вызывается, но sshd не применяет его корректно.
 Появилось в 22.04, остаётся в 24.04. и 24.10 :(
-
 🔥 systemd-logind перехватывает авторизацию
 и не всегда передаёт PAM ограничения.
 Поэтому pam_time.so не может запретить SSH вход, если systemd авторизует сессию до PAM-модуля.
- ## И на понимание этого ушло время...
-
+ ## И на понимание этого ушло время... неделя между работой :( Видимо, прослушал или не догадался, что надо идти по предложенному в методичке пути...
+## Рабочий вариант:
 - **root@pamproject:~# vipw** # создали двух пользователей mouse и  dog для примера через adduser
 - mouse:x:1001:1001:Mikky Mouse,00,01,02,Simple user 1:/home/mouse:/bin/bash
 - dog:x:1002:1002:Jerry Dog,55,56,57,Simple user 2:/home/dog:/bin/bash
@@ -5437,7 +5338,48 @@ fi
 - **root@pamproject:~# cat /etc/group | grep sudo** # проверим
 - sudo:x:27:spg,mouse
 - ### СКРИПТ
-- **root@pamproject:~# cat /usr/local/bin/check_time.sh**
+- **root@pamproject:~# cat /usr/local/bin/check_time2.sh** # скрипт из методички немного изменен
+```bash
+#!/bin/bash
+
+DAY=$(date +%a)
+
+# Если выходной
+if [ "$DAY" = "Sat" ] || [ "$DAY" = "Sun" ]; then
+    # Если пользователь входит в sudo — доступ разрешён
+    if id -nG "$PAM_USER" | grep -qw "sudo"; then
+        exit 0
+    else
+        exit 1
+    fi
+else
+    # В будни всем разрешено
+    exit 0
+fi
+```
+- **root@pamproject:~# sudo chmod +x /usr/local/bin/check_time2.sh** делаем исполняемым
+- **root@pamproject:~# vi /etc/pam.d/sshd** # Добавим исполнение скрипта перед @include common-account
+```bash
+# Standard Un*x authorization.
+account required pam_exec.so /usr/local/bin/check_time.sh
+@include common-account
+```
+- **root@pamproject:~# timedatectl set-ntp false** # отключим NTP
+- **root@pamproject:~# timedatectl set-time "2025-12-06"** # поставим субботу в дату
+-  **ssh spg@10.0.77.182** - Проверим пускают ли группу sudo? Да  
+- spg@10.0.77.182's password: 
+- Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-88-generic x86_64)
+-  **~ ssh mouse@10.0.77.182** # Да
+- mouse@10.0.77.182's password: 
+- Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-88-generic x86_64)
+- ** ~ ssh dog@10.0.77.182** # Нет (dog - не в группе sudo)  
+- dog@10.0.77.182's password: 
+- /usr/local/bin/check_time2.sh failed: exit code 1
+- Connection closed by 10.0.77.182 port 22
+
+
+- 
+- **root@pamproject:~# cat /usr/local/bin/check_time.sh** # скрипт c расписанием, которое можно менять, заменяет предыдущий
 ```bash
 #!/bin/bash
 #
@@ -5552,7 +5494,7 @@ account required pam_exec.so /usr/local/bin/check_time.sh
 @include common-account
 ```
 - **root@pamproject:~# sudo systemctl restart ssh** # перезапустим ssh
-- 
+- ## Скрипт тоже рабочий
 
 - ## Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
 
