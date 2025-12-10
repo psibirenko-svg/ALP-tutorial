@@ -5303,7 +5303,8 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 <img width="1477" height="964" alt="Screenshot 2025-12-01 at 16 47 31" src="https://github.com/user-attachments/assets/b549fbbd-9fc2-4cee-949a-3a09e6b12a8e" />
 
 
-## 24 урок Пользователи и группы. Авторизация и аутентификация 
+## 24 урок 
+## Пользователи и группы. Авторизация и аутентификация 
 
 **Домашнее задание** <ins>"PAM"</ins>
 
