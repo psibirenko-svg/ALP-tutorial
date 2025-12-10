@@ -5303,7 +5303,8 @@ Setting up zabbix-release (1:7.0-2+ubuntu24.04) ...
 <img width="1477" height="964" alt="Screenshot 2025-12-01 at 16 47 31" src="https://github.com/user-attachments/assets/b549fbbd-9fc2-4cee-949a-3a09e6b12a8e" />
 
 
-## 24 урок ZABBIX
+## 24 урок Пользователи и группы. Авторизация и аутентификация 
+
 **Домашнее задание** <ins>"PAM"</ins>
 
 **Цель**: научиться создавать пользователей и добавлять им ограничения;
@@ -5416,8 +5417,135 @@ fi
 
 
 
-- **root@pamproject:~# apt install pamtester** # установим тестировщие PAM, чтобы не восстанавливать потом доступ к системе :)
+- **root@pamproject:~# apt install pamtester** # установим тестировщика PAM, чтобы не восстанавливать потом доступ к системе :)
 - 
+🔥 В Ubuntu 24.04 есть БАГ: pam_time.so не срабатывает в sshd
+Это зафиксировано в Launchpad и на форумах Ubuntu: Модуль вызывается, но sshd не применяет его корректно.
+Появилось в 22.04, остаётся в 24.04. и 24.10 :(
+
+🔥 systemd-logind перехватывает авторизацию
+и не всегда передаёт PAM ограничения.
+Поэтому pam_time.so не может запретить SSH вход, если systemd авторизует сессию до PAM-модуля.
+ ## И на понимание этого ушло время...
+
+- **root@pamproject:~# vipw** # создали двух пользователей mouse и  dog для примера через adduser
+- mouse:x:1001:1001:Mikky Mouse,00,01,02,Simple user 1:/home/mouse:/bin/bash
+- dog:x:1002:1002:Jerry Dog,55,56,57,Simple user 2:/home/dog:/bin/bash
+- **root@pamproject:~# usermod mouse -a -G sudo** # добавим пользователя mouse в группу sudo
+- **root@pamproject:~# id mouse** # проверим
+- uid=1001(mouse) gid=1001(mouse) groups=1001(mouse),27(sudo),100(users
+- **root@pamproject:~# cat /etc/group | grep sudo** # проверим
+- sudo:x:27:spg,mouse
+- ### СКРИПТ
+- **root@pamproject:~# cat /usr/local/bin/check_time.sh**
+```bash
+#!/bin/bash
+#
+# PAM time checker (users + groups + weekdays + time windows)
+#
+# Формат правил:
+#   user_or_group:DAYS:HHMM-HHMM,HHMM-HHMM
+#
+# user_or_group:
+#   - обычный пользователь:  spg
+#   - группа:                @sudo
+#
+# Примеры:
+#   @sudo:Mo-Fr:0000-2400
+#   dog:Mo-Fr:0900-1800
+#
+
+RULES="
+@sudo:Mo-Fr:0000-2400
+dog:Mo-Fr:0900-1800
+"
+
+USER="$PAM_USER"
+WEEKDAY=$(date +%a)   # Mo, Tu, We...
+TIME=$(date +%H%M)    # HHMM
+GROUPS=$(id -nG "$USER")
+
+log() {
+    logger "pam_exec_time: $1"
+}
+
+is_group_match() {
+    local r="$1"
+
+    if [[ "$r" =~ ^@(.*)$ ]]; then
+        local grp="${BASH_REMATCH[1]}"
+        for g in $GROUPS; do
+            if [[ "$g" == "$grp" ]]; then
+                return 0
+            fi
+        done
+        return 1
+    else
+        [[ "$r" == "$USER" ]]
+        return $?
+    fi
+}
+
+match_day() {
+    local day=$1
+    local pattern=$2
+
+    # простое совпадение дня
+    [[ " $pattern " =~ " $day " ]] && return 0
+
+    # диапазон Mo-Fr
+    if [[ $pattern =~ ^([A-Za-z]{2})-([A-Za-z]{2})$ ]]; then
+        local start=${BASH_REMATCH[1]}
+        local end=${BASH_REMATCH[2]}
+        local order="Mo Tu We Th Fr Sa Su"
+
+        # индексы
+        i_start=$(echo $order | awk -v d="$start" '{for(i=1;i<=NF;i++)if($i==d)print i}')
+        i_end=$(echo $order | awk -v d="$end" '{for(i=1;i<=NF;i++)if($i==d)print i}')
+        i_day=$(echo $order | awk -v d="$day" '{for(i=1;i<=NF;i++)if($i==d)print i}')
+
+        [[ $i_day -ge $i_start && $i_day -le $i_end ]] && return 0
+    fi
+
+    return 1
+}
+
+# --- основной цикл правил ---
+while IFS= read -r rule; do
+    [[ -z "$rule" ]] && continue
+
+    IFS=":" read rule_user rule_days rule_times <<< "$rule"
+
+    # Проверяем пользователя или группу
+    if ! is_group_match "$rule_user"; then
+        continue
+    fi
+
+    # Проверяем дни
+    for day_block in $rule_days; do
+        if match_day "$WEEKDAY" "$day_block"; then
+
+            # Проверяем интервалы времени
+            IFS="," read -ra intervals <<< "$rule_times"
+            for intv in "${intervals[@]}"; do
+                start=${intv%-*}
+                end=${intv#*-}
+
+                if [[ $TIME -ge $start && $TIME -lt $end ]]; then
+                    exit 0    # доступ разрешён
+                fi
+            done
+        fi
+    done
+
+done <<< "$RULES"
+
+log "доступ ЗАПРЕЩЕН: user=$USER groups=($GROUPS) weekday=$WEEKDAY time=$TIME"
+exit 1
+
+```
+- **root@pamproject:~# sudo chmod +x /usr/local/bin/check_time.sh** # делаем исполняемым
+
 
 
 - ## Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
