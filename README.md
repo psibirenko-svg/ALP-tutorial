@@ -5572,3 +5572,40 @@ elk.
      Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: enabled)
      Active: active (running) since Wed 2025-12-10 12:14:09 UTC; 21s ago
   <img width="1071" height="324" alt="Screenshot 2025-12-10 at 15 30 42" src="https://github.com/user-attachments/assets/5e110db2-5896-4408-b88a-a01e95b9b27c" />
+
+- **oot@pamproject:~# apt list rsyslog -a** # rsyslog должен быть установлен по умолчанию в нашей ОС, проверим это
+- Listing... Done
+- rsyslog/noble-updates,now 8.2312.0-3ubuntu9.1 amd64 [installed,automatic]
+- rsyslog/noble 8.2312.0-3ubuntu9 amd64
+- **root@pamproject:~# cat /etc/rsyslog.conf**
+```bash
+...
+# provides UDP syslog reception
+module(load="imudp")
+input(type="imudp" port="514")
+
+# provides TCP syslog reception
+module(load="imtcp")
+input(type="imtcp" port="514")
+...
+#Add remote logs # в конец файла добавлфем правила приема логов
+$template RemoteLogs,"/var/log/rsyslog/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?RemoteLogs
+& ~
+```
+ 
+- **root@pamproject:~# ss -tuln**
+```bash
+Netid     State      Recv-Q     Send-Q              Local Address:Port         Peer Address:Port    Process
+udp       UNCONN     0          0                         0.0.0.0:514               0.0.0.0:*
+udp       UNCONN     0          0                      127.0.0.54:53                0.0.0.0:*
+udp       UNCONN     0          0                   127.0.0.53%lo:53                0.0.0.0:*
+udp       UNCONN     0          0              10.0.77.182%ens192:68                0.0.0.0:*
+udp       UNCONN     0          0                            [::]:514                  [::]:*
+tcp       LISTEN     0          25                        0.0.0.0:514               0.0.0.0:*
+tcp       LISTEN     0          4096                      0.0.0.0:22                0.0.0.0:*
+tcp       LISTEN     0          4096                127.0.0.53%lo:53                0.0.0.0:*
+tcp       LISTEN     0          4096                   127.0.0.54:53                0.0.0.0:*
+tcp       LISTEN     0          25                           [::]:514                  [::]:*
+tcp       LISTEN     0          4096                         [::]:22                   [::]:*
+```
