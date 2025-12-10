@@ -5545,8 +5545,14 @@ exit 1
 
 ```
 - **root@pamproject:~# sudo chmod +x /usr/local/bin/check_time.sh** # делаем исполняемым
-
-
+- **root@pamproject:~# vi /etc/pam.d/sshd** # Добавим исполнение скрипта перед @include common-account
+```bash
+# Standard Un*x authorization.
+account required pam_exec.so /usr/local/bin/check_time.sh
+@include common-account
+```
+- **root@pamproject:~# sudo systemctl restart ssh** # перезапустим ssh
+- 
 
 - ## Предоставить определённому пользователю доступ к Docker и право перезапускать Docker-сервис.
 
