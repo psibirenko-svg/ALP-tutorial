@@ -5565,3 +5565,10 @@ elk.
 5. Все критичные логи с web должны собираться и локально и удаленно.
 6. Все логи с nginx должны уходить на удаленный сервер (локально только критичные).
 7. Логи аудита должны также уходить на удаленную систему.
+
+**Есть две машины с Linux Ubuntu 24.04: logclient и logserver
+- **root@logclient:~# systemctl status nginx** # на клиент установлен nginx
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2025-12-10 12:14:09 UTC; 21s ago
+  <img width="1071" height="324" alt="Screenshot 2025-12-10 at 15 30 42" src="https://github.com/user-attachments/assets/5e110db2-5896-4408-b88a-a01e95b9b27c" />
