@@ -5609,3 +5609,18 @@ tcp       LISTEN     0          4096                   127.0.0.54:53            
 tcp       LISTEN     0          25                           [::]:514                  [::]:*
 tcp       LISTEN     0          4096                         [::]:22                   [::]:*
 ```
+- **root@logclient:~# nginx -v**
+- nginx version: nginx/1.24.0 (Ubuntu)
+- **root@logclient:~# cat /etc/nginx/nginx.conf** # добавляем строки в конфиг nginx для логирования
+- error_log /var/log/nginx/error.log;
+- error_log  syslog:server=10.0.77.182:514,tag=nginx_error;
+- ...
+- http {
+- ...
+- access_log /var/log/nginx/access.log;
+- access_log syslog:server=10.0.77.182:514,tag=nginx_access,severity=info combined;
+- **root@logclient:~# nginx -t** # проверяем синтаксис
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+- 
