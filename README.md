@@ -5640,12 +5640,13 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 2025/12/12 11:36:12 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
 2025/12/12 11:36:16 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
 ```
-📌 Настройки audit лога на logclient, передача в rsyslog и на центральный сервер логирования logserver:
-	1	auditd собирает события → пишет в /var/log/audit/audit.log
-	2	rsyslog читает эти логи через imfile
-	3	rsyslog отправляет их на центральный сервер (UDP/TCP 514)
-	4	На сервере логирования — всё складывается в отдельные файлы по хостам
--	
+## Настройки audit лога на logclient, передача в rsyslog и на центральный сервер логирования logserver:
+
+- 1	auditd собирает события → пишет в /var/log/audit/audit.log
+- 2	rsyslog читает эти логи через imfile
+- 3	rsyslog отправляет их на центральный сервер (UDP/TCP 514)
+- 4	На сервере логирования — всё складывается в отдельные файлы по хостам
+	
 - **root@logclient:~# sudo apt install auditd audispd-plugins -y** # устанавливаем audit
 - **root@logclient:~# sudo systemctl enable --now auditd** # стартуем audit
 - Synchronizing state of auditd.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
