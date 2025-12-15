@@ -5666,6 +5666,17 @@ input(
   Facility="local6"
   PersistStateInterval="200"
 )
+# Отправка на центральный сервер (TCP!)
+action(
+  type="omfwd"
+  Target="10.0.77.182"
+  Port="514"
+  Protocol="tcp"
+  Template="RSYSLOG_SyslogProtocol23Format"
+  Action.ResumeRetryCount="-1"
+  Queue.Type="LinkedList"
+  Queue.Size="10000"
+)
 ```
 - **root@logclient:~# sudo vi /etc/rsyslog.d/90-central.conf**
 ```bash
@@ -5673,7 +5684,46 @@ local6.* @10.0.77.182:514 # UDP
 local6.* @@10.0.77.182:514 # TCP
 ```
 - **root@logclient:~# sudo systemctl restart rsyslog** # Перезапуск rsyslog
-- **tail -f /var/log/remote/logclient/audit.log** # смотрим лог аудита с машины logclient и видим, что лог передается но время лога универсальное
+- **root@logclient:~# systemctl status rsyslog**
+
+- **root@logclient:~# tail -f /var/log/audit/audit.log** # убедимся, что аудит лог пишется локально
+```bash
+type=CRED_DISP msg=audit(1765799991.855:5208): pid=23423 uid=0 auid=1000 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_permit acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/1 res=success'UID="root" AUID="spg
+```
+- **root@logclient:~# systemctl restart auditd**
+  
+## Настроим сбор логов на центральном сервере
+```bash
+[Клиент] auditd → /var/log/audit/audit.log
+        rsyslog → TCP/514
+                ↓
+[Центральный сервер логов] rsyslog → /var/log/remote/<host>/audit.log
+```
+
+- **root@logserver:/# mkdir -p /var/log/remote**
+- **root@logserver:/# chown syslog:adm /var/log/remote**
+- **root@logserver:/# chmod 750 /var/log/remote** # rsyslog сам создаст подкаталоги logclient/, если имеет право на /var/log/remote
+
+- **root@logserver:/# vi /etc/rsyslog.d/20-audit-storage.conf** # создание каталогов и файлов в конфиге
+```bash
+template(name="RemoteAudit" type="string"
+         string="/var/log/remote/%HOSTNAME%/audit.log") # разложение audit-логов по хостам
+
+if ($programname == "audit") then {
+    action(
+        type="omfile"
+        dynaFile="RemoteAudit"
+        DirCreateMode="0750"
+        FileCreateMode="0640"
+        DirOwner="syslog"
+        DirGroup="adm"
+        FileOwner="syslog"
+        FileGroup="adm"
+    )
+    stop
+}
+```
+- **root@logserver:/var/log/rsyslog/logclient# tail -f /var/log/remote/logclient/audit.log** # смотрим полученный на центральном сервере лог аудита машины logclient и видим, что лог передается но время лога универсальное
 ```bash
 - 2025-12-15T11:59:51+03:00 logclient auditd type=CRED_DISP msg=audit(1765799991.855:5208): pid=23423 uid=0 auid=1000 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_permit acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/1 res=success'#035UID="root" AUID="spg"
 ```
