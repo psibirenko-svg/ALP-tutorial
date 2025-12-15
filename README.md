@@ -5579,7 +5579,6 @@ elk.
 - rsyslog/noble 8.2312.0-3ubuntu9 amd64
 - **root@pamproject:~# cat /etc/rsyslog.conf**
 ```bash
-...
 # provides UDP syslog reception
 module(load="imudp")
 input(type="imudp" port="514")
