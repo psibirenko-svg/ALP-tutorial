@@ -5555,15 +5555,15 @@ account required pam_exec.so /usr/local/bin/check_time.sh
 рассмотреть особенности разных платформ для сбора логов;
 
 🎯 Что нужно сделать?
-1. Поднимаем две машины — web и log.
-2. На web поднимаем nginx.
-3. Настраиваем центральный лог-сервер на любой системе по выбору:
+1. Поднимаем две машины — logclient и logserver.
+2. На logclient поднимаем nginx.
+3. Настраиваем центральный лог-сервер logserver на любой системе по выбору:
 journald;
-rsyslog;
+**rsyslog;**
 elk.
 4. Настраиваем аудит, который будет отслеживать изменения конфигураций nginx.
-5. Все критичные логи с web должны собираться и локально и удаленно.
-6. Все логи с nginx должны уходить на удаленный сервер (локально только критичные).
+5. Все критичные логи с logclient должны собираться и локально и удаленно.
+6. Все логи с nginx должны уходить на удаленный сервер logserver (локально только критичные).
 7. Логи аудита должны также уходить на удаленную систему.
 
 **Есть две машины с Linux Ubuntu 24.04: logclient и logserver
@@ -5614,6 +5614,7 @@ tcp       LISTEN     0          4096                         [::]:22            
 - **root@logclient:~# cat /etc/nginx/nginx.conf** # добавляем строки в конфиг nginx для логирования
 - error_log /var/log/nginx/error.log;
 - error_log  syslog:server=10.0.77.182:514,tag=nginx_error;
+```bash
 - ...
 - http {
 - ...
@@ -5622,5 +5623,83 @@ tcp       LISTEN     0          4096                         [::]:22            
 - **root@logclient:~# nginx -t** # проверяем синтаксис
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+- **root@logserver:~# cat /var/log/rsyslog/logclient/nginx_access.log**
+```bash
+2025-12-11T14:22:40+03:00 logclient nginx_access: 10.0.77.13 - - [11/Dec/2025:14:22:40 +0000] "GET / HTTP/1.1" 200 409 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Safari/605.1.15"
+2025-12-11T14:22:41+03:00 logclient nginx_access: 10.0.77.13 - - [11/Dec/2025:14:22:41 +0000] "GET / HTTP/1.1" 200 409 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Safari/605.1.15"
+```
+- **root@logserver:~# ail -f /var/log/rsyslog/logclient/nginx_error.log**
+```bash
+2025-12-12T11:36:01+03:00 logclient nginx_error: 2025/12/12 11:36:01 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
+2025-12-12T11:36:12+03:00 logclient nginx_error: 2025/12/12 11:36:12 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
+2025-12-12T11:36:16+03:00 logclient nginx_error: 2025/12/12 11:36:16 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142
+```
+- **root@logclient:~# tail -f  /var/log/nginx/error.log**
+```bash
+2025/12/12 11:36:01 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
+2025/12/12 11:36:12 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
+2025/12/12 11:36:16 [error] 14294#14294: *15 directory index of "/var/www/html/" is forbidden, client: 10.0.77.13, server: _, request: "GET / HTTP/1.1", host: "10.0.77.142"
+```
+📌 Настройки audit лога на logclient, передача в rsyslog и на центральный сервер логирования logserver:
+	1	auditd собирает события → пишет в /var/log/audit/audit.log
+	2	rsyslog читает эти логи через imfile
+	3	rsyslog отправляет их на центральный сервер (UDP/TCP 514)
+	4	На сервере логирования — всё складывается в отдельные файлы по хостам
+-	
+- **root@logclient:~# sudo apt install auditd audispd-plugins -y** # устанавливаем audit
+- **root@logclient:~# sudo systemctl enable --now auditd** # стартуем audit
+- Synchronizing state of auditd.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+- Executing: /usr/lib/systemd/systemd-sysv-install enable auditd
+- ## Разрешаем auditd писать логи в rsyslog
 
-- 
+- **root@logclient:~# sudo vi /etc/rsyslog.d/30-audit.conf**
+- **oot@logclient:~# cat /etc/rsyslog.d/30-audit.conf** # В Ubuntu auditd обычно не передаёт логи напрямую, нужен модуль imfile.
+```bash
+module(load="imfile")
+
+input(
+  type="imfile"
+  File="/var/log/audit/audit.log"
+  Tag="auditd"
+  Severity="info"
+  Facility="local6"
+  PersistStateInterval="200"
+)
+```
+- **root@logclient:~# sudo vi /etc/rsyslog.d/90-central.conf**
+```bash
+local6.* @10.0.77.182:514 # UDP
+local6.* @@10.0.77.182:514 # TCP
+```
+- **root@logclient:~# sudo systemctl restart rsyslog** # Перезапуск rsyslog
+- **tail -f /var/log/remote/logclient/audit.log** # смотрим лог аудита с машины logclient и видим, что лог передается но время лога универсальное
+```bash
+- 2025-12-15T11:59:51+03:00 logclient auditd type=CRED_DISP msg=audit(1765799991.855:5208): pid=23423 uid=0 auid=1000 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_permit acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/1 res=success'#035UID="root" AUID="spg"
+```
+- **root@logserver:/var/log/rsyslog/logclient# timedatectl** # вермя на сервере логов
+```bash
+               Local time: Mon 2025-12-15 15:08:20 MSK
+           Universal time: Mon 2025-12-15 12:08:20 UTC
+                 RTC time: Mon 2025-12-15 12:08:20
+                Time zone: Europe/Moscow (MSK, +0300)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no
+```
+- **root@logclient:~# timedatectl** # вермя на клиенте логов локальное, но передается UTC
+```bash
+               Local time: Mon 2025-12-15 15:00:33 MSK
+           Universal time: Mon 2025-12-15 12:00:33 UTC
+                 RTC time: Mon 2025-12-15 12:00:33
+                Time zone: Europe/Moscow (MSK, +0300)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no
+```
+## Можно оставить стандартное время логов в UTC и корректировать его уже при консолидации/визуализации/...Лучше хранить UTC, отображать в локальной TZ сервера, что делается автоматически в:
+
+👉	•	ELK / OpenSearch
+👉	•	Graylog
+👉	•	Splunk
+
