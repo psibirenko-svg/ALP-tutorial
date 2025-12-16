@@ -5730,7 +5730,7 @@ if ($programname == "audit") then {
 ```bash
 - 2025-12-15T11:59:51+03:00 logclient auditd type=CRED_DISP msg=audit(1765799991.855:5208): pid=23423 uid=0 auid=1000 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_permit acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/1 res=success'#035UID="root" AUID="spg"
 ```
-- **root@logserver:/var/log/rsyslog/logclient# timedatectl** # вермя на сервере логов
+- **root@logserver:/var/log/rsyslog/logclient# timedatectl** # время на сервере логов
 ```bash
                Local time: Mon 2025-12-15 15:08:20 MSK
            Universal time: Mon 2025-12-15 12:08:20 UTC
@@ -5740,7 +5740,7 @@ System clock synchronized: yes
               NTP service: active
           RTC in local TZ: no
 ```
-- **root@logclient:~# timedatectl** # вермя на клиенте логов локальное, но передается UTC
+- **root@logclient:~# timedatectl** # время на клиенте логов локальное, но передается UTC
 ```bash
                Local time: Mon 2025-12-15 15:00:33 MSK
            Universal time: Mon 2025-12-15 12:00:33 UTC
@@ -5752,7 +5752,7 @@ System clock synchronized: yes
 ```
 ## Можно оставить стандартное время логов в UTC и корректировать его уже при консолидации/визуализации/...Лучше хранить UTC, отображать в локальной TZ сервера, что делается автоматически в:
 
-👉	•	ELK / OpenSearch
-👉	•	Graylog
-👉	•	Splunk
+- 👉	•	ELK / OpenSearch
+- 👉	•	Graylog
+- 👉	•	Splunk
 
