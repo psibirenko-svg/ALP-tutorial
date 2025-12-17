@@ -5775,4 +5775,15 @@ System clock synchronized: yes
 - написан скрипт для снятия резервных копий. Скрипт запускается из соответствующей Cron джобы, либо systemd timer-а - на ваше усмотрение;
 - настроено логирование процесса бекапа. Для упрощения можно весь вывод перенаправлять в logger с соответствующим тегом. Если настроите не в syslog, то обязательна ротация логов.
 
-- 
+- ## Выполнение
+- **root@backup:~# lsblk** # в систему добавил новый диск sdb 4 ГБ
+```bash
+NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda                         8:0    0   30G  0 disk
+├─sda1                      8:1    0    1M  0 part
+├─sda2                      8:2    0    2G  0 part /boot
+└─sda3                      8:3    0   28G  0 part
+  └─ubuntu--vg-ubuntu--lv 252:0    0   14G  0 lvm  /
+sdb                         8:16   0    4G  0 disk
+sr0                        11:0    1 1024M  0 rom
+```
