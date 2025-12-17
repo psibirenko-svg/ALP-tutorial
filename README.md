@@ -5925,3 +5925,22 @@ Chunk index:                     844                  878
 borg@10.0.77.182's password:
 etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24]
 ```
+- **root@client:~# borg list borg@10.0.77.182:/var/backup/::etc-2025-12-17_15:09:37** # смотрим список файлов в бэкапе
+```bash
+- ...
+-rw-r--r-- root   root       1854 Mon, 2025-12-15 09:09:34 etc/passwd
+-rw-r--r-- root   root      22499 Fri, 2025-12-12 16:03:42 etc/ld.so.cache
+-rw-r--r-- root   root        221 Wed, 2025-12-17 10:24:07 etc/hosts
+-rw-r--r-- root   root        802 Mon, 2025-12-15 09:09:36 etc/group
+```
+- **root@client:~# borg extract borg@10.0.77.182:/var/backup/::etc-2025-12-17_15:09:37 etc/hostname**
+- borg@10.0.77.182's password:
+- **root@client:~# pwd**
+- /root
+- **root@client:~# ls ./etc/**
+- **root@client:~# ls -hal ./etc/***
+- -rw-r--r-- 1 root root 7 Dec 17 10:23 ./etc/hostname
+- **root@client:~# df -kh ./etc/***
+- Filesystem                         Size  Used Avail Use% Mounted on
+- /dev/mapper/ubuntu--vg-ubuntu--lv   14G  3.0G   11G  23% /
+
