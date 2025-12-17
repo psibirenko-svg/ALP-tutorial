@@ -5843,7 +5843,7 @@ UUID=551c3ca3-3897-4f76-bfdf-065838e6ba47 /var/backup  ext4  defaults  0  2
 - **root@client:~# apt install -y borgbackup** #
 - **root@client:~# borg --version** #
 - borg 1.2.8
-- **root@backup:~# adduser --disabled-password --gecos "" borg** #
+- **root@backup:~# adduser --disabled-password --gecos "" borg** # создаем пользователя сервиса borgbackup
 ```bash
 info: Adding user `borg' ...
 info: Selecting UID/GID from range 1000 to 59999 ...
@@ -5854,7 +5854,74 @@ info: Copying files from `/etc/skel' ...
 info: Adding new user `borg' to supplemental / extra groups `users' ...
 info: Adding user `borg' to group `users' ...
 ```
-- **root@backup:~# id borg**
+- **root@backup:~# id borg** #  проверяем
 ```bash
 uid=1003(borg) gid=1003(borg) groups=1003(borg),100(users)
+```
+- **root@backup:~# chown borg:borg /var/backup** # даем права пользователю borg на папку BACKUP
+- **root@backup:~# su - borg** # переходим в оболочку пользователя borg
+- **borg@backup:~$ pwd** # проверяем, где мы
+- /home/borg
+- **borg@backup:~$ mkdir .ssh** # настраиваем доступ по ключам
+- **borg@backup:~$ touch .ssh/authorized_keys**
+- **borg@backup:~$ chmod 700 .ssh**
+- **borg@backup:~$ chmod 600 .ssh/authorized_keys**
+- **root@client:~# ssh-keygen**
+```bash
+Generating public/private ed25519 key pair.
+Enter file in which to save the key (/root/.ssh/id_ed25519):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /root/.ssh/id_ed25519
+Your public key has been saved in /root/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:gNgRE4w+kv+f01jTNlRTEvXjzYA9pkajIjgW2/HOIPo root@client
+The key's randomart image is:
++--[ED25519 256]--+
+|   o=o      o+o  |
+|  .o.+      o+ . |
+| o. + o    .+.=..|
+|o o  = +  .o +.+o|
+| o .* + So. o  .o|
+|  .o o =o.+.     |
+|  ..   +oo .     |
+|   .. o..        |
+|    E.o.         |
++----[SHA256]-----+
+```
+- **root@client:~# borg init --encryption=repokey borg@10.0.77.182:/var/backup** # Инициализируем репозиторий borg на backup сервере с client сервера. Директорий должен быть пустой, иначе его надо вычистить rm
+- **borg key export borg@10.0.77.182:/var/backup repo-key.borg** # экспорт открытого ключа на сервер
+- **root@client:~# borg create --stats --list borg@10.0.77.182:/var/backup/::"etc-{now:%Y-%m-%d_%H:%M:%S}" /etc** # Запускаем для проверки создания бэкапа
+```bash
+A /etc/hostname
+s /etc/localtime
+A /etc/gshadow
+A /etc/subgid
+A /etc/passwd
+A /etc/ld.so.cache
+A /etc/hosts
+A /etc/group
+d /etc
+------------------------------------------------------------------------------
+Repository: ssh://borg@10.0.77.182/var/backup
+Archive name: etc-2025-12-17_15:09:37
+Archive fingerprint: c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24
+Time (start): Wed, 2025-12-17 15:09:44
+Time (end):   Wed, 2025-12-17 15:09:44
+Duration: 0.62 seconds
+Number of files: 887
+Utilization of max. archive size: 0%
+------------------------------------------------------------------------------
+                       Original size      Compressed size    Deduplicated size
+This archive:                2.37 MB              1.06 MB              1.03 MB
+All archives:                2.37 MB              1.06 MB              1.11 MB
+
+                       Unique chunks         Total chunks
+Chunk index:                     844                  878
+------------------------------------------------------------------------------
+```
+- **root@client:~# borg list borg@10.0.77.182:/var/backup/**
+```bash
+borg@10.0.77.182's password:
+etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24]
 ```
