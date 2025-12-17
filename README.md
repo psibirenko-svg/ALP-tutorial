@@ -5787,3 +5787,27 @@ sda                         8:0    0   30G  0 disk
 sdb                         8:16   0    4G  0 disk
 sr0                        11:0    1 1024M  0 rom
 ```
+- **root@backup:~# mkfs.ext4 -L backup /dev/sdb** # создаем ФС ext4 (форматируем) с меткой "backup"
+```bash
+mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 1048576 4k blocks and 262144 inodes
+Filesystem UUID: 90a22b46-3f37-4470-acab-99280ffdea26
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done
+```
+- **root@backup:~# blkid /dev/sdb** # проверяем
+```bash
+/dev/sdb: LABEL="backup" UUID="551c3ca3-3897-4f76-bfdf-065838e6ba47" BLOCK_SIZE="4096" TYPE="ext4"
+```
+- **root@backup:~# mkdir -p /var/backup** # создаем точку монтирования
+- **root@backup:~# mount /dev/sdb /var/backup** # монтируем диск
+- **root@backup:~# df -h /var/backup** # проверяем
+```bash
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdb        3.9G   24K  3.7G   1% /var/backup
+```
