@@ -5811,3 +5811,50 @@ Writing superblocks and filesystem accounting information: done
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/sdb        3.9G   24K  3.7G   1% /var/backup
 ```
+- ### настраиваем автомонтирование при загрузке
+- **root@backup:~# blkid /dev/sdb**
+/dev/sdb: LABEL="backup" UUID="551c3ca3-3897-4f76-bfdf-065838e6ba47" BLOCK_SIZE="4096" TYPE="ext4"
+- **root@backup:~# cat /etc/fstab** # прописываем монтирование
+```bash
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+# / was on /dev/ubuntu-vg/ubuntu-lv during curtin installation
+/dev/disk/by-id/dm-uuid-LVM-drsoih9oPfyXF1rYvUrehdJZ0QdOjlznwCWWWLAB3J982EVfSo8ZkpXhc5fc48Og / ext4 defaults 0 1
+# /boot was on /dev/sda2 during curtin installation
+/dev/disk/by-uuid/fdc7fdc6-f439-476a-ad4f-1f8e60b9727c /boot ext4 defaults 0 1
+# /var/backup was on /dev/sdb during booting
+UUID=551c3ca3-3897-4f76-bfdf-065838e6ba47 /var/backup  ext4  defaults  0  2
+```
+- **root@backup:~# reboot** # перегружаем и проверяем
+- **root@backup:~# mount**
+```bash
+...
+- /dev/sdb on /var/backup type ext4 (rw,relatime)
+...
+```
+- **root@backup:~# apt install borgbackup** #
+- **root@backup:~# borg --version** #
+- borg 1.2.8
+- **root@client:~# apt install -y borgbackup** #
+- **root@client:~# borg --version** #
+- borg 1.2.8
+- **root@backup:~# adduser --disabled-password --gecos "" borg** #
+```bash
+info: Adding user `borg' ...
+info: Selecting UID/GID from range 1000 to 59999 ...
+info: Adding new group `borg' (1003) ...
+info: Adding new user `borg' (1003) with group `borg (1003)' ...
+info: Creating home directory `/home/borg' ...
+info: Copying files from `/etc/skel' ...
+info: Adding new user `borg' to supplemental / extra groups `users' ...
+info: Adding user `borg' to group `users' ...
+```
+- **root@backup:~# id borg**
+```bash
+uid=1003(borg) gid=1003(borg) groups=1003(borg),100(users)
+```
