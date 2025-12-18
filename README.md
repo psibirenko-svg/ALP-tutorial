@@ -5890,7 +5890,12 @@ The key's randomart image is:
 +----[SHA256]-----+
 ```
 - **root@client:~# borg init --encryption=repokey borg@10.0.77.182:/var/backup** # Инициализируем репозиторий borg на backup сервере с client сервера. Директорий должен быть пустой, иначе его надо вычистить rm
-- **borg key export borg@10.0.77.182:/var/backup repo-key.borg** # экспорт открытого ключа на сервер
+- **root@client:~# borg key export borg@10.0.77.182:/var/backup repo-key.borg** # экспорт открытого ключа на сервер
+- **root@client:~# ssh-copy-id borg@10.0.77.182** # Не помешает положить ключ и в домашний каталог пользователя borg на сервере бэкапа
+- **root@backup:/home/borg/.ssh# cat /home/borg/.ssh/authorized_keys** # проверим, что ключ появился
+- ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOGBaTq4WoCJFmAba9JAnTCnhaRwsSLzL1+CbNhBwFoq root@client
+-  **root@backup:/home/borg/.ssh# vi /home/borg/.ssh/authorized_keys** # ограничим использование ключа ... 
+- command="borg serve --restrict-to-path /var/backup",no-port-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOGBaTq4WoCJFmAba9JAnTCnhaRwsSLzL1+CbNhBwFoq root@client
 - **root@client:~# borg create --stats --list borg@10.0.77.182:/var/backup/::"etc-{now:%Y-%m-%d_%H:%M:%S}" /etc** # Запускаем для проверки создания бэкапа
 ```bash
 A /etc/hostname
@@ -5934,7 +5939,6 @@ etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b
 -rw-r--r-- root   root        802 Mon, 2025-12-15 09:09:36 etc/group
 ```
 - **root@client:~# borg extract borg@10.0.77.182:/var/backup/::etc-2025-12-17_15:09:37 etc/hostname**
-- borg@10.0.77.182's password:
 - **root@client:~# pwd**
 - /root
 - **root@client:~# ls ./etc/**
