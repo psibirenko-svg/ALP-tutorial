@@ -5969,15 +5969,15 @@ Environment=REPO=borg@10.0.77.182:/var/backup/
 Environment=BACKUP_TARGET=/etc
 
 # Создание бэкапа
-ExecStart=/bin/borg create \
+ExecStart=/usr/bin/borg create \
     --stats                \
     ${REPO}::etc-{now:%%Y-%%m-%%d_%%H:%%M:%%S} ${BACKUP_TARGET}
 
 # Проверка бэкапа
-ExecStart=/bin/borg check ${REPO}
+ExecStart=/usr/bin/borg check ${REPO}
 
 # Очистка старых бэкапов
-ExecStart=/bin/borg prune \
+ExecStart=/usr/bin/borg prune \
     --keep-daily  90      \
     --keep-monthly 12     \
     --keep-yearly  1       \
@@ -6021,5 +6021,29 @@ systemctl list-timers | grep borg
 ```bash
 Thu 2025-12-18 11:56:11 MSK 4min 4s Thu 2025-12-18 11:51:11 MSK      55s ago borg-backup.timer              borg-backup.service
 ```
+- **root@client:~# vim /usr/local/bin/borg-backup.sh** #
+```bash
+#!/bin/bash
+set -euo pipefail
 
+export BORG_PASSPHRASE="Otus1234"
+REPO="borg@10.0.77.182:/var/backup"
+BACKUP_TARGET="/etc"
+
+# Создание имени архива (без слэшей!)
+ARCHIVE="etc-$(date +%Y-%m-%d_%H-%M-%S)"
+
+# Логируем начало
+logger -t borg-backup "Backup started: ${ARCHIVE}"
+
+# Создание бэкапа
+/usr/bin/borg create --stats ${REPO}::${ARCHIVE} ${BACKUP_TARGET} 2>&1 | logger -t borg-backup
+
+# Очистка старых бэкапов
+/usr/bin/borg prune --list --keep-daily=90 --keep-monthly=12 ${REPO} 2>&1 | logger -t borg-backup
+
+logger -t borg-backup "Backup finished: ${ARCHIVE}"
+```
+- **root@client:~# sudo chmod +x /usr/local/bin/borg-backup.sh** #
+- 
 ```
