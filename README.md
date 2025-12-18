@@ -5910,20 +5910,6 @@ d /etc
 ------------------------------------------------------------------------------
 Repository: ssh://borg@10.0.77.182/var/backup
 Archive name: etc-2025-12-17_15:09:37
-Archive fingerprint: c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24
-Time (start): Wed, 2025-12-17 15:09:44
-Time (end):   Wed, 2025-12-17 15:09:44
-Duration: 0.62 seconds
-Number of files: 887
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:                2.37 MB              1.06 MB              1.03 MB
-All archives:                2.37 MB              1.06 MB              1.11 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     844                  878
-------------------------------------------------------------------------------
 ```
 - **root@client:~# borg list borg@10.0.77.182:/var/backup/**
 ```bash
@@ -6021,29 +6007,17 @@ systemctl list-timers | grep borg
 ```bash
 Thu 2025-12-18 11:56:11 MSK 4min 4s Thu 2025-12-18 11:51:11 MSK      55s ago borg-backup.timer              borg-backup.service
 ```
-- **root@client:~# vim /usr/local/bin/borg-backup.sh** #
+- **root@client:~# borg list borg@10.0.77.182:/var/backup/** # Просмотрим архивы
 ```bash
-#!/bin/bash
-set -euo pipefail
-
-export BORG_PASSPHRASE="Otus1234"
-REPO="borg@10.0.77.182:/var/backup"
-BACKUP_TARGET="/etc"
-
-# Создание имени архива (без слэшей!)
-ARCHIVE="etc-$(date +%Y-%m-%d_%H-%M-%S)"
-
-# Логируем начало
-logger -t borg-backup "Backup started: ${ARCHIVE}"
-
-# Создание бэкапа
-/usr/bin/borg create --stats ${REPO}::${ARCHIVE} ${BACKUP_TARGET} 2>&1 | logger -t borg-backup
-
-# Очистка старых бэкапов
-/usr/bin/borg prune --list --keep-daily=90 --keep-monthly=12 ${REPO} 2>&1 | logger -t borg-backup
-
-logger -t borg-backup "Backup finished: ${ARCHIVE}"
+etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24]
+etc-2025-12-18_15-29-12              Thu, 2025-12-18 15:29:14 [b6c13f983e92d9336d3b978faa8a5016c94175a58e25087a8c042ec8e449dbea]
+etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113b0403ea660f72a74a100a2f8be0f550d03b7ef3b1136eba]
 ```
-- **root@client:~# sudo chmod +x /usr/local/bin/borg-backup.sh** #
-- 
+- **root@backup:/home/borg/.ssh# borg list /var/backup** # Посмотрим на самом сервере бэкапов
+```bash
+Warning: Attempting to access a previously unknown unencrypted repository!
+Do you want to continue? [yN] y
+etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24]
+etc-2025-12-18_15-29-12              Thu, 2025-12-18 15:29:14 [b6c13f983e92d9336d3b978faa8a5016c94175a58e25087a8c042ec8e449dbea]
+etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113b0403ea660f72a74a100a2f8be0f550d03b7ef3b11
 ```
