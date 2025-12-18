@@ -5953,7 +5953,7 @@ Filesystem                         Size  Used Avail Use% Mounted on
 ```
 
 ### Автоматизируем создание бэкапов с помощью systemd (глубина бекапа должна быть год, хранить можно по последней копии на конец месяца, кроме последних трех.Последние три месяца должны содержать копии на каждый день, резервная копия снимается каждые 5 минут)
-- **root@client:~# vim /etc/systemd/system/borg-backup.service**
+- **root@client:~# vim /etc/systemd/system/borg-backup.service** # создаем сервис
 ```bash
 [Unit]
 Description=Borg Backup
@@ -5964,7 +5964,7 @@ Type=oneshot
 # Парольная фраза
 Environment="BORG_PASSPHRASE=Otus1234"
 # Репозиторий
-Environment=REPO=borg@10.77.0.182:/var/backup/
+Environment=REPO=borg@10.0.77.182:/var/backup/
 # Что бэкапим
 Environment=BACKUP_TARGET=/etc
 
@@ -5982,9 +5982,10 @@ ExecStart=/bin/borg prune \
     --keep-monthly 12     \
     --keep-yearly  1       \
     ${REPO}
+```
 
-
-# /etc/systemd/system/borg-backup.timer
+- **root@client:~# vim /etc/systemd/system/borg-backup.timer** # создаем таймер
+```bash
 [Unit]
 Description=Borg Backup
 
@@ -5994,4 +5995,31 @@ OnUnitActiveSec=5min
 [Install]
 WantedBy=timers.target
 ```
+- **root@client:~# systemctl enable borg-backup.timer** # Включаем и 
+```bash
+Created symlink /etc/systemd/system/timers.target.wants/borg-backup.timer → /etc/systemd/system/borg-backup.timer.
+```
+- **root@client:~# systemctl start borg-backup.timer** # запускаем службу таймера
 
+- **root@client:~# systemctl list-timers | grep borg** # НЕ работает!
+```bash
+-                                  - -                                      - borg-backup.timer              borg-backup.service
+```
+- **root@client:~# systemctl stop borg-backup.timer**
+- **root@client:~# systemctl daemon-reexec**
+- **root@client:~# systemctl daemon-reexec**
+- **root@client:~# systemctl daemon-reload**
+- **root@client:~# systemctl start borg-backup.timer**
+- **root@client:~# systemctl status borg-backup.timer**
+```bash
+systemctl list-timers | grep borg
+● borg-backup.timer - Borg Backup every 5 minutes
+     Loaded: loaded (/etc/systemd/system/borg-backup.timer; enabled; preset: enabled)
+     Active: active (waiting)
+```
+- **root@client:~# systemctl list-timers | grep borg** # Работает!
+```bash
+Thu 2025-12-18 11:56:11 MSK 4min 4s Thu 2025-12-18 11:51:11 MSK      55s ago borg-backup.timer              borg-backup.service
+```
+
+```
