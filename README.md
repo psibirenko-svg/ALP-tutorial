@@ -5913,7 +5913,6 @@ Archive name: etc-2025-12-17_15:09:37
 ```
 - **root@client:~# borg list borg@10.0.77.182:/var/backup/**
 ```bash
-borg@10.0.77.182's password:
 etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b5c702f5eed67c670a57fb1f801bcec3c6197d5666cebe24]
 ```
 - **root@client:~# borg list borg@10.0.77.182:/var/backup/::etc-2025-12-17_15:09:37** # смотрим список файлов в бэкапе
