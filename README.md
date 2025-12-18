@@ -5943,8 +5943,55 @@ etc-2025-12-17_15:09:37              Wed, 2025-12-17 15:09:44 [c50f540b6a164961b
 - /root
 - **root@client:~# ls ./etc/**
 - **root@client:~# ls -hal ./etc/***
-- -rw-r--r-- 1 root root 7 Dec 17 10:23 ./etc/hostname
+```bash
+-rw-r--r-- 1 root root 7 Dec 17 10:23 ./etc/hostname
+```
 - **root@client:~# df -kh ./etc/***
-- Filesystem                         Size  Used Avail Use% Mounted on
-- /dev/mapper/ubuntu--vg-ubuntu--lv   14G  3.0G   11G  23% /
+```bash
+Filesystem                         Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv   14G  3.0G   11G  23% /
+```
+
+### Автоматизируем создание бэкапов с помощью systemd (глубина бекапа должна быть год, хранить можно по последней копии на конец месяца, кроме последних трех.Последние три месяца должны содержать копии на каждый день, резервная копия снимается каждые 5 минут)
+- **root@client:~# vim /etc/systemd/system/borg-backup.service**
+```bash
+[Unit]
+Description=Borg Backup
+
+[Service]
+Type=oneshot
+
+# Парольная фраза
+Environment="BORG_PASSPHRASE=Otus1234"
+# Репозиторий
+Environment=REPO=borg@10.77.0.182:/var/backup/
+# Что бэкапим
+Environment=BACKUP_TARGET=/etc
+
+# Создание бэкапа
+ExecStart=/bin/borg create \
+    --stats                \
+    ${REPO}::etc-{now:%%Y-%%m-%%d_%%H:%%M:%%S} ${BACKUP_TARGET}
+
+# Проверка бэкапа
+ExecStart=/bin/borg check ${REPO}
+
+# Очистка старых бэкапов
+ExecStart=/bin/borg prune \
+    --keep-daily  90      \
+    --keep-monthly 12     \
+    --keep-yearly  1       \
+    ${REPO}
+
+
+# /etc/systemd/system/borg-backup.timer
+[Unit]
+Description=Borg Backup
+
+[Timer]
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+```
 
