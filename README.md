@@ -6038,13 +6038,15 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 	
 ## PXE (Preboot eXecution Environment)
 ### Описание
-- PXE (Preboot eXecution Environment) — это спецификация сетевой загрузки, разработанная Intel, позволяющая компьютеру загружать операционную систему по сети, без использования локальных носителей (HDD/SSD/USB).
-- PXE широко применяется для:
+```bash
+PXE (Preboot eXecution Environment) — это спецификация сетевой загрузки, разработанная Intel, позволяющая компьютеру загружать операционную систему по сети, без использования локальных носителей (HDD/SSD/USB).
+PXE широко применяется для:
 	•	массовой установки ОС;
 	•	автоматизации развёртывания серверов;
 	•	diskless-клиентов;
 	•	recovery / rescue-сред;
 	•	CI/CD и bare-metal provisioning.
+```
 
 ### Участники PXE-загрузки
 ```bash
@@ -6055,8 +6057,9 @@ TFTP / HTTP сервер											Передаёт загрузчик и обр
 Bootloader													pxelinux / GRUB / iPXE
 ОС / Инсталлятор											Linux kernel + initrd
 ```
+
+### Общая схема PXE-загрузки
 ```bash
-Общая схема PXE-загрузки
 [ PXE CLIENT ]
       |
       | 1. DHCP DISCOVER (PXE)
@@ -6075,70 +6078,73 @@ Bootloader													pxelinux / GRUB / iPXE
       v
 [ OS / INSTALLER ]
 ```
-Пошаговый процесс загрузки
+### Пошаговый процесс загрузки
 1. Инициализация PXE
+```bash
 	•	BIOS/UEFI передаёт управление PXE ROM сетевой карты
 	•	Клиент инициализирует сеть
 	•	Отправляется DHCPDISCOVER с PXE-опциями
+```
 
 2. DHCP-ответ
+```bash
 DHCP-сервер возвращает DHCPOFFER, содержащий:
-DHCP option
-Описание
-IP address
-IP-адрес клиента
-option 66
-Адрес TFTP/HTTP сервера
-option 67
-Имя загрузочного файла
+DHCP option						Описание
+IP address						IP-адрес клиента
+option 66						Адрес TFTP/HTTP сервера
+option 67						Имя загрузочного файла
+
 Пример DHCP-конфигурации:
+
 next-server 192.168.1.10;
 filename "pxelinux.0";
-
+```
 3. Загрузка загрузчика
+```bash
 Клиент загружает загрузчик по сети:
 	•	BIOS PXE → TFTP
 	•	UEFI PXE → TFTP или HTTP
+
 Примеры загрузчиков:
 	•	pxelinux.0 (Legacy BIOS)
 	•	grubx64.efi (UEFI)
 	•	ipxe.efi
+```
 
 4. Загрузка ядра и initrd
+```bash
 Bootloader:
 	•	читает конфигурацию
 	•	загружает vmlinuz и initrd.img
 	•	передаёт параметры ядру
+
 Пример:
 linux vmlinuz ip=dhcp inst.repo=http://server/repo
 initrd initrd.img
+```bash
 
 5. Запуск ОС или установщика
+```bash
 Возможные сценарии:
 	•	запуск Live Linux;
 	•	установка ОС;
 	•	автоматическая установка (Kickstart / Preseed / Autoinstall);
 	•	загрузка recovery-среды.
+
 PXE завершает работу после передачи управления ядру ОС.
+```
 
-BIOS PXE vs UEFI PXE
-Параметр
-BIOS PXE
-UEFI PXE
-Загрузчик
-pxelinux.0
-grubx64.efi
-Протокол
-TFTP
-TFTP / HTTP
-Secure Boot
-❌
-✅
-Скорость
-ниже
-выше
+### BIOS PXE vs UEFI PXE
+```bash
+Параметр								BIOS PXE							UEFI PXE
+Загрузчик								pxelinux.0							grubx64.efi
+Протокол								TFTP								TFTP / HTTP
+Secure Boot								❌									✅
+Скорость								ниже								выше
+```
 
-iPXE
+### iPXE
+```bash
 iPXE — расширенная реализация PXE:
 	•	поддержка HTTP / HTTPS;
 	•	скрипты и меню;
@@ -6146,8 +6152,10 @@ iPXE — расширенная реализация PXE:
 	•	авторизация;
 	•	высокая скорость загрузки.
 Часто используется вместо классического PXE в production-средах.
+```
 
-Минимальная инфраструктура PXE
+### Минимальная инфраструктура PXE
+```bash
 PXE Server:
 - DHCP
 - TFTP
@@ -6155,20 +6163,24 @@ PXE Server:
 
 Client:
 - PXE-enabled NIC
+```
 
-Ограничения PXE
+### Ограничения PXE
+```bash	
 	•	требуется DHCP;
 	•	TFTP медленный (решается iPXE + HTTP);
 	•	зависит от сетевой инфраструктуры.
+```
 
-Кратко
-PXE — это технология сетевой загрузки, при которой клиент получает параметры по DHCP, загружает загрузчик по сети, затем ядро и initrd, и запускает ОС или установщик без использования локальных носителей.
+### Кратко
+- PXE — это технология сетевой загрузки, при которой клиент получает параметры по DHCP, загружает загрузчик по сети, затем ядро и initrd, и запускает ОС или установщик без использования локальных носителей.
 
-Полезные сценарии применения
+### Полезные сценарии применения
+```bash
 	•	массовая установка серверов;
 	•	bare-metal provisioning;
 	•	diskless рабочие станции;
 	•	recovery и диагностика.
-
+```
 </details>
 - ## Выполнение
