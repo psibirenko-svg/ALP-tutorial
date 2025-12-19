@@ -6035,30 +6035,27 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 - Настроить автоматическую установку c помощью файла user-data
 <details>
 <summary> = Теория = </summary>
-PXE (Preboot eXecution Environment)
-Описание
-PXE (Preboot eXecution Environment) — это спецификация сетевой загрузки, разработанная Intel, позволяющая компьютеру загружать операционную систему по сети, без использования локальных носителей (HDD/SSD/USB).
-PXE широко применяется для:
+	
+## PXE (Preboot eXecution Environment)
+### Описание
+- PXE (Preboot eXecution Environment) — это спецификация сетевой загрузки, разработанная Intel, позволяющая компьютеру загружать операционную систему по сети, без использования локальных носителей (HDD/SSD/USB).
+- PXE широко применяется для:
 	•	массовой установки ОС;
 	•	автоматизации развёртывания серверов;
 	•	diskless-клиентов;
 	•	recovery / rescue-сред;
 	•	CI/CD и bare-metal provisioning.
 
-Участники PXE-загрузки
-Компонент
-Назначение
-PXE-клиент
-Компьютер с поддержкой PXE (BIOS/UEFI)
-DHCP-сервер
-Выдаёт IP-адрес и параметры загрузки
-TFTP / HTTP сервер
-Передаёт загрузчик и образы
-Bootloader
-pxelinux / GRUB / iPXE
-ОС / Инсталлятор
-Linux kernel + initrd
-
+### Участники PXE-загрузки
+```bash
+Компонент													Назначение
+PXE-клиент													Компьютер с поддержкой PXE (BIOS/UEFI)
+DHCP-сервер													Выдаёт IP-адрес и параметры загрузки
+TFTP / HTTP сервер											Передаёт загрузчик и образы
+Bootloader													pxelinux / GRUB / iPXE
+ОС / Инсталлятор											Linux kernel + initrd
+```
+```bash
 Общая схема PXE-загрузки
 [ PXE CLIENT ]
       |
@@ -6077,7 +6074,7 @@ Linux kernel + initrd
       | 4. kernel + initrd
       v
 [ OS / INSTALLER ]
-
+```
 Пошаговый процесс загрузки
 1. Инициализация PXE
 	•	BIOS/UEFI передаёт управление PXE ROM сетевой карты
