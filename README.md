@@ -6343,6 +6343,9 @@ LABEL install
 
 ## Запускаем подготовленную машину-клиента
 
+### Адрес получил
+
 - <img width="1197" height="494" alt="Screenshot 2025-12-22 at 16 27 45" src="https://github.com/user-attachments/assets/8032617f-ccc0-4139-9ddf-22de3757be6c" />
 
+### Пошла установка
 <img width="1054" height="525" alt="Screenshot 2025-12-22 at 16 55 21" src="https://github.com/user-attachments/assets/36f9026b-b020-41d3-9cd6-83cd62abf755" />
