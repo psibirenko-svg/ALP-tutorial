@@ -6287,3 +6287,23 @@ resolute-netboot-amd64.tar.gz  100%[============================================
 ./amd64/pxelinux.cfg/default
 ./amd64/ldlinux.c32
 ```
+-**root@pxeserver:~# systemctl restart dnsmasq** # перезапускаем службу dnsmasq
+
+##  Настройка Web-сервера
+- Для того, чтобы отдавать файлы по HTTP нам потребуется настроенный веб-сервер.
+- **root@pxeserver:~# sudo apt install apache2**
+- **root@pxeserver:~# mkdir -p /srv/images**
+- **root@pxeserver:~# cd /srv/images/**
+- **root@pxeserver:/srv/images# wget http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/resolute-live-server-amd64.iso**
+```bash
+--2025-12-22 12:54:54--  http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/resolute-live-server-amd64.iso
+Resolving cdimage.ubuntu.com (cdimage.ubuntu.com)... 185.125.190.37, 91.189.91.124, 2620:2d:4000:1::17, ...
+Connecting to cdimage.ubuntu.com (cdimage.ubuntu.com)|185.125.190.37|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 2417293312 (2.3G) [application/x-iso9660-image]
+Saving to: ‘resolute-live-server-amd64.iso’
+
+resolute-live-server-amd64.iso   100%[========================================================>]   2.25G  26.7MB/s    in 2m 2s
+
+2025-12-22 12:56:57 (18.9 MB/s) - ‘resolute-live-server-amd64.iso’ saved [2417293312/2417293312]
+```  
