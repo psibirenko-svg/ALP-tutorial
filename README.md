@@ -6307,3 +6307,38 @@ resolute-live-server-amd64.iso   100%[==========================================
 
 2025-12-22 12:56:57 (18.9 MB/s) - ‘resolute-live-server-amd64.iso’ saved [2417293312/2417293312]
 ```  
+- **root@pxeserver:/srv/images# cat /etc/apache2/sites-available/ks-server.conf** #создали файл 
+```bash
+#Указываем IP-адрес хоста и порт на котором будет работать Web-сервер
+<VirtualHost 10.0.77.182:80>
+DocumentRoot /
+# Указываем директорию /srv/images из которой будет загружаться iso-образ
+<Directory /srv/images>
+Options Indexes MultiViews
+AllowOverride All
+Require all granted
+</Directory>
+</VirtualHost>
+```
+- **root@pxeserver:/srv/images# sudo a2ensite ks-server.conf** # активируем конфигурацию ks-server в apache
+```bash
+Enabling site ks-server.
+To activate the new configuration, you need to run:
+  systemctl reload apache2 #перезагрузим позже
+```
+- **cat /srv/tftp/amd64/pxelinux.cfg/default** # вносим изменения в файл
+```bash
+DEFAULT install
+LABEL install
+  KERNEL linux
+  INITRD initrd
+  APPEND root=/dev/ram0 ramdisk_size=3000000 ip=dhcp iso-url=https://10.0.77.182/srv/images/noble-live-server-amd64.iso ---
+```
+### В данном файле мы указываем что файлы linux и initrd будут забираться по tftp, а сам iso-образ ubuntu 24.04
+### будет скачиваться из нашего веб-сервера http://10.0.0.20/srv/images/noble-live-server-amd64.iso
+### Из-за того, что образ достаточно большой (2.6G) и он сначала загружается в ОЗУ, необходимо указать
+### размер ОЗУ до 3 гигабайт (root=/dev/ram0 ramdisk_size=3000000)
+
+- **root@pxeserver:/srv/images# systemctl restart apache2** # перегружаем apache2
+
+- <img width="1197" height="494" alt="Screenshot 2025-12-22 at 16 27 45" src="https://github.com/user-attachments/assets/8032617f-ccc0-4139-9ddf-22de3757be6c" />
