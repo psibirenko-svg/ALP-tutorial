@@ -6332,7 +6332,7 @@ DEFAULT install
 LABEL install
   KERNEL linux
   INITRD initrd
-  APPEND root=/dev/ram0 ramdisk_size=3000000 ip=dhcp iso-url=https://10.0.77.182/srv/images/noble-live-server-amd64.iso ---
+  APPEND root=/dev/ram0 ramdisk_size=3000000 ip=dhcp iso-url=http://10.0.77.182/srv/images/resolute-live-server-amd64.iso ---
 ```
 ### В данном файле мы указываем что файлы linux и initrd будут забираться по tftp, а сам iso-образ ubuntu 24.04
 ### будет скачиваться из нашего веб-сервера http://10.0.0.20/srv/images/noble-live-server-amd64.iso
@@ -6341,4 +6341,8 @@ LABEL install
 
 - **root@pxeserver:/srv/images# systemctl restart apache2** # перегружаем apache2
 
+## Запускаем подготовленную машину-клиента
+
 - <img width="1197" height="494" alt="Screenshot 2025-12-22 at 16 27 45" src="https://github.com/user-attachments/assets/8032617f-ccc0-4139-9ddf-22de3757be6c" />
+
+<img width="1054" height="525" alt="Screenshot 2025-12-22 at 16 55 21" src="https://github.com/user-attachments/assets/36f9026b-b020-41d3-9cd6-83cd62abf755" />
