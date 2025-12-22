@@ -6201,4 +6201,89 @@ Client:
 	•	recovery и диагностика.
 ```
 </details>
+
 - ## Выполнение
+- **root@pxeserver:~# systemctl stop ufw** # останавливаем фаервол
+- **root@pxeserver:~# systemctl disable ufw** #
+```bash
+Synchronizing state of ufw.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install disable ufw
+Removed "/etc/systemd/system/multi-user.target.wants/ufw.service".
+```
+- **root@pxeserver:~# systemctl status ufw** # проверяем
+```bash
+○ ufw.service - Uncomplicated firewall
+     Loaded: loaded (/usr/lib/systemd/system/ufw.service; disabled; preset: enabled)
+     Active: inactive (dead)
+       Docs: man:ufw(8)
+
+Dec 19 12:23:20 pxeserver systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Dec 19 12:23:20 pxeserver systemd[1]: Finished ufw.service - Uncomplicated firewall.
+Dec 22 08:11:46 pxeserver systemd[1]: Stopping ufw.service - Uncomplicated firewall...
+Dec 22 08:11:46 pxeserver ufw-init[8914]: Skip stopping firewall: ufw (not enabled)
+Dec 22 08:11:46 pxeserver systemd[1]: ufw.service: Deactivated successfully.
+Dec 22 08:11:46 pxeserver systemd[1]: Stopped ufw.service - Uncomplicated firewall.
+```
+- **root@pxeserver:~# sudo apt update** # обновляем кэш
+- **root@pxeserver:~# sudo apt install dnsmasq** # устанавливаем утилиту dnsmasq
+- **root@pxeserver:~# cat /etc/dnsmasq.d/pxe.conf** # создаем файл конфигурации PXE
+```bash
+#Указываем интерфейс в на котором будет работать DHCP/TFTP
+interface=eth1
+bind-interfaces
+#Также указаваем интерфейс и range адресов которые будут выдаваться по DHCP
+dhcp-range=eth1,10.0.77.140,10.0.77.142
+#Имя файла, с которого надо начинать загрузку для Legacy boot (этот пример рассматривается в методичке)
+dhcp-boot=pxelinux.0
+#Имена файлов, для UEFI-загрузки (не обязательно добавлять)
+dhcp-match=set:efi-x86_64,option:client-arch,7
+dhcp-boot=tag:efi-x86_64,bootx64.efi
+#Включаем TFTP-сервер
+enable-tftp
+#Указываем каталог для TFTP-сервера
+tftp-root=/srv/tftp/amd64
+```
+- **root@pxeserver:~# mkdir -p /srv/tftp** # создаем каталог для файлов TFTP-сервера
+- **root@pxeserver:~# wget http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/noble-netboot-amd64.tar.gz
+tar -xzvf noble-netboot-amd64.tar.gz -C /srv/tftp** # скачиваем файлы для сетевой установки Ubuntu 24.04
+```bash
+--2025-12-22 08:29:52--  http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/noble-netboot-amd64.tar.gz
+Resolving cdimage.ubuntu.com (cdimage.ubuntu.com)... 91.189.91.124, 185.125.190.37, 2620:2d:4000:1::17, ...
+Connecting to cdimage.ubuntu.com (cdimage.ubuntu.com)|91.189.91.124|:80... connected.
+HTTP request sent, awaiting response... 404 Not Found
+2025-12-22 08:29:53 ERROR 404: Not Found. 
+
+tar (child): noble-netboot-amd64.tar.gz: Cannot open: No such file or directory
+tar (child): Error is not recoverable: exiting now
+tar: Child returned status 2
+tar: Error is not recoverable: exiting now
+```
+### но его там уже нет... 
+- **root@pxeserver:~# wget http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/resolute-netboot-amd64.tar.gz** # но есть другой
+```bash
+--2025-12-22 08:42:17--  http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/resolute-netboot-amd64.tar.gz
+Resolving cdimage.ubuntu.com (cdimage.ubuntu.com)... 91.189.91.124, 185.125.190.37, 2620:2d:4000:1::17, ...
+Connecting to cdimage.ubuntu.com (cdimage.ubuntu.com)|91.189.91.124|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 112038753 (107M) [application/x-gzip]
+Saving to: ‘resolute-netboot-amd64.tar.gz’
+
+resolute-netboot-amd64.tar.gz  100%[==================================================>] 106.85M  12.0MB/s    in 9.9s
+
+2025-12-22 08:42:27 (10.8 MB/s) - ‘resolute-netboot-amd64.tar.gz’ saved [112038753/112038753]
+```
+- **root@pxeserver:~# tar -xzvf resolute-netboot-amd64.tar.gz -C /srv/tftp** # распакуем
+```bash
+./
+./amd64/
+./amd64/grub/
+./amd64/grub/grub.cfg
+./amd64/initrd
+./amd64/grubx64.efi
+./amd64/linux
+./amd64/pxelinux.0
+./amd64/bootx64.efi
+./amd64/pxelinux.cfg/
+./amd64/pxelinux.cfg/default
+./amd64/ldlinux.c32
+```
