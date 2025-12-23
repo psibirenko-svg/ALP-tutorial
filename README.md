@@ -6341,7 +6341,7 @@ LABEL install
 
 - **root@pxeserver:/srv/images# systemctl restart apache2** # перегружаем apache2
 
-## Запускаем подготовленную машину-клиента
+### Запускаем подготовленную машину-клиента
 
 ### Адрес получил
 
@@ -6349,3 +6349,61 @@ LABEL install
 
 ### Пошла установка
 <img width="1054" height="525" alt="Screenshot 2025-12-22 at 16 55 21" src="https://github.com/user-attachments/assets/36f9026b-b020-41d3-9cd6-83cd62abf755" />
+
+
+## Настройка автоматической установки Ubuntu 24.04
+cоздаём каталог для файлов с автоматической установкой
+- **root@pxeserver:/srv/images# mkdir /srv/ks** # создаём файл /srv/ks/user-data и 
+
+- **root@pxeserver:/srv/images# vim /srv/ks/user-data** # добавляем в него следующее содержимое
+```bash
+autoinstall:
+apt:
+disable_components: []
+geoip: true
+preserve_sources_list: false
+primary:
+- arches:
+- amd64
+- i386
+uri: http://us.archive.ubuntu.com/ubuntu
+- arches:
+- default
+uri: http://ports.ubuntu.com/ubuntu-ports
+drivers:
+install: false
+identity:
+hostname: linux
+password: $6$sJgo6Hg5zXBwkkI8$btrEoWAb5FxKhajagWR49XM4EAOfO/
+Dr5bMrLOkGe3KkMYdsh7T3MU5mYwY2TIMJpVKckAwnZFs2ltUJ1abOZ.
+realname: otus
+username: otus
+kernel:
+package: linux-generic
+keyboard:
+layout: us
+toggle: null
+variant: ''
+locale: en_US.UTF-8
+network:
+ethernets:
+enp0s3:
+dhcp4: true
+enp0s8:
+dhcp4: true
+version: 2
+ssh:
+allow-pw: true
+authorized-keys: []
+install-server: true
+updates: security
+version: 1
+```
+- В данном файле указываются следующие настройки:
+• устанавливается apt-репозиторий http://us.archive.ubuntu.com/ubuntu
+• отключена автоматическая загрузка драйверов
+• задаётся hostname linux
+• создаётся пользователь otus c паролем 123 (пароль зашифрован в SHA512)
+• использование английской раскладки
+• добавлена настройка получения адресов по DHCP (для обоих портов)
+• устанавливается openssh-сервер с доступом по логину и паролю
