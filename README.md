@@ -6440,3 +6440,5 @@ LABEL install
 - **root@pxeserver:/srv/images# systemctl restart apache2** # перезагружаем apache2
 
 Проверяем автоматическую установку
+<img width="930" height="686" alt="Screenshot 2025-12-23 at 12 43 44" src="https://github.com/user-attachments/assets/ea40c6c0-7447-4519-ad9e-ccd217dd7a65" />
+
