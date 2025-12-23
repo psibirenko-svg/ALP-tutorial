@@ -6407,3 +6407,36 @@ version: 1
 • использование английской раскладки
 • добавлена настройка получения адресов по DHCP (для обоих портов)
 • устанавливается openssh-сервер с доступом по логину и паролю
+
+- **root@pxeserver:/srv/images# touch /srv/ks/meta-data** # создаем файл с иетаданными (хранит дополнительную информацию о хосте),не будем пока
+- **root@pxeserver:/srv/images# cat /etc/apache2/sites-available/ks-server.conf** # в конфигурации веб-сервера добавим каталог /srv/ks идёнтично каталогу /srv/images
+```bash
+#Указываем IP-адрес хоста и порт на котором будет работать Web-сервер
+<VirtualHost 10.0.77.182:80>
+DocumentRoot /
+# Указываем директорию /srv/ks из которой будет загружаться параметры автоматической установки
+<Directory /srv/ks>
+Options Indexes MultiViews
+AllowOverride All
+Require all granted
+</Directory>
+# Указываем директорию /srv/images из которой будет загружаться iso-образ
+<Directory /srv/images>
+Options Indexes MultiViews
+AllowOverride All
+Require all granted
+</Directory>
+</VirtualHost>
+```
+- **root@pxeserver:/srv/images# cat /srv/tftp/amd64/pxelinux.cfg/default** # добавляем параметры автоматической установки
+```bash
+DEFAULT install
+LABEL install
+  KERNEL linux
+  INITRD initrd
+  APPEND root=/dev/ram0 ramdisk_size=3000000 ip=dhcp iso-url=http://10.0.77.182/srv/images/resolute-live-server-amd64.iso autoinstall ds=nocloud-net;s=http://10.0.77.182/srv/ks/
+```
+- **root@pxeserver:/srv/images# systemctl restart dnsmasq** # перезагружаем dnsmasq
+- **root@pxeserver:/srv/images# systemctl restart apache2** # перезагружаем apache2
+
+Проверяем автоматическую установку
