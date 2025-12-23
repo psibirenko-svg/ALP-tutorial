@@ -6232,7 +6232,7 @@ Dec 22 08:11:46 pxeserver systemd[1]: Stopped ufw.service - Uncomplicated firewa
 interface=eth1
 bind-interfaces
 #Также указаваем интерфейс и range адресов которые будут выдаваться по DHCP
-dhcp-range=eth1,10.0.77.140,10.0.77.142
+dhcp-range=eth1,10.0.77.186,10.0.77.190
 #Имя файла, с которого надо начинать загрузку для Legacy boot (этот пример рассматривается в методичке)
 dhcp-boot=pxelinux.0
 #Имена файлов, для UEFI-загрузки (не обязательно добавлять)
@@ -6413,13 +6413,15 @@ version: 1
 ```bash
 #Указываем IP-адрес хоста и порт на котором будет работать Web-сервер
 <VirtualHost 10.0.77.182:80>
-DocumentRoot /
+DocumentRoot /srv
+Alias /ks /srv/ks
 # Указываем директорию /srv/ks из которой будет загружаться параметры автоматической установки
 <Directory /srv/ks>
 Options Indexes MultiViews
 AllowOverride All
 Require all granted
 </Directory>
+Alias /images /srv/images
 # Указываем директорию /srv/images из которой будет загружаться iso-образ
 <Directory /srv/images>
 Options Indexes MultiViews
@@ -6434,11 +6436,11 @@ DEFAULT install
 LABEL install
   KERNEL linux
   INITRD initrd
-  APPEND root=/dev/ram0 ramdisk_size=3000000 ip=dhcp iso-url=http://10.0.77.182/srv/images/resolute-live-server-amd64.iso autoinstall ds=nocloud-net;s=http://10.0.77.182/srv/ks/
+  APPEND root=/dev/ram0 ramdisk_size=3000000 ip=dhcp iso-url=http://10.0.77.182/images/resolute-live-server-amd64.iso autoinstall ds=nocloud-net;s=http://10.0.77.182/ks/
 ```
 - **root@pxeserver:/srv/images# systemctl restart dnsmasq** # перезагружаем dnsmasq
 - **root@pxeserver:/srv/images# systemctl restart apache2** # перезагружаем apache2
 
-Проверяем автоматическую установку
+### Проверяем автоматическую установку. Если в BIOS стоял первым HD (пустой, без boot) до PXE, то просто перезагрузка.
 <img width="930" height="686" alt="Screenshot 2025-12-23 at 12 43 44" src="https://github.com/user-attachments/assets/ea40c6c0-7447-4519-ad9e-ccd217dd7a65" />
 
