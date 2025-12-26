@@ -6457,5 +6457,145 @@ LABEL install
 - запустить nginx на centralServer.
 - пробросить 80й порт на inetRouter2 8080.
 - дефолт в инет оставить через inetRouter.
-<details>
-<summary> = 🧠 Теория 🧠= </summary>
+
+
+Debian / Ubuntu
+```bash
+sudo apt update
+sudo apt install knockd
+```
+
+
+```bash
+
+```
+
+</details>
+
+- ## Выполнение
+🔐 Что такое Port Knocking
+- Port knocking — это способ скрыть открытый порт (например, SSH 22). Порт закрыт всегда, и открывается только после правильной последовательности обращений к другим портам.
+- Пример: Клиент стучится: 7000 → 8000 → 9000  → сервер открывает порт 22 на 30 секунд
+
+📦 Что понадобится
+-	•	Linux-сервер
+-	•	iptables или nftables
+-	•	knockd (демон port knocking)
+	
+- **root@inetRouter:~# iptables -nvL** # чисто, ну и просмотрим другие таблицы (nat,raw..)
+```bash
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+```
+- **root@inetRouter:~# iptables -A INPUT -i lo -j ACCEPT** # регламентируем входной траффик, разрешим прохождение 
+- **root@inetRouter:~# iptables -nvL** # проверим
+```bash
+Chain INPUT (policy ACCEPT 476 packets, 33958 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+```
+
+- **root@inetRouter:~# iptables -A INPUT -p icmp -j ACCEPT** # Накидаем правил, которые нам нужны и пока с разрешающей политикой (потом изменим на запрещающую)
+- **root@inetRouter:~# iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT** # Разрешить только те пакеты, которые мы запросили
+- ### для проверки работы knockd нам нужно закрыть доступ по ssh (22) - "sudo iptables -I INPUT 3 -p tcp --dport 22 -j DROP" (пока не буде себя отключать:)
+- **root@inetRouter:~# sudo apt update**
+- **root@inetRouter:~# sudo apt install knockd** # Установка knockd
+- **root@inetRouter:~# cat /etc/knockd.conf** #
+```bash
+[options]
+    logfile = /var/log/knockd.log
+
+[openSSH]
+    sequence    = 7000,8000,9000
+    seq_timeout = 10
+    command     = /sbin/iptables -I INPUT -s %IP% -p tcp --dport 22 -j ACCEPT
+    timeout     = 30
+
+[closeSSH]
+    sequence    = 9000,8000,7000
+    command     = /sbin/iptables -D INPUT -s %IP% -p tcp --dport 22 -j ACCEPT
+```
+-**root@inetRouter:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.182/24 metric 100 fe80::250:56ff:feb3:8745/64
+```
+- **oot@inetRouter:~# cat /etc/default/knockd** #
+```bash 
+# control if we start knockd at init or not
+# 1 = start
+# anything else = don't start
+# PLEASE EDIT /etc/knockd.conf BEFORE ENABLING
+START_KNOCKD=1
+
+# command line options
+KNOCKD_OPTS="-i ens192"
+```
+- **root@inetRouter:~# systemctl start knockd** #
+- **root@inetRouter:~# systemctl status knockd** #
+- **root@centralRouter:~# apt install knockd** #
+- **root@inetRouter:~# iptables -nvL --line**
+```bash
+Chain INPUT (policy ACCEPT 4 packets, 1104 bytes)
+num   pkts bytes target     prot opt in     out     source               destination
+1        4   444 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0
+2        0     0 ACCEPT     1    --  *      *       0.0.0.0/0            0.0.0.0/0
+3    64936 4665K ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+num   pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 35458 packets, 3311K bytes)
+num   pkts bytes target     prot opt in     out     source               destination
+1        4   444 ACCEPT     0    --  *      lo      0.0.0.0/0            0.0.0.0/0
+2       12   576 ACCEPT     1    --  *      *       0.0.0.0/0            0.0.0.0/0 
+```
+- **root@inetRouter:~# iptables -P INPUT DROP** #
+- **root@inetRouter:~# iptables-save** #
+```bash
+# Generated by iptables-save v1.8.10 (nf_tables) on Fri Dec 26 12:45:42 2025
+*filter
+:INPUT DROP [12:2873]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [36489:3403498]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -p icmp -j ACCEPT
+COMMIT
+# Completed on Fri Dec 26 12:45:42 2025
+```
+- **root@centralRouter:~# ssh spg@10.0.77.182** # ответа НЕТ (DROP)
+- ^C
+- **root@centralRouter:~# knock 10.0.77.182 7000 8000 9000** #
+```bash
+root@centralRouter:~# ssh spg@10.0.77.182
+spg@10.0.77.182's password:
+Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-90-generic x86_64
+...
+Last login: Fri Dec 26 12:27:42 2025 from 10.0.77.13
+spg@inetRouter:~$
+```
+- **root@inetRouter:~# iptables -nvL --line**
+```bash
+Chain INPUT (policy DROP 151 packets, 30269 bytes)
+num   pkts bytes target     prot opt in     out     source               destination
+1       23  5208 ACCEPT     6    --  *      *       10.0.77.186          0.0.0.0/0            tcp dpt:22
+2        4   444 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0
+3        0     0 ACCEPT     1    --  *      *       0.0.0.0/0            0.0.0.0/0
+4    67559 4849K ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+```
+
