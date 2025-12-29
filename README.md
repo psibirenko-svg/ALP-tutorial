@@ -6601,3 +6601,69 @@ num   pkts bytes target     prot opt in     out     source               destina
 	•	Возможны replay-атаки
 	•	Может не работать за NAT (в редких случаях)
 
+
+- **root@inetRouter2:/etc# cat /etc/netplan/50-cloud-init.yaml** #
+```bash
+network:
+  version: 2
+  ethernets:
+    ens192:
+      dhcp4: no
+      addresses:
+        - 10.0.77.182/24
+      routes:
+        - to: default
+          via: 10.0.77.1
+      nameservers:
+        addresses: [10.0.1.167, 10.0.1.194]
+
+    ens224:
+      dhcp4: no
+      addresses:
+        - 192.168.0.1/28
+```  
+- **root@inetRouter2:/etc# iptables -nvL** #
+```bash
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+```
+- **root@inetRouter2:/etc# cat /etc/sysctl.conf** #
+```bash
+# Uncomment the next line to enable packet forwarding for IPv4
+net.ipv4.ip_forward=
+```
+- **root@CentralServer:~# cat /etc/netplan/00-installer-config.yaml** #
+```bash
+network:
+  version: 2
+  ethernets:
+    ens192:
+      dhcp4: no
+      addresses:
+        - 192.168.0.2/28
+      routes:
+        - to: default
+          via: 192.168.0.1/28
+      nameservers:
+        addresses: [192.168.0.1, 8.8.8.8]
+```
+
+- **root@CentralServer:~# ping ya.ru**
+ping: ya.ru: Temporary failure in name resolution
+- **oot@CentralServer:~# ping 8.8.8.8**
+ping: connect: Network is unreachable
+- **root@CentralServer:~# ping 192.168.0.1** #
+```bash
+PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
+64 bytes from 192.168.0.1: icmp_seq=1 ttl=64 time=0.059 ms
+64 bytes from 192.168.0.1: icmp_seq=2 ttl=64 time=0.052 ms
+```
+- **root@inetRouter2:/etc# iptables -t nat -A PREROUTING -p tcp --dport 9022 -j DNAT --to 192.168.0.2:22** #
+- ** ~ ssh -p 9022 spg@10.0.77.182** # c host - NO
+ssh: connect to host 10.0.77.182 port 9022: Operation timed out
