@@ -6638,6 +6638,11 @@ Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
 # Uncomment the next line to enable packet forwarding for IPv4
 net.ipv4.ip_forward=
 ```
+- **root@inetRouter2:/etc# sudo sysctl -p** #
+- net.ipv4.ip_forward = 1
+- **root@inetRouter:/etc# cat /proc/sys/net/ipv4/ip_forward**
+- 1
+
 - **root@CentralServer:~# cat /etc/netplan/00-installer-config.yaml** #
 ```bash
 network:
@@ -6649,11 +6654,12 @@ network:
         - 192.168.0.2/28
       routes:
         - to: default
-          via: 192.168.0.1/28
+          via: 192.168.0.1
       nameservers:
         addresses: [192.168.0.1, 8.8.8.8]
 ```
-
+- **root@CentralServer:~# netplan generate**
+- **root@CentralServer:~# netplan apply**
 - **root@CentralServer:~# ping ya.ru**
 ping: ya.ru: Temporary failure in name resolution
 - **oot@CentralServer:~# ping 8.8.8.8**
@@ -6665,5 +6671,21 @@ PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
 64 bytes from 192.168.0.1: icmp_seq=2 ttl=64 time=0.052 ms
 ```
 - **root@inetRouter2:/etc# iptables -t nat -A PREROUTING -p tcp --dport 9022 -j DNAT --to 192.168.0.2:22** #
-- ** ~ ssh -p 9022 spg@10.0.77.182** # c host - NO
+- **~ ssh -p 9022 spg@10.0.77.182** # c host - NO
+```bash
 ssh: connect to host 10.0.77.182 port 9022: Operation timed out
+```
+- **root@inetRouter:/etc# iptables -t nat -A POSTROUTING -o ens224 -j MASQUERADE** # 
+
+- **~/.ssh/known_hosts:26: 10.0.77.186** #
+```bash
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '[10.0.77.182]:9022' (ED25519) to the list of known hosts.
+spg@10.0.77.182's password:
+```
+- **root@CentralServer:~# ping ya.ru** #
+```bash
+PING ya.ru (77.88.44.242) 56(84) bytes of data.
+64 bytes from ya.ru (77.88.44.242): icmp_seq=1 ttl=56 time=3.60 ms
+64 bytes from ya.ru (77.88.44.242): icmp_seq=2 ttl=56 time=3.34 ms
+```
