@@ -6677,7 +6677,7 @@ ssh: connect to host 10.0.77.182 port 9022: Operation timed out
 ```
 - **root@inetRouter:/etc# iptables -t nat -A POSTROUTING -o ens224 -j MASQUERADE** # 
 
-- **~/.ssh/known_hosts:26: 10.0.77.186** #
+- **~ssh -p 9022 spg@10.0.77.182** #
 ```bash
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Warning: Permanently added '[10.0.77.182]:9022' (ED25519) to the list of known hosts.
