@@ -6047,8 +6047,13 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 ### ВЫПОЛНЕНИЕ
 
 - Дана схема сети:
-<img width="752" height="893" alt="Screenshot 2026-01-05 at 10 47 42" src="https://github.com/user-attachments/assets/c0dfad50-97da-4028-9e5f-ad9b33ebabb8" />
+<img width="785" height="891" alt="Screenshot 2026-01-05 at 11 06 55" src="https://github.com/user-attachments/assets/2dba85d1-969b-4917-bf40-4cea137d4c43" />
 
+### 1. Разберем ее:
+- 10  сетей для хостов
+- 4 сети для интерфейсов, через которые связаны маршрутизаторы (условно, так как маршрутизация будет строится на серверах Linux). Четвертая сеть на схеме - Интернет.
+- Посчитаем сети:
+<img width="945" height="899" alt="Screenshot 2026-01-05 at 13 06 32" src="https://github.com/user-attachments/assets/f5cd00d7-2852-4335-b2a7-8dd6ab1e7cef" />
 
 
 ## 29 урок 
