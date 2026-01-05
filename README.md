@@ -6057,7 +6057,8 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 
 ### 2. Настроим сетевой стенд
 - Создадим 7 ВМ с минимальным колличеством сетевых интерфейсов в одной "Distributed port group" (разделим сетями) для тестов по ДЗ (3 ВМ - по 1 сетевому интерфейсу; 3 ВМ - по 2 и 1 ВМ - с 4-мя): 
-<img width="1349" height="489" alt="Screenshot 2026-01-05 at 15 02 43" src="https://github.com/user-attachments/assets/f4b14e82-6b3e-47da-bf23-88e614f6317e" />
+<img width="1339" height="491" alt="Screenshot 2026-01-05 at 15 04 36" src="https://github.com/user-attachments/assets/92eb33c9-23b0-4fa8-8f5f-b1eaf2e3d9e8" />
+
 
 
 
