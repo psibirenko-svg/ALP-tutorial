@@ -6056,8 +6056,10 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 <img width="945" height="899" alt="Screenshot 2026-01-05 at 13 06 32" src="https://github.com/user-attachments/assets/f5cd00d7-2852-4335-b2a7-8dd6ab1e7cef" />
 
 ### 2. Настроим сетевой стенд
-- Создадим 7 ВМ с минимальным колличеством сетевых интерфейсов для тестов по ДЗ (3 ВМ - по 1 сетевому интерфейсу; 3 ВМ - по 2 и 1 ВМ - с 4-мя):
-<img width="1137" height="490" alt="Screenshot 2026-01-05 at 14 36 38" src="https://github.com/user-attachments/assets/9c59c358-7506-4853-9e78-b9a0a3d7241b" />
+- Создадим 7 ВМ с минимальным колличеством сетевых интерфейсов в одной "Distributed port group" (разделим сетями) для тестов по ДЗ (3 ВМ - по 1 сетевому интерфейсу; 3 ВМ - по 2 и 1 ВМ - с 4-мя): 
+<img width="1349" height="489" alt="Screenshot 2026-01-05 at 15 02 43" src="https://github.com/user-attachments/assets/f4b14e82-6b3e-47da-bf23-88e614f6317e" />
+
+
 
 ## 29 урок 
 ## DHCP, PXE
