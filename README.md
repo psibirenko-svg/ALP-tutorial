@@ -6058,6 +6058,10 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 ### 2. Настроим сетевой стенд
 - Создадим 7 ВМ с минимальным колличеством сетевых интерфейсов в одной "Distributed port group" (разделим сетями) для тестов по ДЗ (3 ВМ - по 1 сетевому интерфейсу; 3 ВМ - по 2 и 1 ВМ - с 4-мя): 
 <img width="1339" height="491" alt="Screenshot 2026-01-05 at 15 04 36" src="https://github.com/user-attachments/assets/92eb33c9-23b0-4fa8-8f5f-b1eaf2e3d9e8" />
+- установил на все машины Linux Ubuntu 24.04
+- настройки интерфейсов на всех машинах:
+<img width="541" height="372" alt="Screenshot 2026-01-05 at 15 37 19" src="https://github.com/user-attachments/assets/624a9ca3-10fd-4aea-b766-6f67842e9ed8" />
+<img width="498" height="282" alt="Screenshot 2026-01-05 at 15 50 46" src="https://github.com/user-attachments/assets/c866f202-e05e-495d-a927-7a5cbbea5acf" />
 
 
 
