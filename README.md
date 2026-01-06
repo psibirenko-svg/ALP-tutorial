@@ -6059,14 +6059,18 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 - Создадим 7 ВМ с минимальным колличеством сетевых интерфейсов в одной "Distributed port group" (разделим сетями) для тестов по ДЗ (3 ВМ - по 1 сетевому интерфейсу; 3 ВМ - по 2 и 1 ВМ - с 4-мя): 
 <img width="1339" height="491" alt="Screenshot 2026-01-05 at 15 04 36" src="https://github.com/user-attachments/assets/92eb33c9-23b0-4fa8-8f5f-b1eaf2e3d9e8" />
 - установил на все машины Linux Ubuntu 24.04
-- настройки интерфейсов на всех машинах:
+- настройки интерфейсов на всех машинах (Скриншоты использованы потому что после установки VMware Remote Console все равно сложности с "copy/paste"):
 <img width="541" height="372" alt="Screenshot 2026-01-05 at 15 37 19" src="https://github.com/user-attachments/assets/624a9ca3-10fd-4aea-b766-6f67842e9ed8" />
 <img width="498" height="282" alt="Screenshot 2026-01-05 at 15 50 46" src="https://github.com/user-attachments/assets/c866f202-e05e-495d-a927-7a5cbbea5acf" />
 <img width="279" height="547" alt="Screenshot 2026-01-05 at 16 53 32" src="https://github.com/user-attachments/assets/20b1dbe8-5ac1-445f-a36f-a1db32cb24b2" />
+<img width="520" height="356" alt="Screenshot 2026-01-06 at 13 03 31" src="https://github.com/user-attachments/assets/dcb6a4e8-b8f1-4882-bfa5-5ed27f061251" />
+<img width="529" height="355" alt="Screenshot 2026-01-06 at 13 11 30" src="https://github.com/user-attachments/assets/98f14699-7484-4a81-a312-a2dc0f32bf1a" />
 
 
 
-### Установил VMware Remote Console для удобства работы с ВМ
+
+
+
 
 ## 29 урок 
 ## DHCP, PXE
