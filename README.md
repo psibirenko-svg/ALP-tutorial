@@ -6062,10 +6062,11 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 - настройки интерфейсов на всех машинах:
 <img width="541" height="372" alt="Screenshot 2026-01-05 at 15 37 19" src="https://github.com/user-attachments/assets/624a9ca3-10fd-4aea-b766-6f67842e9ed8" />
 <img width="498" height="282" alt="Screenshot 2026-01-05 at 15 50 46" src="https://github.com/user-attachments/assets/c866f202-e05e-495d-a927-7a5cbbea5acf" />
-<img width="325" height="645" alt="Screenshot 2026-01-05 at 16 38 52" src="https://github.com/user-attachments/assets/87d4926e-47a4-405b-8a15-56960cb904a0" />
+<img width="279" height="547" alt="Screenshot 2026-01-05 at 16 53 32" src="https://github.com/user-attachments/assets/20b1dbe8-5ac1-445f-a36f-a1db32cb24b2" />
 
 
 
+### Установил VMware Remote Console для удобства работы с ВМ
 
 ## 29 урок 
 ## DHCP, PXE
