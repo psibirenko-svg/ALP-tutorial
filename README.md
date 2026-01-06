@@ -6061,11 +6061,17 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 - установил на все машины Linux Ubuntu 24.04
 - настройки интерфейсов на всех машинах (Скриншоты использованы потому что после установки VMware Remote Console все равно сложности с "copy/paste"):
 <img width="541" height="372" alt="Screenshot 2026-01-05 at 15 37 19" src="https://github.com/user-attachments/assets/624a9ca3-10fd-4aea-b766-6f67842e9ed8" />
+
 <img width="498" height="282" alt="Screenshot 2026-01-05 at 15 50 46" src="https://github.com/user-attachments/assets/c866f202-e05e-495d-a927-7a5cbbea5acf" />
+
 <img width="279" height="547" alt="Screenshot 2026-01-05 at 16 53 32" src="https://github.com/user-attachments/assets/20b1dbe8-5ac1-445f-a36f-a1db32cb24b2" />
+
 <img width="520" height="356" alt="Screenshot 2026-01-06 at 13 03 31" src="https://github.com/user-attachments/assets/dcb6a4e8-b8f1-4882-bfa5-5ed27f061251" />
+
 <img width="529" height="355" alt="Screenshot 2026-01-06 at 13 11 30" src="https://github.com/user-attachments/assets/98f14699-7484-4a81-a312-a2dc0f32bf1a" />
+
 <img width="534" height="295" alt="Screenshot 2026-01-06 at 13 31 51" src="https://github.com/user-attachments/assets/6657a9f5-5934-4b40-9c27-e5c128274387" />
+
 <img width="522" height="292" alt="Screenshot 2026-01-06 at 13 38 49" src="https://github.com/user-attachments/assets/68bfd02b-e35f-4b6e-a867-6dd3f69687f8" />
 
 
