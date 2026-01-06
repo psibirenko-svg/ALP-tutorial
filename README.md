@@ -6067,6 +6067,7 @@ etc-2025-12-18_15:36:43              Thu, 2025-12-18 15:36:44 [9eb71341c2b8ef113
 <img width="542" height="390" alt="Screenshot 2026-01-06 at 13 56 07" src="https://github.com/user-attachments/assets/b2ac5a94-9cae-42f0-9f99-1fac0364d0da" />
 <img width="536" height="314" alt="Screenshot 2026-01-06 at 13 56 19" src="https://github.com/user-attachments/assets/08c74225-645b-4491-99e7-aa44fe0e6a58" />
 <img width="534" height="313" alt="Screenshot 2026-01-06 at 13 56 31" src="https://github.com/user-attachments/assets/b4d135a7-8b5e-46c2-9b75-4df2fd506f85" />
+### нужно настроить маршрутизацию и NAT таким образом, чтобы доступ в Интернет со всех хостов был через inetRouter и каждый сервер должен быть доступен с любого из 7 хостов
 
 
 
