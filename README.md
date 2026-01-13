@@ -6115,7 +6115,7 @@ COMMIT
 ```
 - **~ ssh -p 1022 spg@10.0.77.182**
 - **spg@centralrouter:~$** # получили доступ к CentralRouter за NAT-ом по ssh
-- **Дальше настроим маршрутизацию на оставшихся роутерах через netplan**
+- **Дальше настроим маршрутизацию на оставшихся роутерах и серверах через netplan (конфигурация серверов без изменений, но удобно для копирования стало)**
 - **1. CentralRouter**
 ```bash
 root@centralrouter:~# cat /etc/netplan/50-cloud-init.yaml
@@ -6259,10 +6259,24 @@ network:
       nameservers:
         addresses: [8.8.8.8, 1.1.1.1]
 ```
+- **root@inetRouter:~# apt install -y traceroute** # устанавливаем утилиту traceroute на все машины для проверки ДЗ
+- **root@inetRouter:~# traceroute 192.168.2.130** # проверяем доступность и прохождение с inetRouter на office1Server
+```bash
+traceroute to 192.168.2.130 (192.168.2.130), 30 hops max, 60 byte packets
+ 1  192.168.255.2 (192.168.255.2)  0.109 ms  0.073 ms  0.071 ms
+ 2  192.168.255.10 (192.168.255.10)  0.165 ms  0.127 ms  0.113 ms
+ 3  192.168.2.130 (192.168.2.130)  0.235 ms  0.216 ms  0.203 ms
+```
+- **root@inetRouter:~# traceroute 192.168.1.2** # проверяем доступность и прохождение с inetRouter на office2Server
+```bash
 
-
-
-
+```
+- **root@inetRouter:~# traceroute 192.168.0.2** # проверяем доступность и прохождение с inetRouter на CentralServer
+```bash
+traceroute to 192.168.0.2 (192.168.0.2), 30 hops max, 60 byte packets
+ 1  192.168.255.2 (192.168.255.2)  0.103 ms  0.088 ms  0.065 ms
+ 2  192.168.0.2 (192.168.0.2)  0.150 ms  0.132 ms  0.125 ms
+```
 ## 29 урок 
 ## DHCP, PXE
 
