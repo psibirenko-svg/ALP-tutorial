@@ -6259,6 +6259,7 @@ network:
       nameservers:
         addresses: [8.8.8.8, 1.1.1.1]
 ```
+### Результаты конфигурации маршрутов в netplan проверялись в "ip route show"
 - **root@inetRouter:~# apt install -y traceroute** # устанавливаем утилиту traceroute на все машины для проверки ДЗ
 - **root@inetRouter:~# traceroute 192.168.2.130** # проверяем доступность и прохождение с inetRouter на office1Server
 ```bash
