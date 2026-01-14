@@ -6116,6 +6116,32 @@ COMMIT
 - **~ ssh -p 1022 spg@10.0.77.182**
 - **spg@centralrouter:~$** # получили доступ к CentralRouter за NAT-ом по ssh
 - **Дальше настроим маршрутизацию на оставшихся роутерах и серверах через netplan (конфигурация серверов без изменений, но удобно для копирования стало)**
+- **0. InetRouter**
+```bash
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+
+    ens192:
+      dhcp4: no
+      addresses:
+        - 10.0.77.182/24
+      routes:
+        - to: default
+          via: 10.0.77.1
+      nameservers:
+        addresses: [10.0.1.167, 10.0.1.194]
+
+    ens224:
+      dhcp4: no
+      addresses:
+        - 192.168.255.1/30
+      routes:
+        - to: 192.168.0.0/16
+          via: 192.168.255.2
+```
 - **1. CentralRouter**
 ```bash
 root@centralrouter:~# cat /etc/netplan/50-cloud-init.yaml
