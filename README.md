@@ -7156,6 +7156,7 @@ network:
       addresses:
         - 10.0.12.1/30
 ```
+- **Router2 DZ33**
 - **root@router2:~# cat /etc/netplan/50-cloud-init.yaml**
 ```bash
 network:
@@ -7179,6 +7180,7 @@ network:
       addresses:
         - 10.0.11.2/30
 ```
+- **Router3 DZ33**
 - **root@router3:~# cat /etc/netplan/50-cloud-init.yaml**
 ```bash
 network:
