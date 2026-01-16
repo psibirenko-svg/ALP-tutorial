@@ -7132,7 +7132,73 @@ COMMIT
 - **Развернем три машины linux c OC Ubuntu 24.04 c 3-мя сетевыми интерфейсами**
 <img width="934" height="712" alt="Screenshot 2026-01-16 at 11 04 03" src="https://github.com/user-attachments/assets/f7872e1c-b289-4389-b8ec-87114efdf9c5" />
 
-
+- **Router1 DZ33**
+- **root@router1:~# cat /etc/netplan/50-cloud-init.yaml**
 ```bash
+network:
+  version: 2
+  renderer: networkd
 
+  ethernets:
+
+    ens192:
+      dhcp4: no
+      addresses:
+        - 192.168.10.1/24
+
+    ens224:
+      dhcp4: no
+      addresses:
+        - 10.0.10.1/30
+
+    ens256:
+      dhcp4: no
+      addresses:
+        - 10.0.12.1/30
+```
+- **root@router2:~# cat /etc/netplan/50-cloud-init.yaml**
+```bash
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+
+    ens192:
+      dhcp4: no
+      addresses:
+        - 192.168.20.1/24
+
+    ens224:
+      dhcp4: no
+      addresses:
+        - 10.0.10.2/30
+
+    ens256:
+      dhcp4: no
+      addresses:
+        - 10.0.11.2/30
+```
+- **root@router3:~# cat /etc/netplan/50-cloud-init.yaml**
+```bash
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+
+    ens192:
+      dhcp4: no
+      addresses:
+        - 192.168.30.1/24
+
+    ens224:
+      dhcp4: no
+      addresses:
+        - 10.0.12.2/30
+
+    ens256:
+      dhcp4: no
+      addresses:
+        - 10.0.11.1/30
 ```
