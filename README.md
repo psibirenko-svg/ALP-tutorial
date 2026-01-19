@@ -7212,7 +7212,7 @@ network:
 
 - **Убрал у всех четвертый интерфейс** # ens161
 - **root@router123# systemctl stop ufw** 
-- **root@router123# systemctl disable ufw** # отключил на всех роутерах файурвол
+- **root@router123# systemctl disable ufw** # отключил на всех роутерах firewall
 - **root@router123# curl -s https://deb.frrouting.org/frr/keys.asc | sudo apt-key add -** #добавляем gpg ключ
 - **root@router123# echo deb https://deb.frrouting.org/frr $(lsb_release -s -c) frr-stable > /etc/apt/sources.list.d/frr.list**
 - **root@router123# sudo apt update** 
@@ -7248,4 +7248,44 @@ pathd=no
 vtysh_enable=yes
 ```
 
-###Настройка OSPF
+- ###Настройка OSPF
+- **Узнать имена интерфейсов и их адреса**
+- **root@router1:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             192.168.10.1/24 fe80::250:56ff:feb3:7658/64
+ens224           UP             10.0.10.1/30 fe80::250:56ff:feb3:a17f/64
+ens256           UP             10.0.12.1/30 fe80::250:56ff:feb3:8cca/64
+```
+**root@router1:~# ip a | grep "inet"** 
+```bash
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host noprefixroute
+    inet 192.168.10.1/24 brd 192.168.10.255 scope global ens192
+    inet6 fe80::250:56ff:feb3:7658/64 scope link
+    inet 10.0.10.1/30 brd 10.0.10.3 scope global ens224
+    inet6 fe80::250:56ff:feb3:a17f/64 scope link
+    inet 10.0.12.1/30 brd 10.0.12.3 scope global ens256
+    inet6 fe80::250:56ff:feb3:8cca/64 scope link
+```
+- **Из интерфейса FRR**
+- **root@router1:~# vtysh**
+```bash
+Hello, this is FRRouting (version 10.5.1).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+```
+- **router1# show interface brief**
+```bash
+Interface       Status  VRF             Addresses
+---------       ------  ---             ---------
+ens192          up      default         192.168.10.1/24
+                                        fe80::250:56ff:feb3:7658/64
+ens224          up      default         10.0.10.1/30
+                                        fe80::250:56ff:feb3:a17f/64
+ens256          up      default         10.0.12.1/30
+                                        fe80::250:56ff:feb3:8cca/64
+lo              up      default
+```
+- **router1# exit** # выходим
+- **root@router1:~#**
+- 
