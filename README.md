@@ -7204,3 +7204,48 @@ network:
       addresses:
         - 10.0.11.1/30
 ```
+- **Для установки  пакетов для тестирования и настройки OSPF на всех роутерах добавил один интерфейс смотрящий в Инет**
+
+- **Поставил базовые программы для изменения конфигурационных файлов (vim) и изучения сети (traceroute, tcpdump, net-tools):**
+- **root@router123# apt update**
+- **root@router123# apt install vim traceroute tcpdump net-tools**
+
+- **Убрал у всех четвертый интерфейс** # ens161
+- **root@router123# systemctl stop ufw** 
+- **root@router123# systemctl disable ufw** # отключил на всех роутерах файурвол
+- **root@router123# curl -s https://deb.frrouting.org/frr/keys.asc | sudo apt-key add -** #добавляем gpg ключ
+- **root@router123# echo deb https://deb.frrouting.org/frr $(lsb_release -s -c) frr-stable > /etc/apt/sources.list.d/frr.list**
+- **root@router123# sudo apt update** 
+- **root@router123# sudo apt install frr frr-pythontools** # Обновляем пакеты и устанавливаем FRR
+- **root@router123# sysctl net.ipv4.conf.all.forwarding=1** # Разрешаем (включаем) маршрутизацию транзитных пакетов
+- **root@router123:~# cat /etc/frr/daemons** # Включаем демон ospfd в FRR
+```bash
+bgpd=no
+zebra=yes
+ospfd=yes
+ospf6d=no
+ripd=no
+ripngd=no
+isisd=no
+pimd=no
+pim6d=no
+ldpd=no
+nhrpd=no
+eigrpd=no
+babeld=no
+sharpd=no
+pbrd=no
+bfdd=no
+fabricd=no
+vrrpd=no
+pathd=no
+
+#
+# If this option is set the /etc/init.d/frr script automatically loads
+# the config via "vtysh -b" when the servers are started.
+# Check /etc/pam.d/frr if you intend to use "vtysh"!
+#
+vtysh_enable=yes
+```
+
+###Настройка OSPF
