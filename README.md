@@ -7516,3 +7516,94 @@ total 28
      Loaded: loaded (/usr/lib/systemd/system/frr.service; enabled; preset: enabled)
      Active: active (running) since Mon 2026-01-19 13:22:19 UTC; 6min ago
 ```
+- **root@router1:~# ping 192.168.30.1**
+```bash
+PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
+64 bytes from 192.168.30.1: icmp_seq=1 ttl=64 time=0.113 ms
+64 bytes from 192.168.30.1: icmp_seq=2 ttl=64 time=0.083 ms
+64 bytes from 192.168.30.1: icmp_seq=3 ttl=64 time=0.079 ms
+^C
+--- 192.168.30.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2043ms
+rtt min/avg/max/mdev = 0.079/0.091/0.113/0.015 ms
+```
+- **root@router1:~# traceroute  192.168.30.1**
+```bash
+traceroute to 192.168.30.1 (192.168.30.1), 30 hops max, 60 byte packets
+ 1  192.168.30.1 (192.168.30.1)  0.096 ms  0.093 ms  0.079 ms
+```
+```bash
+root@router1:~# ping 192.168.10.1
+PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
+64 bytes from 192.168.10.1: icmp_seq=1 ttl=64 time=0.017 ms
+64 bytes from 192.168.10.1: icmp_seq=2 ttl=64 time=0.015 ms
+^C
+--- 192.168.10.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1048ms
+rtt min/avg/max/mdev = 0.015/0.016/0.017/0.001 ms
+root@router1:~# ping 192.168.20.1
+PING 192.168.20.1 (192.168.20.1) 56(84) bytes of data.
+64 bytes from 192.168.20.1: icmp_seq=1 ttl=64 time=0.080 ms
+^C
+--- 192.168.20.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.080/0.080/0.080/0.000 ms
+root@router1:~# ping 192.168.30.1
+PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
+64 bytes from 192.168.30.1: icmp_seq=1 ttl=64 time=0.099 ms
+64 bytes from 192.168.30.1: icmp_seq=2 ttl=64 time=0.105 ms
+^C
+--- 192.168.30.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1042ms
+rtt min/avg/max/mdev = 0.099/0.102/0.105/0.003 ms
+```
+```bash
+root@router2:~# ping 192.168.10.1
+PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
+64 bytes from 192.168.10.1: icmp_seq=1 ttl=64 time=0.093 ms
+^C
+--- 192.168.10.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.093/0.093/0.093/0.000 ms
+root@router2:~# ping 192.168.20.1
+PING 192.168.20.1 (192.168.20.1) 56(84) bytes of data.
+64 bytes from 192.168.20.1: icmp_seq=1 ttl=64 time=0.013 ms
+64 bytes from 192.168.20.1: icmp_seq=2 ttl=64 time=0.012 ms
+^C
+--- 192.168.20.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1006ms
+rtt min/avg/max/mdev = 0.012/0.012/0.013/0.000 ms
+root@router2:~# ping 192.168.30.1
+PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
+64 bytes from 192.168.30.1: icmp_seq=1 ttl=64 time=0.111 ms
+^C
+--- 192.168.30.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.111/0.111/0.111/0.000 ms
+```
+```bash
+root@router3:~# ping 192.168.30.1
+PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
+64 bytes from 192.168.30.1: icmp_seq=1 ttl=64 time=0.016 ms
+64 bytes from 192.168.30.1: icmp_seq=2 ttl=64 time=0.020 ms
+^C
+--- 192.168.30.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1037ms
+rtt min/avg/max/mdev = 0.016/0.018/0.020/0.002 ms
+root@router3:~# ping 192.168.20.1
+PING 192.168.20.1 (192.168.20.1) 56(84) bytes of data.
+64 bytes from 192.168.20.1: icmp_seq=1 ttl=64 time=0.076 ms
+64 bytes from 192.168.20.1: icmp_seq=2 ttl=64 time=0.085 ms
+^C
+--- 192.168.20.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1006ms
+rtt min/avg/max/mdev = 0.076/0.080/0.085/0.004 ms
+root@router3:~# ping 192.168.10.1
+PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
+64 bytes from 192.168.10.1: icmp_seq=1 ttl=64 time=0.094 ms
+64 bytes from 192.168.10.1: icmp_seq=2 ttl=64 time=0.089 ms
+^C
+--- 192.168.10.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1038ms
+rtt min/avg/max/mdev = 0.089/0.091/0.094/0.002 ms
+```
