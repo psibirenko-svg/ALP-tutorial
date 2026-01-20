@@ -7516,22 +7516,8 @@ total 28
      Loaded: loaded (/usr/lib/systemd/system/frr.service; enabled; preset: enabled)
      Active: active (running) since Mon 2026-01-19 13:22:19 UTC; 6min ago
 ```
-- **root@router1:~# ping 192.168.30.1**
-```bash
-PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
-64 bytes from 192.168.30.1: icmp_seq=1 ttl=64 time=0.113 ms
-64 bytes from 192.168.30.1: icmp_seq=2 ttl=64 time=0.083 ms
-64 bytes from 192.168.30.1: icmp_seq=3 ttl=64 time=0.079 ms
-^C
---- 192.168.30.1 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2043ms
-rtt min/avg/max/mdev = 0.079/0.091/0.113/0.015 ms
-```
-- **root@router1:~# traceroute  192.168.30.1**
-```bash
-traceroute to 192.168.30.1 (192.168.30.1), 30 hops max, 60 byte packets
- 1  192.168.30.1 (192.168.30.1)  0.096 ms  0.093 ms  0.079 ms
-```
+### Проверим как работает...
+
 ```bash
 root@router1:~# ping 192.168.10.1
 PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
@@ -7606,4 +7592,65 @@ PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
 --- 192.168.10.1 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time 1038ms
 rtt min/avg/max/mdev = 0.089/0.091/0.094/0.002 ms
+```
+- **root@router1:~# traceroute  192.168.30.1** # трассировка с роутера1 во внутреннюю сеть роутера3
+```bash
+traceroute to 192.168.30.1 (192.168.30.1), 30 hops max, 60 byte packets
+ 1  192.168.30.1 (192.168.30.1)  0.096 ms  0.093 ms  0.079 ms
+```
+- **root@router1:~# vtysh**
+- **router1# sh ip route ospf** # посмотрим маршруты OSPF
+```bash
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+IPv4 unicast VRF default:
+O   10.0.10.0/30 [110/10] is directly connected, ens224, weight 1, 00:26:58
+O>* 10.0.11.0/30 [110/20] via 10.0.10.2, ens224, weight 1, 00:24:38
+  *                       via 10.0.12.2, ens256, weight 1, 00:24:38
+O   10.0.12.0/30 [110/10] is directly connected, ens256, weight 1, 00:24:49
+O   192.168.10.0/24 [110/10] is directly connected, ens192, weight 1, 00:27:29
+O>* 192.168.20.0/24 [110/20] via 10.0.10.2, ens224, weight 1, 00:26:56
+O>* 192.168.30.0/24 [110/20] via 10.0.12.2, ens256, weight 1, 00:24:38
+```
+- **root@router1:~# ifconfig ens256 down** # выключим интерфейс на роутере1 смотрящий на роутер3
+-  ### и повторим проверку доступности внутренней сети роутера 3
+```bash
+root@router1:~# ping 192.168.30.1
+PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
+64 bytes from 192.168.30.1: icmp_seq=1 ttl=63 time=0.168 ms
+64 bytes from 192.168.30.1: icmp_seq=2 ttl=63 time=0.151 ms
+^C
+--- 192.168.30.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1058ms
+rtt min/avg/max/mdev = 0.151/0.159/0.168/0.008 ms
+root@router1:~# traceroute 192.168.30.1
+traceroute to 192.168.30.1 (192.168.30.1), 30 hops max, 60 byte packets
+ 1  10.0.10.2 (10.0.10.2)  0.098 ms  0.072 ms  0.065 ms
+ 2  192.168.30.1 (192.168.30.1)  0.149 ms  0.159 ms  0.146 ms
+root@router1:~# vtysh
+
+Hello, this is FRRouting (version 10.5.1).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+router1# sh ip route ospf
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+IPv4 unicast VRF default:
+O   10.0.10.0/30 [110/10] is directly connected, ens224, weight 1, 00:35:11
+O>* 10.0.11.0/30 [110/20] via 10.0.10.2, ens224, weight 1, 00:03:32
+                          via 10.0.12.2, ens256 inactive, weight 1, 00:03:32
+O>* 10.0.12.0/30 [110/30] via 10.0.10.2, ens224, weight 1, 00:03:12
+O   192.168.10.0/24 [110/10] is directly connected, ens192, weight 1, 00:35:42
+O>* 192.168.20.0/24 [110/20] via 10.0.10.2, ens224, weight 1, 00:35:09
+O>* 192.168.30.0/24 [110/30] via 10.0.10.2, ens224, weight 1, 00:03:32
 ```
