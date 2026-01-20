@@ -7359,10 +7359,10 @@ default-information originate always
 
 log syslog informational
 ```
-- **root@router1:~# systemctl restart frr**
-- **root@router1:~# systemctl enable  frr**
-- **root@router1:~# systemctl status  frr**
-- **root@router1:~# systemctl status frr**
+- **root@router123:~# systemctl restart frr**
+- **root@router123:~# systemctl enable  frr**
+- **root@router123:~# systemctl status  frr**
+- **root@router123:~# systemctl status frr**
 ```bash
 ● frr.service - FRRouting
      Loaded: loaded (/usr/lib/systemd/system/frr.service; enabled; preset: enabled)
