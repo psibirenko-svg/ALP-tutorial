@@ -7130,7 +7130,7 @@ COMMIT
 - изобразить ассиметричный роутинг;
 - сделать один из линков "дорогим", но что бы при этом роутинг был симметричным.
 - **Развернем три машины linux c OC Ubuntu 24.04 c 3-мя сетевыми интерфейсами**
-<img width="934" height="712" alt="Screenshot 2026-01-16 at 11 04 03" src="https://github.com/user-attachments/assets/f7872e1c-b289-4389-b8ec-87114efdf9c5" />
+<img width="913" height="672" alt="Screenshot 2026-01-20 at 16 31 48" src="https://github.com/user-attachments/assets/a8a0c64c-c4bf-47ac-8d81-f780a009b7d7" />
 
 - **Router1 DZ33**
 - **root@router1:~# cat /etc/netplan/50-cloud-init.yaml**
