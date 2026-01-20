@@ -7289,7 +7289,7 @@ lo              up      default
 - **router1# exit** # выходим
 - **root@router1:~#**
 - 
-- **root@router1:~# cat /etc/frr/frr.conf**
+- **root@router1:~# cat /etc/frr/frr.conf** # Правим конфиг frr
 ```bash
 # default to using syslog. /etc/rsyslog.d/45-frr.conf places the log in
 # /var/log/frr/frr.log
@@ -7359,10 +7359,158 @@ default-information originate always
 
 log syslog informational
 ```
-- **root@router123:~# systemctl restart frr**
-- **root@router123:~# systemctl enable  frr**
-- **root@router123:~# systemctl status  frr**
-- **root@router123:~# systemctl status frr**
+- **root@router2:~# cat /etc/frr/frr.conf** # Правим конфиг frr
+```bash
+# default to using syslog. /etc/rsyslog.d/45-frr.conf places the log in
+# /var/log/frr/frr.log
+#
+# Note:
+# FRR's configuration shell, vtysh, dynamically edits the live, in-memory
+# configuration while FRR is running. When instructed, vtysh will persist the
+# live configuration to this file, overwriting its contents. If you want to
+# avoid this, you can edit this file manually before starting FRR, or instruct
+# vtysh to write configuration to a different file.
+!Указание версии FRR
+frr version 10.5.1
+frr defaults traditional
+!Указываем имя машины
+hostname router2
+log syslog informational
+no ipv6 forwarding
+service integrated-vtysh-config
+!
+!Добавляем информацию об интерфейсе enp0s8
+interface ens224
+ !Указываем имя интерфейса
+ description r2-r1
+ !Указываем ip-aдрес и маску (эту информацию мы получили в прошлом шаге)
+ ip address 10.0.10.2/30
+ !Указываем параметр игнорирования MTU
+ ip ospf mtu-ignore
+ !Если потребуется, можно указать «стоимость» интерфейса
+ !ip ospf cost 1000
+ !Указываем параметры hello-интервала для OSPF пакетов
+ ip ospf hello-interval 10
+ !Указываем параметры dead-интервала для OSPF пакетов
+ !Должно быть кратно предыдущему значению
+ ip ospf dead-interval 30
+!
+interface ens256
+ description r2-r3
+ ip address 10.0.11.2/30
+ ip ospf mtu-ignore
+ !ip ospf cost 45
+ ip ospf hello-interval 10
+ ip ospf dead-interval 30
+
+interface ens192
+ description net_router2
+ ip address 192.168.20.1/24
+ ip ospf mtu-ignore
+ !ip ospf cost 45
+ ip ospf hello-interval 10
+ ip ospf dead-interval 30
+!
+!Начало настройки OSPF
+router ospf
+ !Указываем router-id
+ router-id 2.2.2.2
+ !Указываем сети, которые хотим анонсировать соседним роутерам
+ network 10.0.10.0/30 area 0
+ network 10.0.11.0/30 area 0
+ network 192.168.20.0/24 area 0
+ !Указываем адреса соседних роутеров
+ neighbor 10.0.10.1
+ neighbor 10.0.11.1
+
+!Указываем адрес log-файла
+log file /var/log/frr/frr.log
+default-information originate always
+
+log syslog informational
+```
+- **root@router3:~# cat /etc/frr/frr.conf** # Правим конфиг frr
+```bash
+# default to using syslog. /etc/rsyslog.d/45-frr.conf places the log in
+# /var/log/frr/frr.log
+#
+# Note:
+# FRR's configuration shell, vtysh, dynamically edits the live, in-memory
+# configuration while FRR is running. When instructed, vtysh will persist the
+# live configuration to this file, overwriting its contents. If you want to
+# avoid this, you can edit this file manually before starting FRR, or instruct
+# vtysh to write configuration to a different file.
+!Указание версии FRR
+frr version 10.5.1
+frr defaults traditional
+!Указываем имя машины
+hostname router3
+log syslog informational
+no ipv6 forwarding
+service integrated-vtysh-config
+!
+!Добавляем информацию об интерфейсе enp0s8
+interface ens224
+ !Указываем имя интерфейса
+ description r3-r1
+ !Указываем ip-aдрес и маску (эту информацию мы получили в прошлом шаге)
+ ip address 10.0.12.2/30
+ !Указываем параметр игнорирования MTU
+ ip ospf mtu-ignore
+ !Если потребуется, можно указать «стоимость» интерфейса
+ !ip ospf cost 1000
+ !Указываем параметры hello-интервала для OSPF пакетов
+ ip ospf hello-interval 10
+ !Указываем параметры dead-интервала для OSPF пакетов
+ !Должно быть кратно предыдущему значению
+ ip ospf dead-interval 30
+!
+interface ens256
+ description r3-r2
+ ip address 10.0.11.1/30
+ ip ospf mtu-ignore
+ !ip ospf cost 45
+ ip ospf hello-interval 10
+ ip ospf dead-interval 30
+
+interface ens192
+ description net_router3
+ ip address 192.168.30.1/24
+ ip ospf mtu-ignore
+ !ip ospf cost 45
+ ip ospf hello-interval 10
+ ip ospf dead-interval 30
+!
+!Начало настройки OSPF
+router ospf
+ !Указываем router-id
+ router-id 3.3.3.3
+ !Указываем сети, которые хотим анонсировать соседним роутерам
+ network 10.0.12.0/30 area 0
+ network 10.0.11.0/30 area 0
+ network 192.168.30.0/24 area 0
+ !Указываем адреса соседних роутеров
+ neighbor 10.0.12.1
+ neighbor 10.0.11.2
+
+!Указываем адрес log-файла
+log file /var/log/frr/frr.log
+default-information originate always
+
+log syslog informational
+```
+- **root@router123:~# ls -l /etc/frr** # проверяем права
+```bash
+total 28
+-rw-r----- 1 frr frr 4138 Jan 16 13:36 daemons
+-rw-r----- 1 frr frr 2389 Jan 20 11:09 frr.conf
+-rw-r----- 1 frr frr 8667 Jan  6 14:40 support_bundle_commands.conf
+-rw-r----- 1 frr frr   32 Jan  6 14:40 vtysh.conf
+```
+
+- **root@router123:~# systemctl restart frr** # Перезапускаем FRR и 
+- **root@router123:~# systemctl enable  frr** # добавляем его в автозагрузку
+- **root@router123:~# systemctl status  frr** # проверяем
 ```bash
 ● frr.service - FRRouting
      Loaded: loaded (/usr/lib/systemd/system/frr.service; enabled; preset: enabled)
