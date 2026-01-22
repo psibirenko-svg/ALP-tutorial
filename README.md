@@ -7658,5 +7658,70 @@ O>* 192.168.30.0/24 [110/30] via 10.0.10.2, ens224, weight 1, 00:03:32
 - **root@router123:~# sysctl net.ipv4.conf.all.rp_filter=0** # для реализации ассиметричного роутинга отключаем rp_filter — защита от IP-spoofing
 - net.ipv4.conf.all.rp_filter = 0
 - ### поменяем стоимость интерфейса ens224 на router1
+```bash
+root@router1:~# vtysh
+
+Hello, this is FRRouting (version 10.5.1).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+router1# conf t
+router1(config)# int ens224
+router1(config-if)# ip ospf cost 1000
+router1(config-if)# exit
+router1(config)# exit
+router1# sh ip route ospf
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+IPv4 unicast VRF default:
+O   10.0.10.0/30 [110/30] via 10.0.12.2, ens256, weight 1, 00:01:08
+O>* 10.0.11.0/30 [110/20] via 10.0.12.2, ens256, weight 1, 00:01:08
+O   10.0.12.0/30 [110/10] is directly connected, ens256, weight 1, 1d16h58m
+O   192.168.10.0/24 [110/10] is directly connected, ens192, weight 1, 1d17h39m
+O>* 192.168.20.0/24 [110/30] via 10.0.12.2, ens256, weight 1, 00:01:08
+O>* 192.168.30.0/24 [110/20] via 10.0.12.2, ens256, weight 1, 1d16h58m
+```
+```bash
+root@router2:~# vtysh
+
+Hello, this is FRRouting (version 10.5.1).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+router2# show ip route ospf
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+IPv4 unicast VRF default:
+O   10.0.10.0/30 [110/10] is directly connected, ens224, weight 1, 1d17h43m
+O   10.0.11.0/30 [110/10] is directly connected, ens256, weight 1, 1d17h40m
+O>* 10.0.12.0/30 [110/20] via 10.0.10.1, ens224, weight 1, 1d17h02m
+  *                       via 10.0.11.1, ens256, weight 1, 1d17h02m
+O>* 192.168.10.0/24 [110/20] via 10.0.10.1, ens224, weight 1, 1d17h42m
+O   192.168.20.0/24 [110/10] is directly connected, ens192, weight 1, 1d17h43m
+O>* 192.168.30.0/24 [110/20] via 10.0.11.1, ens256, weight 1, 1d17h40m
+```
+- ### Видим, что маршрут от Router1 до сети 192.168.20.0/24 теперь пойдет через Router3 (via 10.0.12.2, ens256), но маршрут от Router2 в сеть 192.168.10.0/24 пойдет сразу на Router1 (via 10.0.10.1, ens224)
+- **root@router1:~# ping 192.168.20.1** # запускаем ping от Router1  на адрес интерфейса внутренней сети Riuter2
+```bash
+PING 192.168.20.1 (192.168.20.1) 56(84) bytes of data.
+64 bytes from 192.168.20.1: icmp_seq=1 ttl=63 time=0.130 ms
+64 bytes from 192.168.20.1: icmp_seq=2 ttl=63 time=0.157 ms
+...
+```
+- **root@router2:~# tcpdump -i ens256** # Видим, что пакеты ICMP приходят с адреса интерфейса Router1 смотрящего на Router3 (то есть по более длинному, но менее дорогому маршруту)
+```bash
+...
+06:16:05.037696 IP 10.0.12.1 > router2: ICMP echo request, id 14049, seq 45, length 64
+06:16:05.037707 IP router2 > 10.0.12.1: ICMP echo reply, id 14049, seq 45, length 64
+```
+
 
 - ## Настройка симметичного роутинга
