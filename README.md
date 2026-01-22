@@ -7731,3 +7731,50 @@ listening on ens224, link-type EN10MB (Ethernet), snapshot length 262144 bytes
 ```
 
 - ## Настройка симметичного роутинга
+- ### Чтобы сделать симитричный роутинг для нашего примера, сделаем ответный маршрут Router2 -> Router1  из предыдущего пункта дорогим и заставим его отправлять пакетв по тому же маршруту, по которому он их получает от Router1:
+```bash
+root@router2:~# tvysh
+Command 'tvysh' not found, did you mean:
+  command 'vtysh' from deb frr (8.4.4-1.1ubuntu6.3)
+Try: apt install <deb name>
+root@router2:~# vtysh
+
+Hello, this is FRRouting (version 10.5.1).
+Copyright 1996-2005 Kunihiro Ishiguro, et al.
+
+router2# conf t
+router2(config)# int ens224
+router2(config-if)# ip ospf cost 1000
+router2(config-if)# exit
+router2(config)# exit
+router2# show ip route ospf
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+IPv4 unicast VRF default:
+O   10.0.10.0/30 [110/1000] is directly connected, ens224, weight 1, 00:00:25
+O   10.0.11.0/30 [110/10] is directly connected, ens256, weight 1, 1d21h58m
+O>* 10.0.12.0/30 [110/20] via 10.0.11.1, ens256, weight 1, 00:00:25
+O>* 192.168.10.0/24 [110/30] via 10.0.11.1, ens256, weight 1, 00:00:25
+O   192.168.20.0/24 [110/10] is directly connected, ens192, weight 1, 1d22h00m
+O>* 192.168.30.0/24 [110/20] via 10.0.11.1, ens256, weight 1, 1d21h57m
+```
+### видим, что маршрут до внутренней сети Router1 (192.168.10.0/24) теперь идет через Router3 (10.0.1.11)
+### Проверка:
+- **root@router1:~# ping -I 192.168.10.1 192.168.20.1**
+```bash
+PING 192.168.20.1 (192.168.20.1) from 192.168.10.1 : 56(84) bytes of data.
+64 bytes from 192.168.20.1: icmp_seq=1 ttl=63 time=0.154 ms
+64 bytes from 192.168.20.1: icmp_seq=2 ttl=63 time=0.134 ms
+```
+- **root@router2:~# tcpdump -i ens256** # Теперь и запрос и ответ идут через один маршрут
+```bash
+10:28:17.259046 IP 192.168.10.1 > router2: ICMP echo request, id 20201, seq 24, length 64
+10:28:17.259055 IP router2 > 192.168.10.1: ICMP echo reply, id 20201, seq 24, length 64
+10:28:18.283037 IP 192.168.10.1 > router2: ICMP echo request, id 20201, seq 25, length 64
+10:28:18.283049 IP router2 > 192.168.10.1: ICMP echo reply, id 20201, seq 25, length 64
+```
