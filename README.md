@@ -7709,19 +7709,25 @@ O   192.168.20.0/24 [110/10] is directly connected, ens192, weight 1, 1d17h43m
 O>* 192.168.30.0/24 [110/20] via 10.0.11.1, ens256, weight 1, 1d17h40m
 ```
 - ### Видим, что маршрут от Router1 до сети 192.168.20.0/24 теперь пойдет через Router3 (via 10.0.12.2, ens256), но маршрут от Router2 в сеть 192.168.10.0/24 пойдет сразу на Router1 (via 10.0.10.1, ens224)
-- **root@router1:~# ping 192.168.20.1** # запускаем ping от Router1  на адрес интерфейса внутренней сети Riuter2
+- **root@router1:~# ping -I 192.168.10.1192.168.20.1** # запускаем ping от интерфейса внутренней сети Router1  на адрес интерфейса внутренней сети Riuter2
 ```bash
-PING 192.168.20.1 (192.168.20.1) 56(84) bytes of data.
-64 bytes from 192.168.20.1: icmp_seq=1 ttl=63 time=0.130 ms
-64 bytes from 192.168.20.1: icmp_seq=2 ttl=63 time=0.157 ms
+PING 192.168.20.1 (192.168.20.1) from 192.168.10.1 : 56(84) bytes of data.
+64 bytes from 192.168.20.1: icmp_seq=1 ttl=64 time=0.114 ms
+64 bytes from 192.168.20.1: icmp_seq=2 ttl=64 time=0.116 ms
 ...
 ```
-- **root@router2:~# tcpdump -i ens256** # Видим, что пакеты ICMP приходят с адреса интерфейса Router1 смотрящего на Router3 (то есть по более длинному, но менее дорогому маршруту)
+- **root@router2:~# tcpdump -i ens256** # Видим, что пакеты ICMP приходят на интерфейс Router2 смотрящего на Router3 (то есть по более длинному, но менее дорогому для Router1 маршруту)
 ```bash
 ...
-06:16:05.037696 IP 10.0.12.1 > router2: ICMP echo request, id 14049, seq 45, length 64
-06:16:05.037707 IP router2 > 10.0.12.1: ICMP echo reply, id 14049, seq 45, length 64
+06:42:20.094800 IP 192.168.10.1 > router2: ICMP echo request, id 18317, seq 44, length 64
+06:42:21.118789 IP 192.168.10.1 > router2: ICMP echo request, id 18317, seq 45, length 64
+06:42:22.142742 IP 192.168.10.1 > router2: ICMP echo request, id 18317, seq 46, length 64
 ```
-
+- **root@router2:~# tcpdump -i ens224** # Видим, что  ответные пакеты ICMP выходят с интерфейс Router2 смотрящего на Router1 (то есть по кратчайшему до Router1 маршруту)
+```bash
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on ens224, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+06:41:44.255895 IP router2 > 192.168.10.1: ICMP echo reply, id 18317, seq 9, length 64
+```
 
 - ## Настройка симметичного роутинга
