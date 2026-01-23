@@ -7654,6 +7654,9 @@ O   192.168.10.0/24 [110/10] is directly connected, ens192, weight 1, 00:35:42
 O>* 192.168.20.0/24 [110/20] via 10.0.10.2, ens224, weight 1, 00:35:09
 O>* 192.168.30.0/24 [110/30] via 10.0.10.2, ens224, weight 1, 00:03:32
 ```
+- **root@router1:~# ifconfig ens256 up**
+
+  
 - ## Настройка ассиметричного роутинга
 - **root@router123:~# sysctl net.ipv4.conf.all.rp_filter=0** # для реализации ассиметричного роутинга отключаем rp_filter — защита от IP-spoofing
 - net.ipv4.conf.all.rp_filter = 0
