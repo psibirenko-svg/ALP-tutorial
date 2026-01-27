@@ -7805,4 +7805,10 @@ PING 192.168.20.1 (192.168.20.1) from 192.168.10.1 : 56(84) bytes of data.
 
 - Между centralRouter и inetRouter "пробросить" 2 линка (общая inernal сеть) и объединить их в бонд, проверить работу c отключением интерфейсов
 - ## Выполнение
-- Развернем на Vcenter 
+- Развернем на Vcenter 7 машин:
+  <img width="1093" height="497" alt="Screenshot 2026-01-27 at 16 32 29" src="https://github.com/user-attachments/assets/5b508ec9-a222-4b7d-9e52-156575369886" />
+- ### Дана следующая схема для ДЗ:
+
+<img width="824" height="810" alt="image" src="https://github.com/user-attachments/assets/5fe8e4e4-9338-4ced-9703-9703b49c4277" />
+
+
