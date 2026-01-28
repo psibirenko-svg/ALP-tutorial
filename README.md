@@ -7937,3 +7937,4 @@ network:
       addresses:
         - 10.10.10.254/24
 ```
+- ### Для работы с VLAN trunk сетевых интерфейсов inetRouter и centralRouter создадим для них специальный виртуальный коммутатор Post binding на VMWare vShere и подключим к нему их пары интерфейсов (ens192 ens224)  
