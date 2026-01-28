@@ -7811,7 +7811,7 @@ PING 192.168.20.1 (192.168.20.1) from 192.168.10.1 : 56(84) bytes of data.
 
 <img width="824" height="810" alt="image" src="https://github.com/user-attachments/assets/5fe8e4e4-9338-4ced-9703-9703b49c4277" />
 
-- Топология представленной сети  и ДЗ не предпологают vlan фильтрацию на хосте office1Router. Поэтому я заменю его на виртуальный коммутатор portgroup trunking в "VMware vSphere" (с помощью которой делаю ДЗ) для того, чтобы пакеты между ВМ не фильтровались по тегам (разрешен весь диапазон VLAN-ов). К нему подключу только интерфейсы ens224. Интерфейсы ens192 подключены через коммутатор в режиме access к моей рабочей сети, стобы легче было получить доступ к каждой ВМ по ssh (не через консоль, откуда сложно копировать резeльтаты работы в Github)
+- Топология представленной сети  и ДЗ не предпологают vlan фильтрацию на хосте office1Router. Поэтому я заменю его на виртуальный коммутатор portgroup trunking в "VMware vSphere" (с помощью которой делаю ДЗ) для того, чтобы пропускать VLAN-теги (разрешен весь диапазон VLAN-ов). К нему подключу только интерфейсы ens224. Интерфейсы ens192 подключены через коммутатор в режиме access к моей рабочей сети, стобы легче было получить доступ к каждой ВМ по ssh (не через консоль, откуда сложно копировать резeльтаты работы в Github)
 - ### Схема теперь выглядит так:
 <img width="819" height="800" alt="Screenshot 2026-01-28 at 10 48 30" src="https://github.com/user-attachments/assets/30521413-33d1-413b-a9e4-b41515808365" />
 
@@ -7891,4 +7891,26 @@ lo               UNKNOWN        127.0.0.1/8 ::1/128
 ens192           UP             10.0.77.182/24 metric 100 fe80::250:56ff:feb3:8745/64
 ens224           UP             fe80::250:56ff:feb3:b7c7/64
 ens224.20@ens224 UP             10.10.10.1/24 fe80::250:56ff:feb3:b7c7/64
+```
+- ### Проверим
+- **root@testclient1:~# ping 10.10.10.1**
+```bash
+PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
+64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.095 ms
+```
+- **root@testserver1:~# tcpdump -i ens224 -e vlan**
+```bash
+08:37:21.982580 00:50:56:b3:0a:62 (oui Unknown) > 00:50:56:b3:42:a3 (oui Unknown), ethertype 802.1Q (0x8100), length 102: vlan 10, p 0, ethertype IPv4 (0x0800), testserver1 > 10.10.10.254: ICMP echo reply, id 5939, seq 5, length 64
+```
+- **root@testclient2:~# ping 10.10.10.1**
+```bash
+PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
+64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.081 ms
+64 bytes from 10.10.10.1: icmp_seq=2 ttl=64 time=0.064 m
+```
+- **root@testserver2:~# tcpdump -i ens224 -e vlan | grep 10.10.10.254**
+```bash
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on ens224, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+08:43:51.810187 00:50:56:b3:16:66 (oui Unknown) > 00:50:56:b3:b7:c7 (oui Unknown), ethertype 802.1Q (0x8100), length 102: vlan 20, p 0, ethertype IPv4 (0x0800), 10.10.10.254 > testserver2: ICMP echo request, id 5946, seq 28, length 64
 ```
