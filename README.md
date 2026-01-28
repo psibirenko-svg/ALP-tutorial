@@ -7844,15 +7844,47 @@ ens224           DOWN             10.10.10.254/24 fe80::250:56ff:feb3:1666/64
 ```
 - **root@*******:~# ip link set dev ens224 up**  # на всех 4-х машинах пока одинаково
 - ### Создание VLAN-интерфейсов
-- **root@testclient1:~# sudo ip link add link ens224 name ens224.10 type vlan id 10
-sudo ip addr add 10.10.10.254/24 dev ens224.10
-sudo ip link set dev ens224.10 up**
-- **root@testserver1:~# sudo ip link add link ens224 name ens224.10 type vlan id 10
-sudo ip addr add 10.10.10.1/24 dev ens224.10
-sudo ip link set dev ens224.10 up**
-- **root@testclient2:~# sudo ip link add link ens224 name ens224.20 type vlan id 20
-sudo ip addr add 10.10.10.254/24 dev ens224.20
-sudo ip link set dev ens224.20 up**
-- **root@testserver2:~# sudo ip link add link ens224 name ens224.20 type vlan id 20
-sudo ip addr add 10.10.10.1/24 dev ens224.20
-sudo ip link set dev ens224.20 up**
+- **root@testclient1:~# ip link add link ens224 name ens224.10 type vlan id 10**
+- **root@testclient1:~# ip addr add 10.10.10.254/24 dev ens224.10**
+- **root@testclient1:~# ip link set dev ens224.10 up**
+- 
+- **root@testserver1:~# ip link add link ens224 name ens224.10 type vlan id 10**
+- **root@testserver1:~# ip addr add 10.10.10.1/24 dev ens224.10**
+- **root@testserver1:~# ip link set dev ens224.10 up**
+- 
+- **root@testclient2:~# ip link add link ens224 name ens224.20 type vlan id 20**
+- **root@testclient2:~# ip addr add 10.10.10.254/24 dev ens224.20**
+- **root@testclient2:~# ip link set dev ens224.20 up**
+- 
+- **root@testserver2:~# ip link add link ens224 name ens224.20 type vlan id 20**
+- **root@testserver2:~# ip addr add 10.10.10.1/24 dev ens224.20**
+- **root@testserver2:~# ip link set dev ens224.20 up**
+
+- **root@testclient1:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.156/24 metric 100 fe80::250:56ff:feb3:8557/64
+ens224           UP
+ens224.10@ens224 UP             10.10.10.254/24 fe80::250:56ff:feb3:42a3/64
+```
+- **root@testserver1:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.186/24 metric 100 fe80::250:56ff:feb3:7ee8/64
+ens224           UP             fe80::250:56ff:feb3:a62/64
+ens224.10@ens224 UP             10.10.10.1/24 fe80::250:56ff:feb3:a62/64
+```
+- **root@testclient2:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.170/24 metric 100 fe80::250:56ff:feb3:7658/64
+ens224           UP
+ens224.20@ens224 UP             10.10.10.254/24 fe80::250:56ff:feb3:1666/64
+```
+- **root@testserver2:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.182/24 metric 100 fe80::250:56ff:feb3:8745/64
+ens224           UP             fe80::250:56ff:feb3:b7c7/64
+ens224.20@ens224 UP             10.10.10.1/24 fe80::250:56ff:feb3:b7c7/64
+```
