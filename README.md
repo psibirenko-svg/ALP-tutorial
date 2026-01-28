@@ -7914,3 +7914,26 @@ tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
 listening on ens224, link-type EN10MB (Ethernet), snapshot length 262144 bytes
 08:43:51.810187 00:50:56:b3:16:66 (oui Unknown) > 00:50:56:b3:b7:c7 (oui Unknown), ethertype 802.1Q (0x8100), length 102: vlan 20, p 0, ethertype IPv4 (0x0800), 10.10.10.254 > testserver2: ICMP echo request, id 5946, seq 28, length 64
 ```
+- ### Между ВМ testclient1 и testclient2, testserver1 и testserver2 конфликтов из-за одинаковых адресов нет, машины testclient1 и testclient2, testserver1 и testserver2 находятся в изолированных сетях (VLAN10 | VLAN20)
+- ###  Пример настройки через netplan:
+```bash
+root@testclient1:~# cat /etc/netplan/50-cloud-init.yaml
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+
+    ens192:
+      dhcp4: true
+
+    ens224:
+      dhcp4: no
+
+  vlans:
+    ens224.10:
+      id: 10
+      link: ens224
+      addresses:
+        - 10.10.10.254/24
+```
