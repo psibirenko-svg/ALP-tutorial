@@ -7812,6 +7812,9 @@ PING 192.168.20.1 (192.168.20.1) from 192.168.10.1 : 56(84) bytes of data.
 <img width="824" height="810" alt="image" src="https://github.com/user-attachments/assets/5fe8e4e4-9338-4ced-9703-9703b49c4277" />
 
 - Топология представленной сети  и ДЗ не предпологают vlan фильтрацию на хосте office1Router. Поэтому я заменю его на виртуальный коммутатор portgroup trunking в "VMware vSphere" (с помощью которой делаю ДЗ) для того, чтобы пакеты между ВМ не фильтровались по тегам (разрешен весь диапазон VLAN-ов). К нему подключу только интерфейсы ens224. Интерфейсы ens192 подключены через коммутатор в режиме access к моей рабочей сети, стобы легче было получить доступ к каждой ВМ по ssh (не через консоль, откуда сложно копировать резeльтаты работы в Github)
+- ### Схема теперь выглядит так:
+<img width="826" height="791" alt="Screenshot 2026-01-28 at 09 40 35" src="https://github.com/user-attachments/assets/b306452c-0884-4e4e-9d82-04f865cc282b" />
+
 - **root@*******:~# apt install -y vim traceroute tcpdump net-tools**
 - **root@*******:~# cat /etc/netplan/50-cloud-init.yaml**
 ```bash
