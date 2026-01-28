@@ -7813,7 +7813,8 @@ PING 192.168.20.1 (192.168.20.1) from 192.168.10.1 : 56(84) bytes of data.
 
 - Топология представленной сети  и ДЗ не предпологают vlan фильтрацию на хосте office1Router. Поэтому я заменю его на виртуальный коммутатор portgroup trunking в "VMware vSphere" (с помощью которой делаю ДЗ) для того, чтобы пакеты между ВМ не фильтровались по тегам (разрешен весь диапазон VLAN-ов). К нему подключу только интерфейсы ens224. Интерфейсы ens192 подключены через коммутатор в режиме access к моей рабочей сети, стобы легче было получить доступ к каждой ВМ по ssh (не через консоль, откуда сложно копировать резeльтаты работы в Github)
 - ### Схема теперь выглядит так:
-<img width="828" height="796" alt="Screenshot 2026-01-28 at 09 48 37" src="https://github.com/user-attachments/assets/40c957a4-b0bb-4ddc-a3bd-6b1e02f654cd" />
+<img width="819" height="800" alt="Screenshot 2026-01-28 at 10 48 30" src="https://github.com/user-attachments/assets/30521413-33d1-413b-a9e4-b41515808365" />
+
 
 
 - **root@*******:~# apt install -y vim traceroute tcpdump net-tools**
@@ -7839,5 +7840,19 @@ network:
 ```bash
 lo               UNKNOWN        127.0.0.1/8 ::1/128
 ens192           UP             10.0.77.*/24 metric 100 fe80::250:56ff:feb3:7658/64
-ens224           UP             10.10.10.254/24 fe80::250:56ff:feb3:1666/64
+ens224           DOWN             10.10.10.254/24 fe80::250:56ff:feb3:1666/64
 ```
+- **root@*******:~# ip link set dev ens224 up**  # на всех 4-х машинах пока одинаково
+- ### Создание VLAN-интерфейсов
+- **root@testclient1:~# sudo ip link add link ens224 name ens224.10 type vlan id 10
+sudo ip addr add 10.10.10.254/24 dev ens224.10
+sudo ip link set dev ens224.10 up**
+- **root@testserver1:~# sudo ip link add link ens224 name ens224.10 type vlan id 10
+sudo ip addr add 10.10.10.1/24 dev ens224.10
+sudo ip link set dev ens224.10 up**
+- **root@testclient2:~# sudo ip link add link ens224 name ens224.20 type vlan id 20
+sudo ip addr add 10.10.10.254/24 dev ens224.20
+sudo ip link set dev ens224.20 up**
+- **root@testserver2:~# sudo ip link add link ens224 name ens224.20 type vlan id 20
+sudo ip addr add 10.10.10.1/24 dev ens224.20
+sudo ip link set dev ens224.20 up**
