@@ -7842,8 +7842,11 @@ lo               UNKNOWN        127.0.0.1/8 ::1/128
 ens192           UP             10.0.77.*/24 metric 100 fe80::250:56ff:feb3:7658/64
 ens224           DOWN             10.10.10.254/24 fe80::250:56ff:feb3:1666/64
 ```
+
 - **root@*******:~# ip link set dev ens224 up**  # на всех 4-х машинах пока одинаково
+- 
 - ### Создание VLAN-интерфейсов
+- 
 - **root@testclient1:~# ip link add link ens224 name ens224.10 type vlan id 10**
 - **root@testclient1:~# ip addr add 10.10.10.254/24 dev ens224.10**
 - **root@testclient1:~# ip link set dev ens224.10 up**
@@ -7859,6 +7862,7 @@ ens224           DOWN             10.10.10.254/24 fe80::250:56ff:feb3:1666/64
 - **root@testserver2:~# ip link add link ens224 name ens224.20 type vlan id 20**
 - **root@testserver2:~# ip addr add 10.10.10.1/24 dev ens224.20**
 - **root@testserver2:~# ip link set dev ens224.20 up**
+
 
 - **root@testclient1:~# ip -br a**
 ```bash
