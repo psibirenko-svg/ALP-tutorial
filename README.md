@@ -8035,9 +8035,10 @@ PING 192.168.255.2 (192.168.255.2) 56(84) bytes of data.
 64 bytes from 192.168.255.2: icmp_seq=1 ttl=64 time=0.117 ms
 64 bytes from 192.168.255.2: icmp_seq=2 ttl=64 time=0.101 ms
 64 bytes from 192.168.255.2: icmp_seq=3 ttl=64 time=0.112 ms
-  
+```  
 - **root@centralrouter:~# ip link set ens256 down** # кладем второй интерфейс
 - **root@centralrouter:~# ip -br a**
+```bash
 lo               UNKNOWN        127.0.0.1/8 ::1/128
 ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
 ens224           DOWN
@@ -8061,7 +8062,7 @@ ens224           UP
 ens256           UP             fe80::250:56ff:feb3:e65b/64
 bond0            UP             192.168.255.2/30 fe80::4cfe:38ff:fe69:9604/64
 ```
-- **root@inetrouter:~# ping 192.168.255.2** # Пошло! Bound работает
+- **root@inetrouter:~# ping 192.168.255.2** # Пошло! Bond работает
 ```bash
 From 192.168.255.1 icmp_seq=30 Destination Host Unreachable
 From 192.168.255.1 icmp_seq=31 Destination Host Unreachable
