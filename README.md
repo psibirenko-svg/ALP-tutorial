@@ -7998,7 +7998,7 @@ network:
         - 192.168.255.2/30
 ```
 - **root@*******:~# netplan generate**
-- ****root@*******:~# netplan apply**
+- **root@*******:~# netplan apply**
 - ###  Проверяем работу транка Bond через ping
 - **root@centralrouter:~# ping 192.168.255.1** # работает
 ```bash
@@ -8015,11 +8015,13 @@ PING 192.168.255.2 (192.168.255.2) 56(84) bytes of data.
 64 bytes from 192.168.255.2: icmp_seq=3 ttl=64 time=0.112 ms
 ```
 - **root@centralrouter:~# ip -br a** # состояние интерфейсов
+```bash
 lo               UNKNOWN        127.0.0.1/8 ::1/128
 ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
 ens224           UP
 ens256           UP             fe80::250:56ff:feb3:e65b/64
 bond0            UP             192.168.255.2/30 fe80::4cfe:38ff:fe69:9604/64
+```
 - **root@centralrouter:~# ip link set ens224 down** # кладем один интерфейс 
 - **root@centralrouter:~# ip -br a** 
 ```bash
