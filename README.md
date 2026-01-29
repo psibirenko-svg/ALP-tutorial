@@ -7940,4 +7940,131 @@ network:
 - ### Для работы с VLAN trunk сетевых интерфейсов inetRouter и centralRouter создадим для них специальный виртуальный коммутатор Post binding на VMWare vShere и подключим к нему их пары интерфейсов (ens256 ens224), один интерфейс (ens192) подключен через коммутатор в режиме access к моей рабочей сети
 <img width="823" height="799" alt="Screenshot 2026-01-28 at 15 35 57" src="https://github.com/user-attachments/assets/6b3104ab-d7b6-4f14-a11a-4f62cf63819d" />
 
-- 
+- **root@*******:~# ip -br a**
+```bash 
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
+ens224           DOWN
+ens256           DOWN
+```
+- **root@inetlrouter:~# vi /etc/netplan/50-cloud-init.yaml**
+```bash
+ network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+    ens224:
+      dhcp4: no
+    ens225:
+      dhcp4: no
+
+  bonds:
+    bond0:
+      interfaces:
+        - ens224
+        - ens225
+      parameters:
+        mode: 802.3ad
+        lacp-rate: fast
+        transmit-hash-policy: layer3+4
+        mii-monitor-interval: 100
+      addresses:
+        - 192.168.255.1/30
+```
+- **root@centralrouter:~# vi /etc/netplan/50-cloud-init.yaml**
+```bash
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+    ens224:
+      dhcp4: no
+    ens225:
+      dhcp4: no
+
+  bonds:
+    bond0:
+      interfaces:
+        - ens224
+        - ens225
+      parameters:
+        mode: 802.3ad
+        lacp-rate: fast
+        transmit-hash-policy: layer3+4
+        mii-monitor-interval: 100
+      addresses:
+        - 192.168.255.2/30
+```
+- **root@*******:~# netplan generate**
+- ****root@*******:~# netplan apply**
+- ###  Проверяем работу транка Bond через ping
+- **root@centralrouter:~# ping 192.168.255.1** # работает
+```bash
+PING 192.168.255.1 (192.168.255.1) 56(84) bytes of data.
+64 bytes from 192.168.255.1: icmp_seq=1 ttl=64 time=0.101 ms
+64 bytes from 192.168.255.1: icmp_seq=2 ttl=64 time=0.104 ms
+64 bytes from 192.168.255.1: icmp_seq=3 ttl=64 time=0.140 ms
+```
+- **root@inetrouter:~# ping 192.168.255.2** # в обратную сторону тоже работает
+```bash
+PING 192.168.255.2 (192.168.255.2) 56(84) bytes of data.
+64 bytes from 192.168.255.2: icmp_seq=1 ttl=64 time=0.117 ms
+64 bytes from 192.168.255.2: icmp_seq=2 ttl=64 time=0.101 ms
+64 bytes from 192.168.255.2: icmp_seq=3 ttl=64 time=0.112 ms
+```
+- **root@centralrouter:~# ip -br a** # состояние интерфейсов
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
+ens224           UP
+ens256           UP             fe80::250:56ff:feb3:e65b/64
+bond0            UP             192.168.255.2/30 fe80::4cfe:38ff:fe69:9604/64
+- **root@centralrouter:~# ip link set ens224 down** # кладем один интерфейс 
+- **root@centralrouter:~# ip -br a** 
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
+ens224           DOWN
+ens256           UP             fe80::250:56ff:feb3:e65b/64
+bond0            DOWN           192.168.255.2/30 fe80::4cfe:38ff:fe69:9604/64
+```
+- **root@inetrouter:~# ping 192.168.255.2** # ping не прервался
+```bash
+PING 192.168.255.2 (192.168.255.2) 56(84) bytes of data.
+64 bytes from 192.168.255.2: icmp_seq=1 ttl=64 time=0.117 ms
+64 bytes from 192.168.255.2: icmp_seq=2 ttl=64 time=0.101 ms
+64 bytes from 192.168.255.2: icmp_seq=3 ttl=64 time=0.112 ms
+  
+- **root@centralrouter:~# ip link set ens256 down** # кладем второй интерфейс
+- **root@centralrouter:~# ip -br a**
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
+ens224           DOWN
+ens256           DOWN
+bond0            DOWN           192.168.255.2/30 fe80::4cfe:38ff:fe69:9604/64
+```
+- **root@inetrouter:~# ping 192.168.255.2** # ping прервался
+```bash
+64 bytes from 192.168.255.2: icmp_seq=45 ttl=64 time=0.076 ms
+From 192.168.255.1 icmp_seq=50 Destination Host Unreachable
+From 192.168.255.1 icmp_seq=51 Destination Host Unreachable
+From 192.168.255.1 icmp_seq=52 Destination Host Unreachable**
+```
+- **root@centralrouter:~# ip link set ens256 up** # поднимаем один интерфейс
+- **root@centralrouter:~# ip link set ens224 up** # поднимаем второй интерфейс
+- **root@centralrouter:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             10.0.77.148/24 metric 100 fe80::250:56ff:feb3:e85a/64
+ens224           UP
+ens256           UP             fe80::250:56ff:feb3:e65b/64
+bond0            UP             192.168.255.2/30 fe80::4cfe:38ff:fe69:9604/64
+```
+- **root@inetrouter:~# ping 192.168.255.2** # Пошло! Bound работает
+```bash
+From 192.168.255.1 icmp_seq=30 Destination Host Unreachable
+From 192.168.255.1 icmp_seq=31 Destination Host Unreachable
+64 bytes from 192.168.255.2: icmp_seq=35 ttl=64 time=1024 ms
+64 bytes from 192.168.255.2: icmp_seq=36 ttl=64 time=0.190 ms
+```
