@@ -8071,6 +8071,9 @@ From 192.168.255.1 icmp_seq=31 Destination Host Unreachable
 64 bytes from 192.168.255.2: icmp_seq=35 ttl=64 time=1024 ms
 64 bytes from 192.168.255.2: icmp_seq=36 ttl=64 time=0.190 ms
 ```
+
+
+
 **1. CentOS 8 - проблема с репозитариями
 2. Ubuntu - нет сервера, только клиент
 3. Rockylinux 9**
@@ -8120,10 +8123,62 @@ epel                                             Extra Packages for Enterprise L
 epel-cisco-openh264                              Extra Packages for Enterprise Linux 9 openh264 (From Cisco) - x86_64
 extras                                           Rocky Linux 9 - Extras
 ```
+- **[root@FreeIPAServer ~]# setenforce 0** # гасим Selinux
+```bash
+getenforce
+Permissive
+```
+- **[root@FreeIPAServer ~]# vi /etc/selinux/config** # **SELINUX=disabled**
 - **[root@FreeIPAServer ~]# dnf install -y ipa-server ipa-server-dns** # Установка пакетов IPA сервера
 ```bash
   xkeyboard-config-2.33-2.el9.0.1.noarch                                  xml-commons-apis-1.4.01-39.el9.noarch
   xml-commons-resolver-1.2-42.el9.noarch                                  xorg-x11-fonts-Type1-7.5-33.el9.noarch
   ...
 Выполнено!
+```
+- **[root@FreeIPAServer ~]# hostnamectl set-hostname ipa.otus.lan** # переименовал (?)
+- **[root@FreeIPAServer ~]# cat /etc/hosts**
+```bash
+host.conf  hostname   hosts
+[root@FreeIPAServer ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+10.0.77.170 ipa.otus.lan ipa
+```
+- **[root@FreeIPAServer ~]# ipa-server-install** # установка (много, долго и непонятно)
+```bash
+Server host name [FreeIPAServer]: ipa.otus.lan
+the domain name [otus.lan]
+Following DNS servers are configured in /etc/resolv.conf: 10.0.1.167, 10.0.1.194
+a realm name [OTUS.LAN]:
+Do you want to configure DNS forwarders? [yes]: yes
+Do you want to configure these servers as DNS forwarders? [yes]: yes
+Do you want to search for missing reverse zones? [yes]: no
+NetBIOS domain name [OTUS]:
+Do you want to configure chrony with NTP server or pool address? [no]:
+Continue to configure the system with these values? [no]: yes
+
+==============================================================================
+Setup complete
+
+Next steps:
+	1. You must make sure these network ports are open:
+		TCP Ports:
+		  * 80, 443: HTTP/HTTPS
+		  * 389, 636: LDAP/LDAPS
+		  * 88, 464: kerberos
+		  * 53: bind
+		UDP Ports:
+		  * 88, 464: kerberos
+		  * 53: bind
+		  * 123: ntp
+
+	2. You can now obtain a kerberos ticket using the command: 'kinit admin'
+	   This ticket will allow you to use the IPA tools (e.g., ipa user-add)
+	   and the web user interface.
+
+Be sure to back up the CA certificates stored in /root/cacert.p12
+These files are required to create replicas. The password for these
+files is the Directory Manager password
+The ipa-server-install command was successful
 ```
