@@ -8207,3 +8207,50 @@ Valid starting       Expires              Service principal
 - 
 <img width="1330" height="835" alt="Screenshot 2026-02-04 at 14 26 13" src="https://github.com/user-attachments/assets/b43a8e47-c507-49c2-8c03-b1938cbbd260" />
 <img width="1341" height="571" alt="Screenshot 2026-02-04 at 14 28 14" src="https://github.com/user-attachments/assets/384222ac-e051-41d4-a1ed-079a03254247" />
+
+- ### Настройка и подключение клиента
+
+- **root@client1:~# timedatectl set-timezone Europe/Moscow** # Время
+- **root@client1:~# update**
+- **root@client1:~# apt install chrony** # Синхронизация
+- **root@client1:~# apt update**
+- **root@client1:~# apt install freeipa-client** # Установка клиента
+- **root@client1:~# ipa-client-install --mkhomedir** # Настройка клиента
+```bash
+Provide the domain name of your IPA server (ex: example.com): otus.lan
+Provide your IPA server name (ex: ipa.example.com): ipa.otus.lan
+Proceed with fixed values and no DNS discovery? [no]: yes
+Do you want to configure chrony with NTP server or pool address? [no]: yes
+Enter NTP source server addresses separated by comma, or press Enter to skip:
+Enter a NTP source pool address, or press Enter to skip:
+Client hostname: client1.ptus.lan
+Realm: OTUS.LAN
+DNS Domain: otus.lan
+IPA Server: ipa.otus.lan
+BaseDN: dc=otus,dc=lan
+Continue to configure the system with these values? [no]: yes
+User authorized to enroll computers: admin
+Password for admin@OTUS.LAN:
+
+SSSD enabled
+Configured /etc/openldap/ldap.conf
+Configured /etc/ssh/ssh_config
+Configured /etc/ssh/sshd_config.d/04-ipa.conf
+Configuring otus.lan as NIS domain.
+Configured /etc/krb5.conf for IPA realm OTUS.LAN
+Client configuration complete.
+The ipa-client-install command was successful
+```
+- **root@client1:~# kinit admin** # проверим, что клиент может получать билет от сервера
+```bash
+Password for admin@OTUS.LAN:
+```
+- **root@client1:~# klist** # проверяем, что билет получен
+```bash
+Ticket cache: KEYRING:persistent:0:0
+Default principal: admin@OTUS.LAN
+
+Valid starting       Expires              Service principal
+02/04/2026 15:22:03  02/05/2026 15:04:55  krbtgt/OTUS.LAN@OTUS.LAN
+```
+### Клиент настроен.
