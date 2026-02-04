@@ -8145,7 +8145,7 @@ host.conf  hostname   hosts
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 10.0.77.170 ipa.otus.lan ipa
 ```
-- **[root@FreeIPAServer ~]# ipa-server-install** # установка (много, долго и непонятно)
+- **[root@ipa ~]# ipa-server-install** # установка (много, долго и непонятно)
 ```bash
 Server host name [FreeIPAServer]: ipa.otus.lan
 the domain name [otus.lan]
@@ -8182,3 +8182,19 @@ These files are required to create replicas. The password for these
 files is the Directory Manager password
 The ipa-server-install command was successful
 ```
+- **[root@ipa ~]# kinit admin** # проверим, что система может выдать билет
+```bash
+Password for admin@OTUS.LAN:
+```
+- **[root@ipa ~]# klist** # выдает
+```bash
+Ticket cache: KCM:0
+Default principal: admin@OTUS.LAN
+
+Valid starting       Expires              Service principal
+04.02.2026 13:57:52  05.02.2026 13:31:28  krbtgt/OTUS.LAN@OTUS.LAN
+```
+- **[root@ipa ~]# kdestroy** # Удалим полученный билет
+- 
+- <img width="1330" height="835" alt="Screenshot 2026-02-04 at 14 26 13" src="https://github.com/user-attachments/assets/b43a8e47-c507-49c2-8c03-b1938cbbd260" />
+<img width="1341" height="571" alt="Screenshot 2026-02-04 at 14 28 14" src="https://github.com/user-attachments/assets/384222ac-e051-41d4-a1ed-079a03254247" />
