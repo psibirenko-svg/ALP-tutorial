@@ -8148,7 +8148,7 @@ drwxr-xr-x   2 root root 4.0K Nov 24 22:32 server
 -rw-------   1 spg  spg   636 Feb  6 08:07 static.key
 -rwxr-xr-x   1 root root 1.5K Nov 24 22:32 update-resolv-conf
 ```
-- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server.conf** # конфигурационный файл OpenVPN
+- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server-tap.conf** # конфигурационный файл OpenVPN
 ```bash
 dev tap
 ifconfig 10.10.10.1 255.255.255.0
@@ -8171,7 +8171,7 @@ ExecStart=/usr/sbin/openvpn --cd /etc/openvpn/ --config %i.conf
 [Install]
 WantedBy=multi-user.target
 ```
-- **root@clientloc:/tmp# cat /etc/openvpn/server.conf**
+- **root@clientloc:/tmp# cat /etc/openvpn/client-tap.conf**
 ```bash
 dev tap
 remote 10.0.77.148
@@ -8185,7 +8185,7 @@ status /var/log/openvpn-status.log
 log /var/log/openvpn.log
 verb 3
 ```
-- **root@clientloc:/tmp# cat /etc/systemd/system/openvpn@.service**
+- **root@clientloc:/tmp# cat /etc/systemd/system/openvpn@.service** # для клиента такой же
 ```bash
 [Unit]
 Description=OpenVPN Tunneling Application On %I
@@ -8197,38 +8197,91 @@ ExecStart=/usr/sbin/openvpn --cd /etc/openvpn/ --config %i.conf
 [Install]
 WantedBy=multi-user.target
 ```
-- **root@serverloc:~# systemctl start openvpn@server** # запускаю на сервер openvpn
-- **root@serverloc:~# systemctl status openvpn@server** # проверяю
+- **root@serverloc:~# systemctl start openvpn@server-tap** # запускаю на сервер openvpn
+- **root@serverloc:~# systemctl status openvpn@server-tap** # проверяю
 ```bash
 ● openvpn@server.service - OpenVPN Tunneling Application On server
      Loaded: loaded (/etc/systemd/system/openvpn@.service; enabled; preset: enabled)
      Active: active (running) since Fri 2026-02-06 13:39:26 MSK; 7min ago
 ```
-- **root@serverloc:~# systemctl enable openvpn@server** #
+- **root@serverloc:~# systemctl enable openvpn@server-tap** #
 - **root@serverloc:~# ip a | grep tap** # проверяю
 ```bash
 3: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
     inet 10.10.10.1/24 scope global tap0
 ```
-- **root@clientloc:~# systemctl start openvpn@server** # запускаю на клиенте openvpn
-- **root@clientloc:~# systemctl status openvpn@server** # проверяю
+- **root@clientloc:~# systemctl start openvpn@client-tun** # запускаю на клиенте openvpn
+- **root@clientloc:~# systemctl status openvpn@client-tun** # проверяю
 ```bash
 ● openvpn@server.service - OpenVPN Tunneling Application On server
      Loaded: loaded (/etc/systemd/system/openvpn@.service; enabled; preset: enabled)
      Active: active (running) since Fri 2026-02-06 10:39:32 UTC; 8min ago
 ```
-- **root@clientloc:~# systemctl enable openvpn@server** #
+- **root@clientloc:~# systemctl enable openvpn@server-tun** #
 - **root@clientloc:~# ip a | grep tap** # проверяю
 ```bash
 3: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
     inet 10.10.10.2/24 scope global tap0
 ```
 - **root@clientloc:~# ping 10.10.10.1** #  проверяю работу туннеля, работает
-PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
 ```bash
+PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
 64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.594 ms
 64 bytes from 10.10.10.1: icmp_seq=2 ttl=64 time=0.327 ms
 ```
+- **root@serverloc:~# iperf3 -s &**
+```bash
+[1] 1348
+root@serverloc:~# iperf3: error - unable to start listener for connections: Address already in use
+iperf3: exiting
+^C
+[1]+  Exit 1                  iperf3 -s
+```
+- **root@serverloc:~# sudo lsof -i :5201** # кто-то держит
+```bash
+COMMAND  PID   USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+iperf3  1347 iperf3    3u  IPv6  21127      0t0  TCP *:5201 (LISTEN)
+```
+- **root@serverloc:~# sudo pkill -9 iperf3** # прибиваем всех
+- **root@serverloc:~# sudo lsof -i :5201** # никого нет, но потом все по-новой
+- **root@serverloc:~# iperf3 -s -p 5202** & # меняем порт (разберемся потом, иногда лучше менять порт, если старый застрял в TIME_WAIT, чем пытаться ждать), запускается
+```bash
+[1] 1360
+root@serverloc:~# -----------------------------------------------------------
+Server listening on 5202 (test #1)
+-----------------------------------------------------------
+```
+- **root@clientloc:~# iperf3 -c 10.10.10.1 -t 40 -i 5** # запускаем iperf3 в режиме клиента и замеряем  скорость в туннеле
+```bash
+Connecting to host 10.10.10.1, port 5201
+[  5] local 10.10.10.2 port 36166 connected to 10.10.10.1 port 5201
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-5.00   sec   352 MBytes   590 Mbits/sec  1617    429 KBytes
+[  5]   5.00-10.00  sec   375 MBytes   629 Mbits/sec   10    426 KBytes
+[  5]  10.00-15.01  sec   364 MBytes   611 Mbits/sec  116    426 KBytes
+^C[  5]  15.01-17.80  sec   212 MBytes   636 Mbits/sec   55    550 KBytes
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-17.80  sec  1.27 GBytes   614 Mbits/sec  1798             sender
+[  5]   0.00-17.80  sec  0.00 Bytes  0.00 bits/sec                  receiver
+iperf3: interrupt - the client has terminated
+```
+
+- **root@clientloc:/etc/openvpn# iperf3 -c 10.10.20.1 -t 40 -i 5** # запускаем iperf3 в режиме клиента и замеряем  скорость в туннеле
+Connecting to host 10.10.20.1, port 5201
+[  5] local 10.10.20.2 port 58730 connected to 10.10.20.1 port 5201
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-5.00   sec   339 MBytes   568 Mbits/sec   87    550 KBytes
+[  5]   5.00-10.00  sec   400 MBytes   671 Mbits/sec  125    255 KBytes
+[  5]  10.00-15.01  sec   377 MBytes   632 Mbits/sec   62    364 KBytes
+^C[  5]  15.01-16.04  sec  80.0 MBytes   650 Mbits/sec   32    251 KBytes
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-16.04  sec  1.17 GBytes   625 Mbits/sec  306             sender
+[  5]   0.00-16.04  sec  0.00 Bytes  0.00 bits/sec                  receiver
+iperf3: interrupt - the client has terminated
+
+
 
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
