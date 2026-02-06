@@ -8154,22 +8154,39 @@ dev tap
 ifconfig 10.10.10.1 255.255.255.0
 topology subnet
 secret /etc/openvpn/static.key
+cipher AES-256-CBC # В методичке нет, но без этого openvpn не стартует (сipher BF-CBC not supported -> Exiting due to fatal error в логах)
 comp-lzo
 status /var/log/openvpn-status.log
 log /var/log/openvpn.log
 verb 3
 ```
-- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server.conf** # service unit для запуска OpenVPN
+- **root@serverloc:/etc/openvpn# cat /etc/systemd/system/openvpn@.service** # service unit для запуска OpenVPN
+```bash
+Description=OpenVPN Tunneling Application On %I
+After=network.target
+[Service]
+Type=notify
+PrivateTmp=true
+ExecStart=/usr/sbin/openvpn --cd /etc/openvpn/ --config %i.conf
+[Install]
+WantedBy=multi-user.target
+```
+- **root@clientloc:/tmp# cat /etc/openvpn/server.conf**
 ```bash
 dev tap
-ifconfig 10.10.10.1 255.255.255.0
+remote 10.0.77.148
+ifconfig 10.10.10.2 255.255.255.0
 topology subnet
+route 10.0.77.0 255.255.255.0
 secret /etc/openvpn/static.key
+cipher AES-256-CBC # ******В методичке нет, но без этого openvpn не стартует (сipher BF-CBC not supported -> Exiting due to fatal error)*****
 comp-lzo
 status /var/log/openvpn-status.log
 log /var/log/openvpn.log
 verb 3
-root@serverloc:/etc/openvpn# cat /etc/systemd/system/openvpn@.service
+```
+- **root@clientloc:/tmp# cat /etc/systemd/system/openvpn@.service**
+```bash
 [Unit]
 Description=OpenVPN Tunneling Application On %I
 After=network.target
@@ -8179,6 +8196,38 @@ PrivateTmp=true
 ExecStart=/usr/sbin/openvpn --cd /etc/openvpn/ --config %i.conf
 [Install]
 WantedBy=multi-user.target
+```
+- **root@serverloc:~# systemctl start openvpn@server** # запускаю на сервер openvpn
+- **root@serverloc:~# systemctl status openvpn@server** # проверяю
+```bash
+● openvpn@server.service - OpenVPN Tunneling Application On server
+     Loaded: loaded (/etc/systemd/system/openvpn@.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-02-06 13:39:26 MSK; 7min ago
+```
+- **root@serverloc:~# systemctl enable openvpn@server** #
+- **root@serverloc:~# ip a | grep tap** # проверяю
+```bash
+3: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
+    inet 10.10.10.1/24 scope global tap0
+```
+- **root@clientloc:~# systemctl start openvpn@server** # запускаю на клиенте openvpn
+- **root@clientloc:~# systemctl status openvpn@server** # проверяю
+```bash
+● openvpn@server.service - OpenVPN Tunneling Application On server
+     Loaded: loaded (/etc/systemd/system/openvpn@.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-02-06 10:39:32 UTC; 8min ago
+```
+- **root@clientloc:~# systemctl enable openvpn@server** #
+- **root@clientloc:~# ip a | grep tap** # проверяю
+```bash
+3: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
+    inet 10.10.10.2/24 scope global tap0
+```
+- **root@clientloc:~# ping 10.10.10.1** #  проверяю работу туннеля, работает
+PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
+```bash
+64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.594 ms
+64 bytes from 10.10.10.1: icmp_seq=2 ttl=64 time=0.327 ms
 ```
 
 
