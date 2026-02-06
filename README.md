@@ -8087,16 +8087,99 @@ From 192.168.255.1 icmp_seq=31 Destination Host Unreachable
 - 
 - ### # Устанавливаем нужные пакеты и отключаем SELinux
 - **root@clientloc:~# apt update** 
-- **root@clientloc:~# apt install openvpn iperf3 selinux-utils** # подключения к VPN, организации site-to-site или remote-access VPN, шифрования трафика
-### iperf3 - Утилита для измерения пропускной способности сети
+- **root@clientloc:~# apt install openvpn iperf3 selinux-utils** # подключения к VPN, организации site-to-site или remote-access VPN, шифрования трафика; iperf3 - утилита для измерения пропускной способности сети
 - **root@clientloc:~# setenforce 0** # отключаем SELinux
 - setenforce: SELinux is disabled
 - **root@serverloc:~# apt update**
 - **root@serverloc:~# apt install openvpn iperf3 selinux-utils** 
 - **root@serverloc:~# setenforce 0** # отключаем SELinux
 - setenforce: SELinux is disabled
-
-
+- 
+- **root@serverloc:~# openvpn --genkey secret /etc/openvpn/static.key** # создаем файл-ключ
+- **root@serverloc:~# cat /etc/openvpn/static.key** # проверим
+```bash
+#
+# 2048 bit OpenVPN static key
+#
+-----BEGIN OpenVPN Static key V1-----
+cfc17ce39235e19e37829bb48d33e733
+2953bf84e8c76f54f10df52c53402490
+07d51cbbf01ee9af049094b741cd431d
+8f04d072f4e6d5df40032d90d8bf2a82
+fde19d2e46820feff51ed19d272fc3ec
+b06cc1121b46dcf8fc6a38b867ac199d
+6ccc961f577f67fababa37014f01271b
+6954a62c6eaba22f5b99658ec9c5ced0
+d012f6a5c7ba28290da55beaa9f8d7f6
+5118173eb516573b804cf152af66608d
+c184c92c670daa987edce6e9949048a6
+bb0a96f6a8ccfd76c8a1fe96296db4e4
+b195c30b73a096ccabf1e6d2f181df86
+271f179f48014abd558544e27b4c3309
+9e801158dcdc3f62a650a1fca515b6ea
+15f08c49c48770ba4e4e17ef484d960e
+-----END OpenVPN Static key V1-----
+```
+- **root@serverloc:~# cd /etc/openvpn/**
+- **root@serverloc:/etc/openvpn# scp ./static.key spg@10.0.77.136:/tmp/** # передадим ключ клиенту
+```bash
+The authenticity of host '10.0.77.136 (10.0.77.136)' can't be established.
+ED25519 key fingerprint is SHA256:DofXG5ZW1tvwsu9egtoM42fRDVKzLzd5Ahn0Ig3Tjzk.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.0.77.136' (ED25519) to the list of known hosts.
+spg@10.0.77.136's password:
+static.key
+```
+- **root@clientloc:/tmp# ls** # gпроверил на клиенте
+```bash
+snap-private-tmp
+static.key
+```
+- **root@clientloc:/tmp# sudo mv /tmp/static.key /etc/openvpn/ 
+ chmod 600 /etc/openvpn/static.key** # переношу ключ в правильное место и даю права
+- **root@clientloc:/tmp# ls -hal /etc/openvpn/** # проверка
+```bash
+total 24K
+drwxr-xr-x   4 root root 4.0K Feb  6 08:12 .
+drwxr-xr-x 109 root root 4.0K Feb  6 07:31 ..
+drwxr-xr-x   2 root root 4.0K Nov 24 22:32 client
+drwxr-xr-x   2 root root 4.0K Nov 24 22:32 server
+-rw-------   1 spg  spg   636 Feb  6 08:07 static.key
+-rwxr-xr-x   1 root root 1.5K Nov 24 22:32 update-resolv-conf
+```
+- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server.conf** # конфигурационный файл OpenVPN
+```bash
+dev tap
+ifconfig 10.10.10.1 255.255.255.0
+topology subnet
+secret /etc/openvpn/static.key
+comp-lzo
+status /var/log/openvpn-status.log
+log /var/log/openvpn.log
+verb 3
+```
+- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server.conf** # service unit для запуска OpenVPN
+```bash
+dev tap
+ifconfig 10.10.10.1 255.255.255.0
+topology subnet
+secret /etc/openvpn/static.key
+comp-lzo
+status /var/log/openvpn-status.log
+log /var/log/openvpn.log
+verb 3
+root@serverloc:/etc/openvpn# cat /etc/systemd/system/openvpn@.service
+[Unit]
+Description=OpenVPN Tunneling Application On %I
+After=network.target
+[Service]
+Type=notify
+PrivateTmp=true
+ExecStart=/usr/sbin/openvpn --cd /etc/openvpn/ --config %i.conf
+[Install]
+WantedBy=multi-user.target
+```
 
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
