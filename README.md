@@ -8615,7 +8615,7 @@ dh /etc/openvpn/pki/dh.pem
 server 10.10.10.0 255.255.255.0
 ifconfig-pool-persist ipp.txt
 client-to-client
-client-config-dir /etc/openvpn/client
+#client-config-dir /etc/openvpn/client
 keepalive 10 120
 comp-lzo
 persist-key
@@ -8628,14 +8628,14 @@ verb 3
 ```bash
 dev tun
 proto udp
-remote 192.168.56.10 1207
+remote 10.0.77.148 1207
 client
 resolv-retry infinite
 remote-cert-tls server
-ca ./ca.crt
-cert ./client.crt
-key ./client.key
-route 192.168.56.0 255.255.255.0
+ca /etc/openvpn/ca.crt
+cert /etc/openvpn/client.crt
+key /etc/openvpn/client.key
+data-ciphers AES-256-GCM
 persist-key
 persist-tun
 comp-lzo
@@ -8657,6 +8657,31 @@ root@clientloc:/tmp# ls /etc/openvpn/
 ca.crt  client.conf  client.key       client-tun.conf  server.conf  update-resolv-conf
 client  client.crt   client-tap.conf  server           static.key                                                                 100% 1704     5.8MB/s   00:00
 ```
+- **root@clientloc:/etc/openvpn# ping -c 4 10.10.10.1** # заработало, когда закоментировал #client-config-dir /etc/openvpn/client в /etc/openvpn/server.conf
+```bash
+PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
+64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.289 ms
+64 bytes from 10.10.10.1: icmp_seq=2 ttl=64 time=0.318 ms
+64 bytes from 10.10.10.1: icmp_seq=3 ttl=64 time=0.295 ms
+64 bytes from 10.10.10.1: icmp_seq=4 ttl=64 time=0.262 ms
+
+--- 10.10.10.1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3076ms
+rtt min/avg/max/mdev = 0.262/0.291/0.318/0.019 ms
+```
+- **root@clientloc:/etc/openvpn# ip r**
+```bash
+root@clientloc:/etc/openvpn# ip r
+default via 10.0.77.1 dev ens192 proto dhcp src 10.0.77.136 metric 100
+10.0.1.167 via 10.0.77.1 dev ens192 proto dhcp src 10.0.77.136 metric 100
+10.0.1.194 via 10.0.77.1 dev ens192 proto dhcp src 10.0.77.136 metric 100
+10.0.1.216 via 10.0.77.1 dev ens192 proto dhcp src 10.0.77.136 metric 100
+10.0.77.0/24 dev ens192 proto kernel scope link src 10.0.77.136 metric 100
+10.0.77.1 dev ens192 proto dhcp scope link src 10.0.77.136 metric 100
+10.10.10.0/24 via 10.10.10.5 dev tun0
+10.10.10.5 dev tun0 proto kernel scope link src 10.10.10.6
+```
+
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
