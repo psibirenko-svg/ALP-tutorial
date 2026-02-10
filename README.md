@@ -8362,105 +8362,84 @@ PING 10.10.20.1 (10.10.20.1) 56(84) bytes of data.
 ^C
 ```
 
-
-
-
-
-
-
-iperf3 -s -p 5202 &
-iperf3: interrupt - the server has terminated
-                                             [1]+  Exit 1                  iperf3 -s -p 5202
-[1] 1865
-root@serverloc:/etc/openvpn# -----------------------------------------------------------
-Server listening on 5202 (test #1)
+### Далее необходимо замерить скорость в туннеле. Попробуем замерить одновременно...
+```bash
+root@serverloc:~# iperf3 -s -B 10.10.10.1 -p 5201 &   # TAP
+[1] 2847
+root@serverloc:~# -----------------------------------------------------------
+Server listening on 5201 (test #1)
 -----------------------------------------------------------
-
-
-	
-- **root@serverloc:~# systemctl start openvpn@server-tap** # запускаю на сервер openvpn
-- **root@serverloc:~# systemctl status openvpn@server-tap** # проверяю
-```bash
-● openvpn@server.service - OpenVPN Tunneling Application On server
-     Loaded: loaded (/etc/systemd/system/openvpn@.service; enabled; preset: enabled)
-     Active: active (running) since Fri 2026-02-06 13:39:26 MSK; 7min ago
-```
-- **root@serverloc:~# systemctl enable openvpn@server-tap** #
-- **root@serverloc:~# ip a | grep tap** # проверяю
-```bash
-3: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
-    inet 10.10.10.1/24 scope global tap0
-```
-- **root@clientloc:~# systemctl start openvpn@client-tun** # запускаю на клиенте openvpn
-- **root@clientloc:~# systemctl status openvpn@client-tun** # проверяю
-```bash
-● openvpn@server.service - OpenVPN Tunneling Application On server
-     Loaded: loaded (/etc/systemd/system/openvpn@.service; enabled; preset: enabled)
-     Active: active (running) since Fri 2026-02-06 10:39:32 UTC; 8min ago
-```
-- **root@clientloc:~# systemctl enable openvpn@server-tun** #
-- **root@clientloc:~# ip a | grep tap** # проверяю
-```bash
-3: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
-    inet 10.10.10.2/24 scope global tap0
-```
-- **root@clientloc:~# ping 10.10.10.1** #  проверяю работу туннеля, работает
-```bash
-PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
-64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.594 ms
-64 bytes from 10.10.10.1: icmp_seq=2 ttl=64 time=0.327 ms
-```
-- **root@serverloc:~# iperf3 -s &**
-```bash
-[1] 1348
-root@serverloc:~# iperf3: error - unable to start listener for connections: Address already in use
-iperf3: exiting
-^C
-[1]+  Exit 1                  iperf3 -s
-```
-- **root@serverloc:~# sudo lsof -i :5201** # кто-то держит
-```bash
-COMMAND  PID   USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-iperf3  1347 iperf3    3u  IPv6  21127      0t0  TCP *:5201 (LISTEN)
-```
-- **root@serverloc:~# sudo pkill -9 iperf3** # прибиваем всех
-- **root@serverloc:~# sudo lsof -i :5201** # никого нет, но потом все по-новой
-- **root@serverloc:~# iperf3 -s -p 5202** & # меняем порт (разберемся потом, иногда лучше менять порт, если старый застрял в TIME_WAIT, чем пытаться ждать), запускается
-```bash
-[1] 1360
+iperf3 -s -B 10.10iperf3 -s -B 10.10.20.1 -p 5202 &   # TUN
+[2] 2850
 root@serverloc:~# -----------------------------------------------------------
 Server listening on 5202 (test #1)
 -----------------------------------------------------------
+Accepted connection from 10.10.20.2, port 42139
+Accepted connection from 10.10.10.2, port 56623
 ```
-- **root@clientloc:~# iperf3 -c 10.10.10.1 -t 40 -i 5** # запускаем iperf3 в режиме клиента и замеряем  скорость в туннеле
 ```bash
+root@clientloc:~# iperf3 -c 10.10.10.1 -p 5201 -P 4 -t 30 --bind 10.10.10.2 &   # TAP
+iperf3 -c 10.10.20.1 -p 5202 -P 4 -t 30 --bind 10.10.20.2 &   # TUN
+wait
+[1] 3495
+[2] 3496
 Connecting to host 10.10.10.1, port 5201
-[  5] local 10.10.10.2 port 36166 connected to 10.10.10.1 port 5201
-[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
-[  5]   0.00-5.00   sec   352 MBytes   590 Mbits/sec  1617    429 KBytes
-[  5]   5.00-10.00  sec   375 MBytes   629 Mbits/sec   10    426 KBytes
-[  5]  10.00-15.01  sec   364 MBytes   611 Mbits/sec  116    426 KBytes
-^C[  5]  15.01-17.80  sec   212 MBytes   636 Mbits/sec   55    550 KBytes
+Connecting to host 10.10.20.1, port 5202
+.......
+.......
+[  5]  29.00-30.00  sec  13.4 MBytes   112 Mbits/sec  115   61.8 KBytes
+[  7]  29.00-30.00  sec  15.8 MBytes   132 Mbits/sec  131   40.7 KBytes
+[  9]  29.00-30.00  sec  13.4 MBytes   112 Mbits/sec  110   56.5 KBytes
+[ 11]  29.00-30.00  sec  15.0 MBytes   126 Mbits/sec  125   63.1 KBytes
+[SUM]  29.00-30.00  sec  57.5 MBytes   482 Mbits/sec  481
 - - - - - - - - - - - - - - - - - - - - - - - - -
 [ ID] Interval           Transfer     Bitrate         Retr
-[  5]   0.00-17.80  sec  1.27 GBytes   614 Mbits/sec  1798             sender
-[  5]   0.00-17.80  sec  0.00 Bytes  0.00 bits/sec                  receiver
-iperf3: interrupt - the client has terminated
-```
+[  5]   0.00-30.00  sec   437 MBytes   122 Mbits/sec  2419             sender
+[  5]   0.00-30.00  sec   436 MBytes   122 Mbits/sec                  receiver
+[  7]   0.00-30.00  sec   438 MBytes   122 Mbits/sec  2541             sender
+[  7]   0.00-30.00  sec   437 MBytes   122 Mbits/sec                  receiver
+[  9]   0.00-30.00  sec   395 MBytes   110 Mbits/sec  2619             sender
+[  9]   0.00-30.00  sec   394 MBytes   110 Mbits/sec                  receiver
+[ 11]   0.00-30.00  sec   448 MBytes   125 Mbits/sec  2674             sender
+[ 11]   0.00-30.00  sec   448 MBytes   125 Mbits/sec                  receiver
+[SUM]   0.00-30.00  sec  1.68 GBytes   480 Mbits/sec  10253             sender
+[SUM]   0.00-30.00  sec  1.67 GBytes   480 Mbits/sec                  receiver
 
-- **root@clientloc:/etc/openvpn# iperf3 -c 10.10.20.1 -t 40 -i 5** # запускаем iperf3 в режиме клиента и замеряем  скорость в туннеле
-Connecting to host 10.10.20.1, port 5201
-[  5] local 10.10.20.2 port 58730 connected to 10.10.20.1 port 5201
-[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
-[  5]   0.00-5.00   sec   339 MBytes   568 Mbits/sec   87    550 KBytes
-[  5]   5.00-10.00  sec   400 MBytes   671 Mbits/sec  125    255 KBytes
-[  5]  10.00-15.01  sec   377 MBytes   632 Mbits/sec   62    364 KBytes
-^C[  5]  15.01-16.04  sec  80.0 MBytes   650 Mbits/sec   32    251 KBytes
+iperf Done.
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[  5]  29.00-30.00  sec  13.2 MBytes   111 Mbits/sec   67   78.3 KBytes
+[  7]  29.00-30.00  sec  15.4 MBytes   129 Mbits/sec   64   61.6 KBytes
+[  9]  29.00-30.00  sec  15.6 MBytes   131 Mbits/sec   38   97.5 KBytes
+[ 11]  29.00-30.00  sec  12.4 MBytes   104 Mbits/sec   51   57.7 KBytes
+[SUM]  29.00-30.00  sec  56.6 MBytes   475 Mbits/sec  220
 - - - - - - - - - - - - - - - - - - - - - - - - -
 [ ID] Interval           Transfer     Bitrate         Retr
-[  5]   0.00-16.04  sec  1.17 GBytes   625 Mbits/sec  306             sender
-[  5]   0.00-16.04  sec  0.00 Bytes  0.00 bits/sec                  receiver
-iperf3: interrupt - the client has terminated
+[  5]   0.00-30.00  sec   443 MBytes   124 Mbits/sec  2260             sender
+[  5]   0.00-30.01  sec   442 MBytes   124 Mbits/sec                  receiver
+[  7]   0.00-30.00  sec   444 MBytes   124 Mbits/sec  2320             sender
+[  7]   0.00-30.01  sec   443 MBytes   124 Mbits/sec                  receiver
+[  9]   0.00-30.00  sec   427 MBytes   119 Mbits/sec  2711             sender
+[  9]   0.00-30.01  sec   426 MBytes   119 Mbits/sec                  receiver
+[ 11]   0.00-30.00  sec   424 MBytes   118 Mbits/sec  2696             sender
+[ 11]   0.00-30.01  sec   423 MBytes   118 Mbits/sec                  receiver
+[SUM]   0.00-30.00  sec  1.70 GBytes   486 Mbits/sec  9987             sender
+[SUM]   0.00-30.01  sec  1.69 GBytes   485 Mbits/sec                  receiver
+
+iperf Done.
+[1]-  Done                    iperf3 -c 10.10.10.1 -p 5201 -P 4 -t 30 --bind 10.10.10.2
+[2]+  Done                    iperf3 -c 10.10.20.1 -p 5202 -P 4 -t 30 --bind 10.10.20.2
+root@clientloc:~#
+```
+- **два параллельных TCP-теста:**
+-	•	TAP (10.10.10.x)
+-	•	TUN (10.10.20.x) оба по 4 потока, 30 сек, одновременно.
+### TAP - 480–486 Mbit/s Retr ~10 200; TUP - 475–485 Mbit/s Retr ~9 900 примерно одинаково делят один поток ≈ 480 Mbit/s
+### Выводы выше в ТЕОРИИ
+
+
+
+
+
 
 
 
