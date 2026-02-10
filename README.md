@@ -8624,6 +8624,39 @@ status /var/log/openvpn-status.log
 log /var/log/openvpn.log
 verb 3
 ```
+- **root@clientloc:/etc/openvpn# cat client.conf** # Необходимо создать файл client.conf
+```bash
+dev tun
+proto udp
+remote 192.168.56.10 1207
+client
+resolv-retry infinite
+remote-cert-tls server
+ca ./ca.crt
+cert ./client.crt
+key ./client.key
+route 192.168.56.0 255.255.255.0
+persist-key
+persist-tun
+comp-lzo
+verb 3
+```
+### Скопировать в одну директорию с client.conf файлы с сервера:
+```bash
+root@serverloc:/etc/openvpn/pki# scp ./ca.crt spg@10.0.77.136:/tmp
+spg@10.0.77.136's password:
+ca.crt                                                                        100% 1204     4.0MB/s   00:00
+root@serverloc:/etc/openvpn/pki# scp ./issued/client.crt spg@10.0.77.136:/tmp
+spg@10.0.77.136's password:
+client.crt                                                                    100% 4493    12.6MB/s   00:00
+root@serverloc:/etc/openvpn/pki# scp ./private/client.key spg@10.0.77.136:/tmp
+spg@10.0.77.136's password:
+client.key
+root@clientloc:/tmp# mv ./c* /etc/openvpn/
+root@clientloc:/tmp# ls /etc/openvpn/
+ca.crt  client.conf  client.key       client-tun.conf  server.conf  update-resolv-conf
+client  client.crt   client-tap.conf  server           static.key                                                                 100% 1704     5.8MB/s   00:00
+```
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
