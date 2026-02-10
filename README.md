@@ -8249,13 +8249,16 @@ WantedBy=multi-user.target
 ```
 - **root@clientloc:/tmp# cat /etc/openvpn/client-tap.conf**
 ```bash
-dev tap0
-proto udp
-port 1194
+dev tap
 remote 10.0.77.148
 ifconfig 10.10.10.2 255.255.255.0
+topology subnet
+route 10.0.77.0 255.255.255.0
 secret /etc/openvpn/static.key
 cipher AES-256-CBC
+comp-lzo
+status /var/log/openvpn-status.log
+log /var/log/openvpn.log
 verb 3
 ```
 - **root@clientloc:/tmp# cat /etc/systemd/system/openvpn@.service** # для клиента такой же
@@ -8273,33 +8276,40 @@ WantedBy=multi-user.target
 ### После многих ошибок добавляю файлы для для режима работы tun (правки внесены и в файлы для tab, чтобы можно было запустить одновременно)
 - **root@serverloc:/etc/openvpn# cat /etc/openvpn/server-tun.conf** # конфигурационный файл OpenVPN
 ```bash
-dev tun0
+dev tun
 proto udp
 port 1195
+
 ifconfig 10.10.20.1 10.10.20.2
+
 secret /etc/openvpn/static.key
 cipher AES-256-CBC
-persist-key
-persist-tun
-status /var/log/openvpn-tun-status.log
+comp-lzo
+
+status /var/log/openvpn-status-tun.log
 log /var/log/openvpn-tun.log
 verb 3
 ```
 - **root@clientloc:/etc/openvpn# cat client-tun.conf**
 ```bash
-dev tun0
+dev tun
+
 proto udp
-port 1195
-remote 10.0.77.148
+remote 10.0.77.148 1195
+
+nobind
+
 ifconfig 10.10.20.2 10.10.20.1
+#route 10.0.77.0 255.255.255.0
+
 secret /etc/openvpn/static.key
 cipher AES-256-CBC
-persist-tun
-persist-key
 comp-lzo
-status /var/log/openvpn-status.log
-log /var/log/openvpn.log
+
+status /var/log/openvpn-status-tun.log
+log /var/log/openvpn-tun.log
 verb 3
+
 ```
 systemctl start openvpn@server-tap
 systemctl start openvpn@server-tun
