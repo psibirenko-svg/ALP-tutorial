@@ -8084,7 +8084,34 @@ From 192.168.255.1 icmp_seq=31 Destination Host Unreachable
 - **1)Настроить VPN между двумя ВМ в tun/tap режимах, замерить скорость в туннелях, сделать вывод об отличающихся показателях**
 - **2)Поднять RAS на базе OpenVPN с клиентскими сертификатами, подключиться с локальной машины на ВМ**
 - ### Развернул две ВМ под ОС Ubuntu 24.04: serverloc, clientloc
-- 
+## Потрачено много времени на выполнение, поэтому немного теории
+<summary> = 🧠 Теория 🧠= 
+🔹 TUN — маршрутизируемый VPN (L3)￼
+￼
+TUN работает на 3 уровне OSI (IP). VPN поднимает виртуальный IP-интерфейс, и через него гоняется только IP-трафик.
+Как это выглядит
+	•	У клиента: tun0 с IP, например 10.8.0.2
+	•	У сервера: tun0 с IP, например 10.8.0.1
+	•	Дальше обычная маршрутизация
+Плюсы
+✅ Экономичный по трафику
+✅ Работает быстрее 
+✅ Легко масштабируется 
+✅ Лучший выбор для site-to-site и road warrior
+✅ Отлично дружит с NAT
+
+Минусы
+❌ Не работает broadcast/multicast 
+❌ Не увидишь «соседей» по сети 
+❌ Не подходит для legacy-протоколов
+Где использовать
+	•	Сервер ↔ сервер
+	•	Офис ↔ офис
+	•	Клиент ↔ офис
+	•	Когда нужна маршрутизация, а не «как будто в одном свиче»
+👉 99% всех VPN — это TUN
+
+</summary>
 - ### # Устанавливаем нужные пакеты и отключаем SELinux
 - **root@clientloc:~# apt update** 
 - **root@clientloc:~# apt install openvpn iperf3 selinux-utils** # подключения к VPN, организации site-to-site или remote-access VPN, шифрования трафика; iperf3 - утилита для измерения пропускной способности сети
@@ -8150,14 +8177,16 @@ drwxr-xr-x   2 root root 4.0K Nov 24 22:32 server
 ```
 - **root@serverloc:/etc/openvpn# cat /etc/openvpn/server-tap.conf** # конфигурационный файл OpenVPN
 ```bash
-dev tap
+dev tap0
+proto udp
+port 1194
 ifconfig 10.10.10.1 255.255.255.0
 topology subnet
 secret /etc/openvpn/static.key
-cipher AES-256-CBC # В методичке нет, но без этого openvpn не стартует (сipher BF-CBC not supported -> Exiting due to fatal error в логах)
+cipher AES-256-CBC
 comp-lzo
 status /var/log/openvpn-status.log
-log /var/log/openvpn.log
+log /var/log/openvpn-tap.log
 verb 3
 ```
 - **root@serverloc:/etc/openvpn# cat /etc/systemd/system/openvpn@.service** # service unit для запуска OpenVPN
@@ -8173,16 +8202,13 @@ WantedBy=multi-user.target
 ```
 - **root@clientloc:/tmp# cat /etc/openvpn/client-tap.conf**
 ```bash
-dev tap
+dev tap0
+proto udp
+port 1194
 remote 10.0.77.148
 ifconfig 10.10.10.2 255.255.255.0
-topology subnet
-route 10.0.77.0 255.255.255.0
 secret /etc/openvpn/static.key
-cipher AES-256-CBC # ******В методичке нет, но без этого openvpn не стартует (сipher BF-CBC not supported -> Exiting due to fatal error)*****
-comp-lzo
-status /var/log/openvpn-status.log
-log /var/log/openvpn.log
+cipher AES-256-CBC
 verb 3
 ```
 - **root@clientloc:/tmp# cat /etc/systemd/system/openvpn@.service** # для клиента такой же
@@ -8197,6 +8223,64 @@ ExecStart=/usr/sbin/openvpn --cd /etc/openvpn/ --config %i.conf
 [Install]
 WantedBy=multi-user.target
 ```
+### После многих ошибок добавляю файлы для для режима работы tun (правки внесены и в файлы для tab, чтобы можно было запустить одновременно)
+- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server-tun.conf** # конфигурационный файл OpenVPN
+```bash
+dev tun0
+proto udp
+port 1195
+ifconfig 10.10.20.1 10.10.20.2
+secret /etc/openvpn/static.key
+cipher AES-256-CBC
+persist-key
+persist-tun
+status /var/log/openvpn-tun-status.log
+log /var/log/openvpn-tun.log
+verb 3
+```
+- **root@clientloc:/etc/openvpn# cat client-tun.conf**
+```bash
+dev tun0
+proto udp
+port 1195
+remote 10.0.77.148
+ifconfig 10.10.20.2 10.10.20.1
+secret /etc/openvpn/static.key
+cipher AES-256-CBC
+persist-tun
+persist-key
+comp-lzo
+status /var/log/openvpn-status.log
+log /var/log/openvpn.log
+verb 3
+```
+systemctl start openvpn@server-tap
+systemctl start openvpn@server-tun
+systemctl start openvpn@client-tap
+systemctl start openvpn@client-tun
+
+root@serverloc:/etc/openvpn# ip a | grep -E "tap0|tun0"
+10: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
+    inet 10.10.10.1/24 scope global tap0
+11: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    inet 10.10.20.1 peer 10.10.20.2/32 scope global tun0
+
+root@clientloc:/etc/openvpn# ip a | grep -E "tap0|tun0"
+16: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
+    inet 10.10.10.2/24 scope global tap0
+17: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    inet 10.10.20.2 peer 10.10.20.1/32 scope global tun0
+	
+iperf3 -s -p 5202 &
+iperf3: interrupt - the server has terminated
+                                             [1]+  Exit 1                  iperf3 -s -p 5202
+[1] 1865
+root@serverloc:/etc/openvpn# -----------------------------------------------------------
+Server listening on 5202 (test #1)
+-----------------------------------------------------------
+
+
+	
 - **root@serverloc:~# systemctl start openvpn@server-tap** # запускаю на сервер openvpn
 - **root@serverloc:~# systemctl status openvpn@server-tap** # проверяю
 ```bash
@@ -8280,6 +8364,8 @@ Connecting to host 10.10.20.1, port 5201
 [  5]   0.00-16.04  sec  1.17 GBytes   625 Mbits/sec  306             sender
 [  5]   0.00-16.04  sec  0.00 Bytes  0.00 bits/sec                  receiver
 iperf3: interrupt - the client has terminated
+
+
 
 
 
