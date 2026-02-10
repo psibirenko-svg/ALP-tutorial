@@ -8331,6 +8331,42 @@ verb 3
     inet 10.10.20.2 peer 10.10.20.1/32 scope global tun0
 ```
 
+### Проерим работу VPN между двумя ВМ в tun/tap режимах:
+
+- **root@serverloc:~# ping 10.10.10.2**
+```bash
+PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
+64 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=0.433 ms
+64 bytes from 10.10.10.2: icmp_seq=2 ttl=64 time=0.399 ms
+^C
+```
+- **root@serverloc:~# ping 10.10.20.2**
+```bash
+PING 10.10.20.2 (10.10.20.2) 56(84) bytes of data.
+64 bytes from 10.10.20.2: icmp_seq=1 ttl=64 time=0.385 ms
+64 bytes from 10.10.20.2: icmp_seq=2 ttl=64 time=0.324 ms
+^C
+```
+- **root@clientloc:~# ping 10.10.10.1**
+```bash
+PING 10.10.10.1 (10.10.10.1) 56(84) bytes of data.
+64 bytes from 10.10.10.1: icmp_seq=1 ttl=64 time=0.361 ms
+64 bytes from 10.10.10.1: icmp_seq=2 ttl=64 time=0.328 ms
+^C
+```
+- **root@clientloc:~# ping 10.10.20.1**
+```bash
+PING 10.10.20.1 (10.10.20.1) 56(84) bytes of data.
+64 bytes from 10.10.20.1: icmp_seq=1 ttl=64 time=0.317 ms
+64 bytes from 10.10.20.1: icmp_seq=2 ttl=64 time=0.317 ms
+^C
+```
+
+
+
+
+
+
 
 iperf3 -s -p 5202 &
 iperf3: interrupt - the server has terminated
