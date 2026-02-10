@@ -8439,8 +8439,10 @@ root@clientloc:~#
 ## 2. RAS на базе OpenVPN
 - **root@serverloc:~# apt update**
 - **root@serverloc:~# apt install openvpn easy-rsa**
-- **root@serverloc:~# cd /etc/openvpn/**
-- **root@serverloc:/etc/openvpn# /usr/share/easy-rsa/easyrsa init-pki**
+- **root@serverloc:~# cd /etc/openvpn/** # Переходим в директорию /etc/openvpn
+
+- **root@serverloc:/etc/openvpn# /usr/share/easy-rsa/easyrsa init-pki** # и инициализируем PKI
+
 ```bash
 Notice
 ------
@@ -8452,6 +8454,7 @@ Your newly created PKI dir is:
 Using Easy-RSA configuration:
 * undefined
 ```
+### Генерируем необходимые ключи и сертификаты для сервера
 - **root@serverloc:/etc/openvpn# echo 'rasvpn' | /usr/share/easy-rsa/easyrsa gen-req server nopass**
 ```bash
 No Easy-RSA 'vars' configuration file exists!
@@ -8476,19 +8479,66 @@ Your files are:
 * req: /etc/openvpn/pki/reqs/server.req
 * key: /etc/openvpn/pki/private/server.key
 ```
+- **root@serverloc:/etc/openvpn# /usr/share/easy-rsa/easyrsa build-ca** 
+```bash
+No Easy-RSA 'vars' configuration file exists!
+
+Using SSL:
+* openssl OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+
+Enter New CA Key Passphrase:
+
+Confirm New CA Key Passphrase:
+.......+..+...+...+.......+.......................+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.................+.+......+.....+....+..+...+.......+..+...+...+....+.................+....+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+...........+...+......+.......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+.............+.........+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+......+......+.....+...+.+.....+...+.......+.....+.+........+....+......+.........+..+...+...............+...+...+.........+......+.+.....+.........+....+..+......+...+....+......+.........+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.....+............+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Common Name (eg: your user, host, or server name) [Easy-RSA CA]:
+
+Notice
+------
+CA creation complete. Your new CA certificate is at:
+* /etc/openvpn/pki/ca.crt
+```
 - **root@serverloc:/etc/openvpn# echo 'yes' | /usr/share/easy-rsa/easyrsa sign-req server servre**
 ```bash
 No Easy-RSA 'vars' configuration file exists!
 
-EasyRSA version 3.1.7
+Using SSL:
+* openssl OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+You are about to sign the following certificate:
+Please check over the details shown below for accuracy. Note that this request
+has not been cryptographically verified. Please be sure it came from a trusted
+source or that you have verified the request checksum with the sender.
+Request subject, to be signed as a server certificate
+for '825' days:
 
-Error
------
-Missing expected CA file: ca.crt
+subject=
+    commonName                = rasvpn
 
-(perhaps you need to run build-ca?)
+Type the word 'yes' to continue, or any other input to abort.
+  Confirm request details:
+Using configuration from /etc/openvpn/pki/openssl-easyrsa.cnf
+Enter pass phrase for /etc/openvpn/pki/private/ca.key:
+Check that the request matches the signature
+Signature ok
+The Subject's Distinguished Name is as follows
+commonName            :ASN.1 12:'rasvpn'
+Certificate is to be certified until May 15 09:20:15 2028 GMT (825 days)
 
-Run easyrsa without commands for usage and command help.
+Write out database with 1 new entries
+Database updated
+
+Notice
+------
+Certificate created at:
+* /etc/openvpn/pki/issued/server.crt
 ```
 - **root@serverloc:/etc/openvpn# /usr/share/easy-rsa/easyrsa gen-dh openvpn --genkey secret ca.key**
 ```bash
@@ -8509,6 +8559,71 @@ DH parameters of size 2048 created at:
 ```
 
 
+
+### Генерируем необходимые ключи и сертификаты для клиента
+- **root@serverloc:/etc/openvpn# echo 'client' | /usr/share/easy-rsa/easyrsa gen-req client nopass**
+```bash
+Private-Key and Public-Certificate-Request files created.
+Your files are:
+* req: /etc/openvpn/pki/reqs/client.req
+* key: /etc/openvpn/pki/private/client.key
+```
+- **root@serverloc:/etc/openvpn# echo 'yes' | /usr/share/easy-rsa/easyrsa sign-req client client**
+```bash
+No Easy-RSA 'vars' configuration file exists!
+
+Using SSL:
+* openssl OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+You are about to sign the following certificate:
+Please check over the details shown below for accuracy. Note that this request
+has not been cryptographically verified. Please be sure it came from a trusted
+source or that you have verified the request checksum with the sender.
+Request subject, to be signed as a client certificate
+for '825' days:
+
+subject=
+    commonName                = client
+
+Type the word 'yes' to continue, or any other input to abort.
+  Confirm request details:
+Using configuration from /etc/openvpn/pki/openssl-easyrsa.cnf
+Enter pass phrase for /etc/openvpn/pki/private/ca.key:
+Check that the request matches the signature
+Signature ok
+The Subject's Distinguished Name is as follows
+commonName            :ASN.1 12:'client'
+Certificate is to be certified until May 15 08:50:50 2028 GMT (825 days)
+
+Write out database with 1 new entries
+Database updated
+
+Notice
+------
+Certificate created at:
+* /etc/openvpn/pki/issued/client.crt
+```
+- **root@serverloc:/etc/openvpn# echo 'iroute 10.10.10.0 255.255.255.0' > /etc/openvpn/client/client** # Зададим параметр iroute для клиента
+- **root@serverloc:/etc/openvpn# cat /etc/openvpn/server.conf** # Создаем конфигурационный файл сервера
+```bash
+port 1207
+proto udp
+dev tun
+ca /etc/openvpn/pki/ca.crt
+cert /etc/openvpn/pki/issued/server.crt
+key /etc/openvpn/pki/private/server.key
+dh /etc/openvpn/pki/dh.pem
+server 10.10.10.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+client-to-client
+client-config-dir /etc/openvpn/client
+keepalive 10 120
+comp-lzo
+persist-key
+persist-tun
+status /var/log/openvpn-status.log
+log /var/log/openvpn.log
+verb 3
+```
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
