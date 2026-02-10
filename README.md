@@ -8309,25 +8309,29 @@ comp-lzo
 status /var/log/openvpn-status-tun.log
 log /var/log/openvpn-tun.log
 verb 3
-
 ```
-systemctl start openvpn@server-tap
-systemctl start openvpn@server-tun
-systemctl start openvpn@client-tap
-systemctl start openvpn@client-tun
 
-root@serverloc:/etc/openvpn# ip a | grep -E "tap0|tun0"
+- **root@serverloc:~# systemctl start openvpn@server-tap**
+- **root@serverloc:~# systemctl start openvpn@server-tun**
+- **root@clientloc:~#systemctl start openvpn@client-tap**
+- **root@clientloc:~#systemctl start openvpn@client-tun**
+
+- **root@serverloc:/etc/openvpn# ip a | grep -E "tap0|tun0"**
+```bash
 10: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
     inet 10.10.10.1/24 scope global tap0
 11: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
     inet 10.10.20.1 peer 10.10.20.2/32 scope global tun0
-
-root@clientloc:/etc/openvpn# ip a | grep -E "tap0|tun0"
+```
+- **root@clientloc:/etc/openvpn# ip a | grep -E "tap0|tun0"**
+```bash
 16: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
     inet 10.10.10.2/24 scope global tap0
 17: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
     inet 10.10.20.2 peer 10.10.20.1/32 scope global tun0
-	
+```
+
+
 iperf3 -s -p 5202 &
 iperf3: interrupt - the server has terminated
                                              [1]+  Exit 1                  iperf3 -s -p 5202
