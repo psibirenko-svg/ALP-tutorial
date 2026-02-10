@@ -8331,7 +8331,7 @@ verb 3
     inet 10.10.20.2 peer 10.10.20.1/32 scope global tun0
 ```
 
-### Проерим работу VPN между двумя ВМ в tun/tap режимах:
+### Проверим работу VPN между двумя ВМ в tun/tap режимах:
 
 - **root@serverloc:~# ping 10.10.10.2**
 ```bash
@@ -8436,13 +8436,77 @@ root@clientloc:~#
 ### TAP - 480–486 Mbit/s Retr ~10 200; TUP - 475–485 Mbit/s Retr ~9 900 примерно одинаково делят один поток ≈ 480 Mbit/s (оба туннеля упираются в один и тот же CPU ?)
 ### Выводы выше в ТЕОРИИ
 
+## 2. RAS на базе OpenVPN
+- **root@serverloc:~# apt update**
+- **root@serverloc:~# apt install openvpn easy-rsa**
+- **root@serverloc:~# cd /etc/openvpn/**
+- **root@serverloc:/etc/openvpn# /usr/share/easy-rsa/easyrsa init-pki**
+```bash
+Notice
+------
+'init-pki' complete; you may now create a CA or requests.
 
+Your newly created PKI dir is:
+* /etc/openvpn/pki
 
+Using Easy-RSA configuration:
+* undefined
+```
+- **root@serverloc:/etc/openvpn# echo 'rasvpn' | /usr/share/easy-rsa/easyrsa gen-req server nopass**
+```bash
+No Easy-RSA 'vars' configuration file exists!
 
+Using SSL:
+* openssl OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+........+......+.+........+......+.........+...+.......+...+.....+.......+..+...+..........+..+....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*...+.+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*......+...+..+......+....+..+.+........+.+......+...+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+...+....+.....+.......+.....+...+.......+.....+.+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*......+...+.......+...+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.......+..+...............+....+..............+...+.......+...+...+..+.......+......+.....+.......+........+...............+....+..+.........+....+...+.........+.....+....+............+.....+....+...+..+.........+.+........+.+............+........+.+...+........+.......+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Common Name (eg: your user, host, or server name) [server]:
+Notice
+------
+Private-Key and Public-Certificate-Request files created.
+Your files are:
+* req: /etc/openvpn/pki/reqs/server.req
+* key: /etc/openvpn/pki/private/server.key
+```
+- **root@serverloc:/etc/openvpn# echo 'yes' | /usr/share/easy-rsa/easyrsa sign-req server servre**
+```bash
+No Easy-RSA 'vars' configuration file exists!
 
+EasyRSA version 3.1.7
 
+Error
+-----
+Missing expected CA file: ca.crt
 
+(perhaps you need to run build-ca?)
 
+Run easyrsa without commands for usage and command help.
+```
+- **root@serverloc:/etc/openvpn# /usr/share/easy-rsa/easyrsa gen-dh openvpn --genkey secret ca.key**
+```bash
+No Easy-RSA 'vars' configuration file exists!
+
+Using SSL:
+* openssl OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+Generating DH parameters, 2048 bit long safe prime
+....+...............................................................................+........+..................................
+...........++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*++*
+DH parameters appear to be ok.
+
+Notice
+------
+
+DH parameters of size 2048 created at:
+* /etc/openvpn/pki/dh.pem
+```
 
 
 
