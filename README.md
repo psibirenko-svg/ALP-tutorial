@@ -9002,3 +9002,336 @@ USE_L10N = True
 USE_TZ = True
 STATIC_URL = '/static/'
 ```
+- **➜  dynamicweb cat project/python/manahe.py**       
+```bash
+#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+if __name__ == '__main__':
+    main()
+```
+- **➜  dynamicweb cat project/python/requirements.txt**
+```bash
+Django==3.1
+gunicorn==20.0.4
+pytz==2020.1
+```
+- **➜  dynamicweb cat project/python/Dockerfile**
+```bash
+FROM python:3.8.3
+
+ENV APP_ROOT /src
+ENV CONFIG_ROOT /config
+
+RUN mkdir ${CONFIG_ROOT}
+COPY requirements.txt ${CONFIG_ROOT}/requirements.txt
+RUN pip install -r ${CONFIG_ROOT}/requirements.txt
+
+RUN mkdir ${APP_ROOT}
+WORKDIR ${APP_ROOT}
+ADD . ${APP_ROOT}
+```
+- **➜  dynamicweb cat project/node/test.js**
+```bash
+const http = require('http');
+const hostname = '0.0.0.0';
+const port = 3000;
+
+const server = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('Hello from node js server');
+});
+
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
+});
+```
+- **➜  dynamicweb cat project/nginx-conf/nginx.conf** 
+```bash
+# ===============================
+# WORDPRESS (PHP-FPM)
+# ===============================
+server {
+    listen 8083;
+    listen [::]:8083;
+    server_name localhost;
+
+    index index.php index.html index.htm;
+    root /var/www/html;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass wordpress:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+
+    location ~* \.(css|gif|ico|jpeg|jpg|js|png)$ {
+        expires max;
+        log_not_found off;
+    }
+}
+
+# ===============================
+# DJANGO (reverse proxy)
+# ===============================
+upstream django {
+    server app:8000;
+}
+
+server {
+    listen 8081;
+    listen [::]:8081;
+    server_name localhost;
+
+    location / {
+        try_files $uri @proxy_to_app;
+    }
+
+    location @proxy_to_app {
+        proxy_pass http://django;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $server_name;
+    }
+}
+
+# ===============================
+# NODE.JS
+# ===============================
+server {
+    listen 8082;
+    listen [::]:8082;
+    server_name localhost;
+
+    location / {
+        proxy_pass http://node:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $server_name;
+    }
+}
+```
+- **➜  dynamicweb cat project/docker-compose.yml**
+```bash
+version: '3.7'
+
+services:
+
+  database:
+    image: mysql:8.0
+    container_name: database
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - app-network
+
+  wordpress:
+    image: wordpress:5.1.1-fpm-alpine
+    container_name: wordpress
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./wordpress:/var/www/html
+    depends_on:
+      - database
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:1.15.12-alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+      - "8081:8081"
+      - "8082:8082"
+    volumes:
+      - ./wordpress:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    depends_on:
+      - wordpress
+      - app
+      - node
+    networks:
+      - app-network
+
+  app:
+    build: ./python
+    container_name: app
+    restart: always
+    env_file:
+      - .env
+    command: gunicorn --workers=2 --bind=0.0.0.0:8000 mysite.wsgi:application
+    networks:
+      - app-network
+
+  node:
+    image: node:16.13.2-alpine3.15
+    container_name: node
+    working_dir: /opt/server
+    volumes:
+      - ./node:/opt/server
+    command: node test.js
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+```
+- **➜  dynamicweb cat prov.yml** 
+```bash
+- hosts: DynamicWeb
+  become: yes
+  gather_facts: yes
+
+  tasks:
+
+  - name: Install dependencies
+    apt:
+      name:
+        - ca-certificates
+        - curl
+        - gnupg
+      update_cache: yes
+      state: present
+
+  - name: Add Docker GPG key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker repo
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu noble stable
+      state: present
+
+  - name: Install Docker
+    apt:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      state: present
+      update_cache: yes
+
+  - name: Install docker compose plugin
+    apt:
+      name: docker-compose-plugin
+      state: present
+
+  - name: Add user to docker group
+    user:
+      name: "{{ ansible_user }}"
+      groups: docker
+      append: yes
+
+  - name: Copy project
+    copy:
+      src: project
+      dest: /home/{{ ansible_user }}/
+
+  - name: Run containers
+    shell: docker compose up -d --build
+    args:
+      chdir: /home/{{ ansible_user }}/project
+```
+- **➜  dynamicweb cat inventory.ini**
+```bash
+[DynamicWeb]
+10.0.77.163 ansible_user=spg
+```
+- **➜  dynamicweb ansible-playbook -i inventory.ini prov.yml -k -K** # Запускаем задание
+```bash
+SSH password: 
+BECOME password[defaults to SSH password]: 
+
+PLAY [DynamicWeb] ****************************************************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************************************************
+[WARNING]: Host '10.0.77.163' is using the discovered Python interpreter at '/usr/bin/python3.12', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.20/reference_appendices/interpreter_discovery.html for more information.
+ok: [10.0.77.163]
+
+TASK [Install dependencies] ******************************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Add Docker GPG key] ********************************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Add Docker repo] ***********************************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Install Docker] ************************************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Install docker compose plugin] *********************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Add user to docker group] **************************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Copy project] **************************************************************************************************************************
+ok: [10.0.77.163]
+
+TASK [Run containers] ************************************************************************************************************************
+changed: [10.0.77.163]
+
+PLAY RECAP ***********************************************************************************************************************************
+10.0.77.163                : ok=9    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+### Проверяем
+<img width="1055" height="856" alt="Screenshot 2026-02-16 at 11 24 37" src="https://github.com/user-attachments/assets/6a8026a1-95b2-4e9f-870c-f7812884af89" />
+
+<img width="539" height="227" alt="Screenshot 2026-02-16 at 11 25 11" src="https://github.com/user-attachments/assets/8581d033-659e-4c32-b4b0-ce3a2e73e33f" />
+
+<img width="806" height="858" alt="Screenshot 2026-02-16 at 11 25 42" src="https://github.com/user-attachments/assets/75a62f4c-dae8-41b4-b728-aff9ed3f67c1" />
+
+
