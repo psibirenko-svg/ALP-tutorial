@@ -8867,3 +8867,138 @@ Valid starting       Expires              Service principal
 ### Использованный материал: https://www.dmosk.ru/miniinstruktions.php?mini=freeipa-centos#client
 
 
+## 42 урок Динамический веб 
+ 
+
+**Домашнее задание** <ins>"Развертывание веб приложения на ВМ с помощью принципа IaC (реализация серез Ansible)"</ins>
+
+**Цель**: 
+- **1. Получить практические навыки в настройке инфраструктуры с помощью манифестов и конфигураций;**
+- **2. Отточить навыки использования ansible/docker;**
+- **3. Использование методологий в построении информационных систем - Infrastructure as Code ( Инфраструктура как код, IaC )**
+
+🎯 Что нужно сделать?
+**1. Создать вариант стенда Вnginx + php-fpm (wordpress) + python (django) + js(node.js) с деплоем через docker-compose
+
+- ### Так как у меня хостовая машина нам macOS (M4) и я использую ВМ созданные в vSphere часть связанную с их созданием опускаю (нет Vagrant)
+- ### Структура (дерево) проекта на хосте:
+```bash
+➜  dynamicweb pwd
+/Users/spg/Ansible/dynamicweb
+➜  dynamicweb tree
+.
+├── inventory.ini
+├── project
+│   ├── docker-compose.yml
+│   ├── nginx-conf
+│   │   └── nginx.conf
+│   ├── node
+│   │   └── test.js
+│   ├── python
+│   │   ├── Dockerfile
+│   │   ├── manahe.py
+│   │   ├── mysite
+│   │   │   ├── _init_.py
+│   │   │   ├── settings.py
+│   │   │   ├── urls.py
+│   │   │   └── wsgi.py
+│   │   └── requirements.txt
+│   └── screens
+└── prov.yml
+
+6 directories, 13 files
+```
+### Содержание дерева снизу вверх:
+
+- **➜  dynamicweb cat project/python/mysite/wsgi.py** 
+```bash
+import os
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+application = get_wsgi_application()
+```
+- **➜  dynamicweb cat project/python/mysite/urls.py**
+```bash
+from django.contrib import admin
+from django.urls import path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+]
+```
+- ➜  **dynamicweb cat project/python/mysite/settings.py**
+```bash
+import os
+import ast
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+SECRET_KEY = os.getenv('MYSITE_SECRET_KEY', '')
+DEBUG = ast.literal_eval(os.getenv('DEBUG', 'True'))
+ALLOWED_HOSTS = ['*']
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'mysite.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'mysite.wsgi.application'
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+STATIC_URL = '/static/'
+```
