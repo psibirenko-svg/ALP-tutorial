@@ -8710,10 +8710,44 @@ www - смотрит на обоих клиентов
 <img width="1045" height="309" alt="Screenshot 2026-02-18 at 11 54 40" src="https://github.com/user-attachments/assets/9ad76e61-fe0e-4086-97bb-dfef5dc80395" />
 <img width="849" height="709" alt="Screenshot 2026-02-18 at 11 56 10" src="https://github.com/user-attachments/assets/415a73a3-3b5f-49d1-89ca-d68444679de8" />
 
-### Python установить из репозиториев не удалось (недоступны для этой ОС)
-Переустановлены все ВМ в минимальной конфигурации с Development tools (python 3)
-Dszcybkjcm Выяснилось, что нет python3-pip
-удалось решить проблему с репозиториями (неподдерживаемая ОС, методичке много лет):
+### На macOS установлен Ansible, сконфигурированны все файлы для запуска:
+```bash
+➜  provisioning git:(master) ✗ tree
+.
+├── client-motd
+├── client-resolv.conf
+├── inventory
+├── master-named.conf
+├── named.ddns.lab
+├── named.dns.lab
+├── named.dns.lab.rev
+├── named.zonetransfer.key
+├── playbook.yml
+├── rndc.conf
+├── servers-resolv.conf
+├── slave-named.conf
+└── zonetransfer.key
+
+1 directory, 13 files
+```
+
+➜  provisioning git:(master) ✗ cat inventory 
+```bash
+[ns]
+ns01 ansible_host=192.168.50.10 ansible_python_interpreter=/usr/libexec/platform-python
+ns02 ansible_host=192.168.50.11 ansible_python_interpreter=/usr/libexec/platform-python
+
+[clients]
+client ansible_host=192.168.50.15 ansible_python_interpreter=/usr/libexec/platform-python
+client2 ansible_host=192.168.50.16 ansible_python_interpreter=/usr/libexec/platform-python
+
+[all:vars]
+ansible_user=spg
+```
+### Python установить из репозиториев не удалось (недоступны для этой ОС) Переустановлены все ВМ в минимальной конфигурации с Development tools (python 3)
+- Выяснилось, что нет python3-pip :))
+- удалось решить проблему с репозиториями неподдерживаемой ОС (методичке много лет):
+### https://www.veeble.com/kb/centos-stream-repo-list-working-urls/
 - **[root@ns01 ~]# cat /etc/yum.repos.d/CentOS-Stream-BaseOS.repo**
 ```bash
 [baseos]
@@ -8735,6 +8769,59 @@ baseurl=http://vault.centos.org/$contentdir/$stream/AppStream/$basearch/os/
 #mirrorlist=http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=extras-extras-common
 baseurl=http://vault.centos.org/$contentdir/$stream/extras/$basearch/extras-common/
 ```
+- **[root@ns01 ~]# dnf install -y python3-pip** # Устанавливаю необходимые пакеты
+
+```bash
+Installed:
+  python3-pip-9.0.3-24.el8.noarch                 python3-setuptools-39.2.0-7.el8.noarch                 python36-3.6.8-39.module_el8+762+77bd8591.x86_64
+
+Complete!
+```
+- **[root@ns01 ~]# dnf install python39 python39-pip -y** # Предыдущего оказалось недостаточно
+
+```bash
+Installed:
+  python39-3.9.19-1.module_el8+1051+5bea6413.x86_64                                python39-libs-3.9.19-1.module_el8+1051+5bea6413.x86_64
+  python39-pip-20.2.4-9.module_el8+963+a9c12c76.noarch                             python39-pip-wheel-20.2.4-9.module_el8+963+a9c12c76.noarch
+  python39-setuptools-50.3.2-5.module_el8+695+192a31a9.noarch                      python39-setuptools-wheel-50.3.2-5.module_el8+695+192a31a9.noarch
+
+Complete!
+```
+- **➜  provisioning git:(master) ✗ cat inventory.ini** # Правим инвентори в соотвествии с установленным на ВМ python3.9
+```bash
+[ns]
+ns01 ansible_host=192.168.50.10 ansible_python_interpreter=/bin/python3.9
+ns02 ansible_host=192.168.50.11 ansible_python_interpreter=/bin/python3.9
+
+[clients]
+client ansible_host=192.168.50.15 ansible_python_interpreter=/bin/python3.9
+client2 ansible_host=192.168.50.16 ansible_python_interpreter=/bin/python3.9
+
+[all:vars]
+ansible_user=spg
+```
+- **➜  provisioning git:(master) ✗ ansible all -i inventory.ini -m ping -k** # Проверяем доступность (все хорошо)
+```bash
+SSH password: 
+ns01 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+client | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+ns02 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+client2 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
