@@ -8710,7 +8710,31 @@ www - смотрит на обоих клиентов
 <img width="1045" height="309" alt="Screenshot 2026-02-18 at 11 54 40" src="https://github.com/user-attachments/assets/9ad76e61-fe0e-4086-97bb-dfef5dc80395" />
 <img width="849" height="709" alt="Screenshot 2026-02-18 at 11 56 10" src="https://github.com/user-attachments/assets/415a73a3-3b5f-49d1-89ca-d68444679de8" />
 
-
+### Python установить из репозиториев не удалось (недоступны для этой ОС)
+Переустановлены все ВМ в минимальной конфигурации с Development tools (python 3)
+Dszcybkjcm Выяснилось, что нет python3-pip
+удалось решить проблему с репозиториями (неподдерживаемая ОС, методичке много лет):
+- **[root@ns01 ~]# cat /etc/yum.repos.d/CentOS-Stream-BaseOS.repo**
+```bash
+[baseos]
+#mirrorlist=http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=BaseOS&infra=$infra
+baseurl=http://vault.centos.org/$contentdir/$stream/BaseOS/$basearch/os/
+``` 
+- **[root@ns01 ~]# cat /etc/yum.repos.d/CentOS-Stream-Extras.repo**
+```bash
+#mirrorlist=http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=extras&infra=$infra
+baseurl=http://vault.centos.org/$contentdir/$stream/extras/$basearch/os/
+```
+- **[root@ns01 ~]# cat /etc/yum.repos.d/CentOS-Stream-AppStream.repo**
+```bash
+#mirrorlist=http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=AppStream&infra=$infra
+baseurl=http://vault.centos.org/$contentdir/$stream/AppStream/$basearch/os/
+```
+- **[root@ns01 ~]# cat /etc/yum.repos.d/CentOS-Stream-Extras-common.repo**
+```bash
+#mirrorlist=http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=extras-extras-common
+baseurl=http://vault.centos.org/$contentdir/$stream/extras/$basearch/extras-common/
+```
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
