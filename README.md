@@ -9318,7 +9318,36 @@ ns02                       : ok=12   changed=5    unreachable=0    failed=0    s
 
 ➜  provisioning git:(master) ✗ 
 ```
+### Проверки
+- **root@ns01:~# ip -br a**
+```bash
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+ens192           UP             192.168.50.10/24 fe80::250:56ff:feb3:7ee8/64
+```
+- **root@ns01:~# ss -ulpn**
+```bash
+State      Recv-Q      Send-Q                               Local Address:Port           Peer Address:Port     Process
+UNCONN     0           0                                    192.168.50.10:53                  0.0.0.0:*         users:(("named",pid=750381,fd=37))
+UNCONN     0           0                                    192.168.50.10:53                  0.0.0.0:*         users:(("named",pid=750381,fd=38))
+UNCONN     0           0                                       127.0.0.54:53                  0.0.0.0:*         users:(("systemd-resolve",pid=651,fd=16))
+UNCONN     0           0                                    127.0.0.53%lo:53                  0.0.0.0:*         users:(("systemd-resolve",pid=651,fd=14))
+UNCONN     0           0                                    192.168.50.10:123                 0.0.0.0:*         users:(("ntpd",pid=959,fd=23))
+UNCONN     0           0                                        127.0.0.1:123                 0.0.0.0:*         users:(("ntpd",pid=959,fd=18))
+UNCONN     0           0                                          0.0.0.0:123                 0.0.0.0:*         users:(("ntpd",pid=959,fd=17))
+UNCONN     0           0                                            [::1]:53                     [::]:*         users:(("named",pid=750381,fd=28))
+UNCONN     0           0                                            [::1]:53                     [::]:*         users:(("named",pid=750381,fd=29))
+UNCONN     0           0                [fe80::250:56ff:feb3:7ee8]%ens192:123                    [::]:*         users:(("ntpd",pid=959,fd=22))
+UNCONN     0           0                                            [::1]:123                    [::]:*         users:(("ntpd",pid=959,fd=20))
+UNCONN     0           0                                             [::]:123                    [::]:*         users:(("ntpd",pid=959,fd=16))
+```
+- **root@ns01:~# cat /etc/bind/named.conf**
+```bash
+options {
 
+    // network
+	listen-on port 53 { 192.168.50.10; };
+	listen-on-v6 port 53 { ::1; };
+```
 
 
 
