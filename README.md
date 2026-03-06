@@ -9045,7 +9045,165 @@ ansible_user=spg
         dest: /etc/motd
         mode: '0644'
 ```      
+- **➜  provisioning git:(master) ✗ cat ./files/master-named.conf** 
+options {
+```bash
+    // network 
+	listen-on port 53 { 192.168.50.10; };
+	listen-on-v6 port 53 { ::1; };
 
+    // data
+	directory 	"/var/cache/bind/";
+	dump-file 	"/var/cache/bind/data/cache_dump.db";
+	statistics-file "/var/cache/bind/data/named_stats.txt";
+	memstatistics-file "/var/cache/bind/data/named_mem_stats.txt";
+
+    // server
+	recursion yes;
+	allow-query     { any; };
+        allow-transfer { any; };
+    
+    // dnssec
+	dnssec-validation auto;
+
+    // others
+	bindkeys-file "/etc/bind/bind.key";
+	managed-keys-directory "/var/cache/bind";
+	pid-file "/run/named/named.pid";
+	session-keyfile "/run/named/session.key";
+};
+
+logging {
+        channel default_debug {
+                file "/var/log/named/named.log";
+                severity dynamic;
+        };
+};
+
+// RNDC Control for client
+key "rndc-key" {
+    algorithm hmac-md5;
+    secret "GrtiE9kz16GK+OKKU/qJvQ==";
+};
+controls {
+        inet 192.168.50.10 allow { 192.168.50.15; } keys { "rndc-key"; }; 
+};
+
+// ZONE TRANSFER WITH TSIG
+include "/etc/bind/named.zonetransfer.key"; 
+server 192.168.50.11 {
+    keys { "zonetransfer.key"; };
+};
+
+// root zone
+zone "." IN {
+	type hint;
+	file "/usr/share/dns/root.hints";
+};
+
+
+// lab's zone
+zone "dns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab";
+};
+
+// lab's zone reverse
+zone "50.168.192.in-addr.arpa" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab.rev";
+};
+
+// lab's ddns zone
+zone "ddns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    allow-update { key "zonetransfer.key"; };
+    file "/etc/bind/named.ddns.lab";
+};
+```
+- **➜  provisioning git:(master) ✗ cat slave-named.conf**
+```bash
+options {
+
+    // network 
+    listen-on port 53 { 192.168.50.10; };
+    listen-on-v6 port 53 { ::1; };
+
+    // data
+    directory       "/var/cache/bind";
+    dump-file       "/var/cache/bind/cache_dump.db";
+    statistics-file "/var/cache/bind/named_stats.txt";
+    memstatistics-file "/var/cache/bind/named_mem_stats.txt";
+
+    // server
+    recursion yes;
+    allow-query     { any; };
+    allow-transfer { any; };
+    
+    // dnssec
+    dnssec-validation auto;
+
+    // others
+    bindkeys-file "/etc/bind/named.iscdlv.key";
+    managed-keys-directory "/var/cache/bind/dynamic";
+    pid-file "/run/named/named.pid";
+    session-keyfile "/run/named/session.key";
+};
+
+logging {
+    channel default_debug {
+        file "/var/log/named/named.run";
+        severity dynamic;
+    };
+};
+
+// RNDC Control for client
+key "rndc-key" {
+    algorithm hmac-md5;
+    secret "GrtiE9kz16GK+OKKU/qJvQ==";
+};
+controls {
+    inet 192.168.50.10 allow { 192.168.50.15; } keys { "rndc-key"; }; 
+};
+
+// ZONE TRANSFER WITH TSIG
+include "/etc/bind/named.zonetransfer.key"; 
+server 192.168.50.11 {
+    keys { "zonetransfer.key"; };
+};
+
+// root zone
+zone "." IN {
+    type hint;
+    file "/usr/share/dns/root.hints";
+};
+
+
+// lab's zone
+zone "dns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab";
+};
+
+// lab's zone reverse
+zone "50.168.192.in-addr.arpa" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab.rev";
+};
+
+// lab's ddns zone
+zone "ddns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    allow-update { key "zonetransfer.key"; };
+    file "/etc/bind/named.ddns.lab";
+};
+```
 ### Все же Ansible отработал 
 - **➜  provisioning git:(master) ✗ ansible-playbook -i inventory.ini playbook.yml -k -K**                               
 ```bash
