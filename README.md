@@ -8820,7 +8820,231 @@ client2 | SUCCESS => {
     "ping": "pong"
 }
 ```
-### В результате не заработало из-за старого python... Принял решение переписать playbook под Ubuntu 24.04 :(
+### В результате не заработало из-за старого python... Принял решение переписать playbook и пр. под Ubuntu 24.04 :(из-за малого опыта показалось, что "руками" настроил бы быстрее). Что получилось:
+- **➜  provisioning git:(master) ✗ pwd**
+- /Users/spg/Ansible/vagrant-bind/provisioning
+- **➜  provisioning git:(master) ✗ tree**
+```bash
+.
+├── client-motd
+├── client-resolv.conf
+├── files
+│   ├── master-named.conf
+│   ├── named.ddns.lab
+│   ├── named.dns.lab
+│   ├── named.dns.lab.rev
+│   └── named.zonetransfer.key
+├── inventory.ini
+├── master-named.conf.old
+├── playbook.all
+├── playbook.bkp
+├── playbook.last
+├── playbook.ns2
+├── playbook.yml
+├── rndc.conf
+├── servers-resolv.conf
+├── slave-named.conf
+├── slave-named.conf.old
+└── zonetransfer.key
+
+2 directories, 19 files
+```
+- **➜  provisioning git:(master) ✗ cat inventory.ini** 
+```bash
+[ns]
+ns01 ansible_host=10.0.77.186
+ns02 ansible_host=10.0.77.156
+#ns01 ansible_host=192.168.50.10
+#ns02 ansible_host=192.168.50.11
+
+[clients]
+client ansible_host=10.0.77.181
+client2 ansible_host=10.0.77.170
+#client ansible_host=192.168.50.15
+#client2 ansible_host=192.168.50.16
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3.12
+ansible_user=spg
+```
+- **➜  provisioning git:(master) ✗ cat playbook.yml** 
+```bash
+---
+############################################
+# Install base packages
+############################################
+
+- hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Temporary DNS
+      copy:
+        dest: /etc/resolv.conf
+        content: |
+          nameserver 8.8.8.8
+
+    - name: Wait for dpkg lock
+      shell: |
+        while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+          sleep 1
+        done
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install packages
+      apt:
+        name:
+          - bind9
+          - bind9utils
+          - dnsutils
+        state: present
+
+    - name: Copy transfer key
+      copy:
+        src: named.zonetransfer.key
+        dest: /etc/bind/named.zonetransfer.key
+        owner: root
+        group: bind
+        mode: '0640'
+
+############################################
+# MASTER DNS
+############################################
+
+- hosts: ns01
+  become: yes
+
+  tasks:
+
+    - name: Install master config
+      copy:
+        src: master-named.conf
+        dest: /etc/bind/named.conf
+        owner: root
+        group: bind
+        mode: '0644'
+      notify: restart bind
+
+    - name: Copy zone files
+      copy:
+        src: "{{ item }}"
+        dest: /etc/bind/
+        owner: root
+        group: bind
+        mode: '0664'
+      loop:
+        - files/named.dns.lab
+        - files/named.dns.lab.rev
+        - files/named.ddns.lab
+      notify: restart bind
+
+    - name: Create DNSSEC directory
+      file:
+        path: /var/cache/bind/dynamic
+        state: directory
+        owner: bind
+        group: bind
+        mode: '0775'
+
+    - name: Check bind config
+      command: named-checkconf /etc/bind/named.conf
+
+    - name: Check forward zone
+      command: named-checkzone dns.lab /etc/bind/named.dns.lab
+
+    - name: Check reverse zone
+      command: named-checkzone 50.168.192.in-addr.arpa /etc/bind/named.dns.lab.rev
+
+    - name: Configure resolv.conf
+      copy:
+        src: servers-resolv.conf
+        dest: /etc/resolv.conf
+        mode: '0644'
+
+  handlers:
+
+    - name: restart bind
+      service:
+        name: bind9
+        state: restarted
+        enabled: yes
+
+############################################
+# SLAVE DNS
+############################################
+
+- hosts: ns02
+  become: yes
+
+  tasks:
+
+    - name: Install slave config
+      copy:
+        src: slave-named.conf
+        dest: /etc/bind/named.conf
+        owner: root
+        group: bind
+        mode: '0644'
+      notify: restart bind
+
+    - name: Ensure bind directory permissions
+      file:
+        path: /etc/bind
+        owner: root
+        group: bind
+        mode: '0755'
+
+    - name: Create DNSSEC directory
+      file:
+        path: /var/cache/bind/dynamic
+        state: directory
+        owner: bind
+        group: bind
+        mode: '0775'
+
+    - name: Check bind config
+      command: named-checkconf /etc/bind/named.conf
+
+    - name: Configure resolv.conf
+      copy:
+        src: servers-resolv.conf
+        dest: /etc/resolv.conf
+        mode: '0644'
+
+  handlers:
+
+    - name: restart bind
+      service:
+        name: bind9
+        state: restarted
+        enabled: yes
+
+############################################
+# CLIENTS
+############################################
+
+- hosts: clients
+  become: yes
+
+  tasks:
+
+    - name: Configure DNS resolver
+      copy:
+        src: client-resolv.conf
+        dest: /etc/resolv.conf
+        mode: '0644'
+
+    - name: Install MOTD
+      copy:
+        src: client-motd
+        dest: /etc/motd
+        mode: '0644'
+```      
 
 ### Все же Ansible отработал 
 - **➜  provisioning git:(master) ✗ ansible-playbook -i inventory.ini playbook.yml -k -K**                               
