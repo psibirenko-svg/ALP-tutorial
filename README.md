@@ -9348,9 +9348,26 @@ options {
 	listen-on port 53 { 192.168.50.10; };
 	listen-on-v6 port 53 { ::1; };
 ```
+- **root@ns020tus:~# cat /etc/bind/named.conf**
+```bash
+options {
 
+    // network
+    listen-on port 53 { 192.168.50.11; };
+    listen-on-v6 port 53 { ::1; };
+```
+- **root@ns01:~# cat /etc/bind/named.conf**
+```bash
+// lab's zone
+zone "dns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab";
+```
+- **root@ns020tus:~# cat /etc/bind/named.conf**
+```bash
 
-
+```
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
 **Домашнее задание** <ins>"LDAP"</ins>
