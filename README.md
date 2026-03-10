@@ -9353,6 +9353,145 @@ ns02                       : ok=15   changed=7    unreachable=0    failed=0    s
 
 ➜  provisioning git:(master) ✗ 
 ```
+### Для того, чтобы при установке ПО на машины стенда у них был доступ в Интернет развернул еще один сервер inetServer с двумя сетевыми интерфейсами в качестве шлюза с NAT-ом и прокидыванием порта для доступа извне по ssh.
+<img width="1202" height="527" alt="Screenshot 2026-03-10 at 10 07 04" src="https://github.com/user-attachments/assets/13e00436-dd11-447a-a8db-33ebb12a1141" />
+### В предверии защиты проекта его разворачивание реализовал через Ansible:
+- **➜  provisioning git:(master) ✗ cd ../../inetrouter** 
+- **➜  inetrouter tree**
+```bash
+.
+├── inventory.ini
+└── playbook.yml
+```
+- **➜  inetrouter cat inventory.ini** 
+```bash
+[routers]
+inetrouter ansible_host=10.0.77.182
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3.12
+ansible_user=spg
+```
+- **➜  inetrouter cat playbook.yml**
+```bash
+---
+- hosts: inetrouter
+  become: yes
+  vars:
+    lan_iface: ens224
+    wan_iface: ens192
+    lan_net: 192.168.50.0/24
+
+  tasks:
+
+    ########################################
+    # Enable IPv4 forwarding
+    ########################################
+    - name: Enable IPv4 forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        reload: yes
+
+    ########################################
+    # Flush iptables
+    ########################################
+    - name: Flush filter table
+      command: iptables -F
+
+    - name: Flush NAT table
+      command: iptables -t nat -F
+
+    ########################################
+    # Allow ICMP and loopback
+    ########################################
+    - name: Allow ICMP
+      command: iptables -A INPUT -p icmp -j ACCEPT
+
+    - name: Allow loopback
+      command: iptables -A INPUT -i lo -j ACCEPT
+
+    ########################################
+    # Forward LAN <-> WAN
+    ########################################
+    - name: Forward LAN to WAN
+      command: iptables -A FORWARD -i {{ lan_iface }} -o {{ wan_iface }} -j ACCEPT
+
+    - name: Forward WAN to LAN for established connections
+      command: iptables -A FORWARD -i {{ wan_iface }} -o {{ lan_iface }} -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+    ########################################
+    # MASQUERADE outgoing traffic from LAN
+    ########################################
+    - name: MASQUERADE LAN -> WAN
+      command: iptables -t nat -A POSTROUTING -s {{ lan_net }} -o {{ wan_iface }} -j MASQUERADE
+
+    ########################################
+    # DNAT for remote SSH (optional)
+    ########################################
+    - name: DNAT port 1010 -> internal host 192.168.50.10
+      command: iptables -t nat -A PREROUTING -p tcp --dport 1010 -j DNAT --to-destination 192.168.50.10:22
+
+    - name: DNAT port 1011 -> internal host 192.168.50.11
+      command: iptables -t nat -A PREROUTING -p tcp --dport 1011 -j DNAT --to-destination 192.168.50.11:22
+
+    - name: DNAT port 1015 -> internal host 192.168.50.15
+      command: iptables -t nat -A PREROUTING -p tcp --dport 1015 -j DNAT --to-destination 192.168.50.15:22
+
+    - name: DNAT port 1016 -> internal host 192.168.50.16
+      command: iptables -t nat -A PREROUTING -p tcp --dport 1016 -j DNAT --to-destination 192.168.50.16:22
+    ########################################
+    # Save iptables rules persistently
+    ########################################
+    - name: Save iptables rules persistently
+      shell: iptables-save > /etc/iptables/rules.v4
+      args:
+        executable: /bin/bash
+
+    ########################################
+    # Apply netplan
+    ########################################
+    - name: Apply netplan configuration
+      command: netplan apply
+```
+- **root@inetrouter:~# cat /etc/netplan/50-cloud-init.yaml**
+```bash
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens192:
+      dhcp4: no
+      addresses:
+        - 10.0.77.182/24
+      routes:
+        - to: default
+          via: 10.0.77.1
+      nameservers:
+        addresses: [10.0.1.167, 10.0.1.194]
+    ens224:
+      dhcp4: no
+      addresses:
+        - 192.168.50.1/24
+```
+- **root@ns01:~# cat /etc/netplan/50-cloud-init.yaml** # У остальных трех машин (192.168.50.11, 192.168.50.15 и 192.168.50.16) сетевые настройки аналогичные. Все получили доступ в Интернет и доступ к ним по портам 1010,1011,1015 и 1016 на 22 порт.
+```bash
+network:
+  version: 2
+  renderer: networkd
+
+  ethernets:
+
+    ens192:
+      dhcp4: no
+      addresses:
+        - 192.168.50.10/24
+      routes:
+        - to: default
+          via: 192.168.50.1
+```
+
 ### Проверки
 - **root@ns01:~# ip -br a**
 ```bash
