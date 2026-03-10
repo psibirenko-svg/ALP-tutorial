@@ -8883,6 +8883,10 @@ ansible_user=spg
 - hosts: all
   become: yes
 
+  vars:
+      ntp_server: "pool.ntp.org"
+      timezone: "Europe/Moscow"
+
   tasks:
 
     - name: Temporary DNS
@@ -8901,6 +8905,64 @@ ansible_user=spg
       apt:
         update_cache: yes
         cache_valid_time: 3600
+
+############################################
+# INSTALL NTP
+############################################
+
+    - name: Set timezone
+      timezone:
+        name: "{{ timezone }}"
+
+    - name: Install chrony
+      apt:
+        name: chrony
+        state: present
+        update_cache: yes
+
+    - name: Configure chrony to use custom NTP server
+      lineinfile:
+        path: /etc/chrony/chrony.conf
+        regexp: '^server '
+        line: "server {{ ntp_server }} iburst"
+        state: present
+        backup: yes
+
+    - name: Enable and start chrony service
+      service:
+        name: chrony
+        state: started
+        enabled: yes
+
+    - name: Wait for chrony to sync
+      shell: |
+        until chronyc sources | grep -q '\*'; do
+          sleep 1
+        done
+      retries: 10
+      delay: 5
+      register: sync_status
+      until: sync_status.rc == 0
+
+    - name: Make a one-time time correction
+      command: chronyc makestep
+      ignore_errors: yes
+
+    - name: Show chrony tracking status
+      command: chronyc tracking
+      register: chrony_status
+
+    - name: Show NTP sources
+      command: chronyc sources -v
+      register: chrony_sources
+
+    - name: Display chrony status
+      debug:
+        var: chrony_status.stdout_lines
+
+############################################
+# INSTALL BIND
+############################################
 
     - name: Install packages
       apt:
@@ -9112,7 +9174,7 @@ key "rndc-key" {
     secret "GrtiE9kz16GK+OKKU/qJvQ==";
 };
 controls {
-        inet 192.168.50.10 allow { 192.168.50.15; } keys { "rndc-key"; }; 
+        inet 192.168.50.10 allow { 192.168.50.11; } keys { "rndc-key"; }; 
 };
 
 // ZONE TRANSFER WITH TSIG
@@ -9236,120 +9298,238 @@ zone "ddns.lab" {
 SSH password: 
 BECOME password[defaults to SSH password]: 
 
-PLAY [all] ***********************************************************************************************
+PLAY [all] ****************************************************************************************************
 
-TASK [Gathering Facts] ***********************************************************************************
+TASK [Gathering Facts] ****************************************************************************************
+ok: [ns02]
 ok: [client2]
 ok: [client]
-ok: [ns02]
 ok: [ns01]
 
-TASK [Temporary DNS] *************************************************************************************
+TASK [Temporary DNS] ******************************************************************************************
+changed: [client]
+changed: [client2]
+changed: [ns02]
+changed: [ns01]
+
+TASK [Wait for dpkg lock] *************************************************************************************
 changed: [ns02]
 changed: [client]
 changed: [client2]
 changed: [ns01]
 
-TASK [Wait for dpkg lock] ********************************************************************************
+TASK [Update apt cache] ***************************************************************************************
 changed: [ns02]
-changed: [client]
-changed: [client2]
-changed: [ns01]
-
-TASK [Update apt cache] **********************************************************************************
 changed: [ns01]
 changed: [client]
 changed: [client2]
-changed: [ns02]
 
-TASK [Install packages] **********************************************************************************
+TASK [Set timezone] *******************************************************************************************
 ok: [ns02]
 ok: [ns01]
 ok: [client]
 ok: [client2]
 
-TASK [Copy transfer key] *********************************************************************************
+TASK [Install chrony] *****************************************************************************************
+ok: [ns02]
+ok: [ns01]
+ok: [client2]
+ok: [client]
+
+TASK [Configure chrony to use custom NTP server] **************************************************************
+ok: [ns02]
+ok: [client]
+ok: [ns01]
+ok: [client2]
+
+TASK [Enable and start chrony service] ************************************************************************
 ok: [ns02]
 ok: [client]
 ok: [client2]
 ok: [ns01]
 
-PLAY [ns01] **********************************************************************************************
+TASK [Wait for chrony to sync] ********************************************************************************
+changed: [ns02]
+changed: [ns01]
+changed: [client2]
+changed: [client]
 
-TASK [Gathering Facts] ***********************************************************************************
+TASK [Make a one-time time correction] ************************************************************************
+changed: [ns01]
+changed: [ns02]
+changed: [client]
+changed: [client2]
+
+TASK [Show chrony tracking status] ****************************************************************************
+changed: [ns01]
+changed: [client]
+changed: [client2]
+changed: [ns02]
+
+TASK [Show NTP sources] ***************************************************************************************
+changed: [ns01]
+changed: [client2]
+changed: [ns02]
+changed: [client]
+
+TASK [Display chrony status] **********************************************************************************
+ok: [ns01] => {
+    "chrony_status.stdout_lines": [
+        "Reference ID    : 596DFB17 (ntp3.vniiftri.ru)",
+        "Stratum         : 2",
+        "Ref time (UTC)  : Tue Mar 10 11:04:29 2026",
+        "System time     : 0.000000000 seconds fast of NTP time",
+        "Last offset     : +0.000039458 seconds",
+        "RMS offset      : 0.000081662 seconds",
+        "Frequency       : 16.490 ppm slow",
+        "Residual freq   : +0.001 ppm",
+        "Skew            : 0.031 ppm",
+        "Root delay      : 0.004787003 seconds",
+        "Root dispersion : 0.000856529 seconds",
+        "Update interval : 1033.1 seconds",
+        "Leap status     : Normal"
+    ]
+}
+ok: [ns02] => {
+    "chrony_status.stdout_lines": [
+        "Reference ID    : 5E64B485 (ntp1.mail.ru)",
+        "Stratum         : 3",
+        "Ref time (UTC)  : Tue Mar 10 11:09:51 2026",
+        "System time     : 0.000000000 seconds slow of NTP time",
+        "Last offset     : +0.000039512 seconds",
+        "RMS offset      : 0.000147538 seconds",
+        "Frequency       : 16.394 ppm slow",
+        "Residual freq   : -0.000 ppm",
+        "Skew            : 0.053 ppm",
+        "Root delay      : 0.007453739 seconds",
+        "Root dispersion : 0.000234529 seconds",
+        "Update interval : 516.9 seconds",
+        "Leap status     : Normal"
+    ]
+}
+ok: [client] => {
+    "chrony_status.stdout_lines": [
+        "Reference ID    : 596DFB18 (ntp4.vniiftri.ru)",
+        "Stratum         : 2",
+        "Ref time (UTC)  : Tue Mar 10 11:08:22 2026",
+        "System time     : 0.000000000 seconds slow of NTP time",
+        "Last offset     : +0.000060026 seconds",
+        "RMS offset      : 0.000092363 seconds",
+        "Frequency       : 16.471 ppm slow",
+        "Residual freq   : +0.002 ppm",
+        "Skew            : 0.042 ppm",
+        "Root delay      : 0.005046131 seconds",
+        "Root dispersion : 0.000207578 seconds",
+        "Update interval : 1026.6 seconds",
+        "Leap status     : Normal"
+    ]
+}
+ok: [client2] => {
+    "chrony_status.stdout_lines": [
+        "Reference ID    : 504251D3 (ntp.sipleg.ru)",
+        "Stratum         : 3",
+        "Ref time (UTC)  : Tue Mar 10 11:00:21 2026",
+        "System time     : 0.000000000 seconds slow of NTP time",
+        "Last offset     : +0.000037685 seconds",
+        "RMS offset      : 0.000196040 seconds",
+        "Frequency       : 16.490 ppm slow",
+        "Residual freq   : +0.000 ppm",
+        "Skew            : 0.093 ppm",
+        "Root delay      : 0.003300552 seconds",
+        "Root dispersion : 0.001542723 seconds",
+        "Update interval : 1037.2 seconds",
+        "Leap status     : Normal"
+    ]
+}
+
+TASK [Install packages] ***************************************************************************************
+ok: [ns01]
+ok: [client]
+ok: [client2]
+ok: [ns02]
+
+TASK [Copy transfer key] **************************************************************************************
+ok: [client]
+ok: [client2]
+ok: [ns01]
+ok: [ns02]
+
+PLAY [ns01] ***************************************************************************************************
+
+TASK [Gathering Facts] ****************************************************************************************
 ok: [ns01]
 
-TASK [Install master config] *****************************************************************************
+TASK [Install master config] **********************************************************************************
 ok: [ns01]
 
-TASK [Copy zone files] ***********************************************************************************
+TASK [Copy zone files] ****************************************************************************************
 ok: [ns01] => (item=named.dns.lab)
 ok: [ns01] => (item=named.dns.lab.rev)
 ok: [ns01] => (item=named.ddns.lab)
 
-TASK [Create DNSSEC directory] ***************************************************************************
+TASK [Create DNSSEC directory] ********************************************************************************
 ok: [ns01]
 
-TASK [Check bind config] *********************************************************************************
+TASK [Check bind config] **************************************************************************************
 changed: [ns01]
 
-TASK [Check forward zone] ********************************************************************************
+TASK [Check forward zone] *************************************************************************************
 changed: [ns01]
 
-TASK [Check reverse zone] ********************************************************************************
+TASK [Check reverse zone] *************************************************************************************
 changed: [ns01]
 
-TASK [Configure resolv.conf] *****************************************************************************
+TASK [Configure resolv.conf] **********************************************************************************
 changed: [ns01]
 
-PLAY [ns02] **********************************************************************************************
+PLAY [ns02] ***************************************************************************************************
 
-TASK [Gathering Facts] ***********************************************************************************
+TASK [Gathering Facts] ****************************************************************************************
 ok: [ns02]
 
-TASK [Configure resolv.conf for slave] *******************************************************************
+TASK [Configure resolv.conf for slave] ************************************************************************
 changed: [ns02]
 
-TASK [Install slave config] ******************************************************************************
+TASK [Install slave config] ***********************************************************************************
 ok: [ns02]
 
-TASK [Ensure bind directory permissions] *****************************************************************
+TASK [Ensure bind directory permissions] **********************************************************************
 ok: [ns02]
 
-TASK [Ensure cache directory exists for slave zones] *****************************************************
+TASK [Ensure cache directory exists for slave zones] **********************************************************
 ok: [ns02]
 
-TASK [Create DNSSEC directory] ***************************************************************************
+TASK [Create DNSSEC directory] ********************************************************************************
 ok: [ns02]
 
-TASK [Check bind config] *********************************************************************************
+TASK [Check bind config] **************************************************************************************
 changed: [ns02]
 
-TASK [Check zone from slave] *****************************************************************************
+TASK [Check zone from slave] **********************************************************************************
 changed: [ns02]
 
-TASK [Configure resolv.conf] *****************************************************************************
+TASK [Configure resolv.conf] **********************************************************************************
 changed: [ns02]
 
-PLAY [clients] *******************************************************************************************
+PLAY [clients] ************************************************************************************************
 
-TASK [Gathering Facts] ***********************************************************************************
-ok: [client2]
+TASK [Gathering Facts] ****************************************************************************************
 ok: [client]
+ok: [client2]
 
-TASK [Configure DNS resolver] ****************************************************************************
+TASK [Configure DNS resolver] *********************************************************************************
 changed: [client]
 changed: [client2]
 
-TASK [Install MOTD] **************************************************************************************
-ok: [client2]
+TASK [Install MOTD] *******************************************************************************************
 ok: [client]
+ok: [client2]
 
-PLAY RECAP ***********************************************************************************************
-client                     : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-client2                    : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-ns01                       : ok=14   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-ns02                       : ok=15   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+PLAY RECAP ****************************************************************************************************
+client                     : ok=18   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+client2                    : ok=18   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ns01                       : ok=23   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ns02                       : ok=24   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ➜  provisioning git:(master) ✗ 
 ```
@@ -9493,53 +9673,30 @@ network:
 ```
 
 ### Проверки
-- **root@ns01:~# ip -br a**
+- **root@client1otus:~# dig @192.168.50.10 web1.dns.lab**
 ```bash
-lo               UNKNOWN        127.0.0.1/8 ::1/128
-ens192           UP             192.168.50.10/24 fe80::250:56ff:feb3:7ee8/64
-```
-- **root@ns01:~# ss -ulpn**
-```bash
-State      Recv-Q      Send-Q                               Local Address:Port           Peer Address:Port     Process
-UNCONN     0           0                                    192.168.50.10:53                  0.0.0.0:*         users:(("named",pid=750381,fd=37))
-UNCONN     0           0                                    192.168.50.10:53                  0.0.0.0:*         users:(("named",pid=750381,fd=38))
-UNCONN     0           0                                       127.0.0.54:53                  0.0.0.0:*         users:(("systemd-resolve",pid=651,fd=16))
-UNCONN     0           0                                    127.0.0.53%lo:53                  0.0.0.0:*         users:(("systemd-resolve",pid=651,fd=14))
-UNCONN     0           0                                    192.168.50.10:123                 0.0.0.0:*         users:(("ntpd",pid=959,fd=23))
-UNCONN     0           0                                        127.0.0.1:123                 0.0.0.0:*         users:(("ntpd",pid=959,fd=18))
-UNCONN     0           0                                          0.0.0.0:123                 0.0.0.0:*         users:(("ntpd",pid=959,fd=17))
-UNCONN     0           0                                            [::1]:53                     [::]:*         users:(("named",pid=750381,fd=28))
-UNCONN     0           0                                            [::1]:53                     [::]:*         users:(("named",pid=750381,fd=29))
-UNCONN     0           0                [fe80::250:56ff:feb3:7ee8]%ens192:123                    [::]:*         users:(("ntpd",pid=959,fd=22))
-UNCONN     0           0                                            [::1]:123                    [::]:*         users:(("ntpd",pid=959,fd=20))
-UNCONN     0           0                                             [::]:123                    [::]:*         users:(("ntpd",pid=959,fd=16))
-```
-- **root@ns01:~# cat /etc/bind/named.conf**
-```bash
-options {
 
-    // network
-	listen-on port 53 { 192.168.50.10; };
-	listen-on-v6 port 53 { ::1; };
-```
-- **root@ns020tus:~# cat /etc/bind/named.conf**
-```bash
-options {
+; <<>> DiG 9.18.39-0ubuntu0.24.04.2-Ubuntu <<>> @192.168.50.10 web1.dns.lab
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 38497
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
 
-    // network
-    listen-on port 53 { 192.168.50.11; };
-    listen-on-v6 port 53 { ::1; };
-```
-- **root@ns01:~# cat /etc/bind/named.conf**
-```bash
-// lab's zone
-zone "dns.lab" {
-    type master;
-    allow-transfer { key "zonetransfer.key"; };
-    file "/etc/bind/named.dns.lab";
-```
-- **root@ns020tus:~# cat /etc/bind/named.conf**
-```bash
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: eeae3ef1d95bd04a0100000069afc703beea775ffc1279b0 (good)
+;; QUESTION SECTION:
+;web1.dns.lab.			IN	A
+
+;; ANSWER SECTION:
+web1.dns.lab.		3600	IN	A	192.168.50.15
+
+;; Query time: 0 msec
+;; SERVER: 192.168.50.10#53(192.168.50.10) (UDP)
+;; WHEN: Tue Mar 10 07:23:47 UTC 2026
+;; MSG SIZE  rcvd: 85
+
 
 ```
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
