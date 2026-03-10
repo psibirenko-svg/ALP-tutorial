@@ -9851,11 +9851,211 @@ acl client2 { !key client-key; key client2-key; 192.168.50.16; };
 ### Технология Split-DNS реализуется с помощью описания представлений (view), для каждого отдельного acl. В каждое представление (view) добавляются только те зоны, которые разрешено видеть хостам, адреса которых указаны в access листе.
 
 ### Все ранее описанные зоны должны быть перенесены в модули view. Вне view зон быть недолжно, зона any должна всегда находиться в самом низу. 
+- **root@ns01:~# cat /etc/bind/named.conf** # Правим зоны в представлениях для ограничейни клиентов
+```bash
+options {
+
+    // network
+	listen-on port 53 { 127.0.0.1; 192.168.50.10; };
+	listen-on-v6 port 53 { ::1; };
+
+    // data
+	directory 	"/var/cache/bind/";
+	dump-file 	"/var/cache/bind/data/cache_dump.db";
+	statistics-file "/var/cache/bind/data/named_stats.txt";
+	memstatistics-file "/var/cache/bind/data/named_mem_stats.txt";
+
+    // server
+	recursion yes;
+	allow-query     { any; };
+        allow-transfer { any; };
+
+    // dnssec
+	dnssec-validation auto;
+
+    // others
+	bindkeys-file "/etc/bind/bind.key";
+	managed-keys-directory "/var/cache/bind";
+	pid-file "/run/named/named.pid";
+	session-keyfile "/run/named/session.key";
+};
+
+logging {
+        channel default_debug {
+                file "/var/log/named/named.log";
+                severity dynamic;
+        };
+};
+
+// RNDC Control for client
+key "rndc-key" {
+    algorithm hmac-md5;
+    secret "GrtiE9kz16GK+OKKU/qJvQ==";
+};
+controls {
+        inet 192.168.50.10 allow { 192.168.50.15;  192.168.50.16; } keys { "rndc-key"; };
+};
+
+key "client-key" {
+    algorithm hmac-sha256;
+    secret "Vmu2YJy3PxwOP2IYUSEfTgSPHjZt54WYpZYD9seU9DI=";
+};
+key "client2-key" {
+    algorithm hmac-sha256;
+    secret "2fOKPhzHxkN+aNNckFhfnNWX3b5davBppBhJSNjrn7Q=";
+};
+
+// ZONE TRANSFER WITH TSIG
+include "/etc/bind/named.zonetransfer.key";
+server 192.168.50.11 {
+    keys { "zonetransfer.key"; };
+};
+#Описание access-листов
+acl client { !key client2-key; key client-key; 192.168.50.15; };
+acl client2 { !key client-key; key client2-key; 192.168.50.16; };
+
+// Настройка первого view
+view "client" {
+    // Кому из клиентов разрешено подключаться, нужно указать имя access-листа
+    match-clients { client; };
+
+    // Описание зоны dns.lab для client
+    zone "dns.lab" {
+        // Тип сервера — мастер
+        type master;
+        // Добавляем ссылку на файл зоны, который создали в прошлом пункте
+        file "/etc/bind/named.dns.lab.client";
+        // Адрес хостов, которым будет отправлена информация об изменении зоны
+        also-notify { 192.168.50.11 key client-key; };
+    };
+
+    // newdns.lab zone
+    zone "newdns.lab" {
+        type master;
+        file "/etc/bind/named.newdns.lab";
+        also-notify { 192.168.50.11 key client-key; };
+    };
+};
+
+// Описание view для client2
+view "client2" {
+    match-clients { client2; };
+
+    // dns.lab zone
+    zone "dns.lab" {
+        type master;
+        file "/etc/bind/named.dns.lab";
+        also-notify { 192.168.50.11 key client2-key; };
+    };
+
+    // dns.lab zone reverse
+    zone "50.168.192.in-addr.arpa" {
+        type master;
+        file "/etc/bind/named.dns.lab.rev";
+        also-notify { 192.168.50.11 key client2-key; };
+    };
+};
+
+// Зона any, указана в файле самой последней
+view "default" {
+    match-clients { any; };
+
+// root zone
+zone "." IN {
+	type hint;
+	file "/usr/share/dns/root.hints";
+};
+
+// lab's zone
+zone "dns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab";
+};
+
+// lab's zone reverse
+zone "50.168.192.in-addr.arpa" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    file "/etc/bind/named.dns.lab.rev";
+};
+
+// lab's ddns zone
+zone "ddns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    allow-update { key "zonetransfer.key"; };
+    file "/etc/bind/named.ddns.lab";
+};
+
+};
+```
 
 
+### Проверка на клиенте 1 и 2 прошли успешно (и при остановленной службе named) :
+```bash
+root@client1otus:~# ping www.newdns.lab
+PING www.newdns.lab (192.168.50.15) 56(84) bytes of data.
+64 bytes from 192.168.50.15: icmp_seq=1 ttl=64 time=0.018 ms
+64 bytes from 192.168.50.15: icmp_seq=2 ttl=64 time=0.016 ms
+64 bytes from 192.168.50.15: icmp_seq=3 ttl=64 time=0.026 ms
+^C
+--- www.newdns.lab ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2080ms
+rtt min/avg/max/mdev = 0.016/0.020/0.026/0.004 ms
 
+root@client1otus:~# ping web1.dns.lab
+PING web1.dns.lab (192.168.50.15) 56(84) bytes of data.
+64 bytes from 192.168.50.15: icmp_seq=1 ttl=64 time=0.012 ms
+64 bytes from 192.168.50.15: icmp_seq=2 ttl=64 time=0.016 ms
+^C
+--- web1.dns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1025ms
+rtt min/avg/max/mdev = 0.012/0.014/0.016/0.002 ms
 
+root@client1otus:~# ping web2.dns.lab
+ping: web2.dns.lab: Name or service not known
 
+root@client2otus:~# ping www.newdns.lab
+ping: www.newdns.lab: Name or service not known
+
+root@client2otus:~# ping web1.dns.lab
+PING web1.dns.lab (192.168.50.15) 56(84) bytes of data.
+64 bytes from 192.168.50.15: icmp_seq=1 ttl=64 time=0.084 ms
+64 bytes from 192.168.50.15: icmp_seq=2 ttl=64 time=0.087 ms
+^C
+--- web1.dns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1028ms
+rtt min/avg/max/mdev = 0.084/0.085/0.087/0.001 ms
+
+root@client2otus:~# ping web2.dns.lab
+PING web2.dns.lab (192.168.50.16) 56(84) bytes of data.
+64 bytes from 192.168.50.16: icmp_seq=1 ttl=64 time=0.023 ms
+64 bytes from 192.168.50.16: icmp_seq=2 ttl=64 time=0.018 ms
+^C
+--- web2.dns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1040ms
+rtt min/avg/max/mdev = 0.018/0.020/0.023/0.002 ms
+```
+- **root@ns020tus:~# dig @192.168.50.10 dns.lab AXFR -k /etc/bind/named.zonetransfer.key**
+```bash
+; <<>> DiG 9.18.39-0ubuntu0.24.04.2-Ubuntu <<>> @192.168.50.10 dns.lab AXFR -k /etc/bind/named.zonetransfer.key
+; (1 server found)
+;; global options: +cmd
+dns.lab.		3600	IN	SOA	ns01.dns.lab. root.dns.lab. 2026030801 3600 600 86400 600
+dns.lab.		3600	IN	NS	ns01.dns.lab.
+dns.lab.		3600	IN	NS	ns02.dns.lab.
+ns01.dns.lab.		3600	IN	A	192.168.50.10
+ns02.dns.lab.		3600	IN	A	192.168.50.11
+web1.dns.lab.		3600	IN	A	192.168.50.15
+web2.dns.lab.		3600	IN	A	192.168.50.16
+dns.lab.		3600	IN	SOA	ns01.dns.lab. root.dns.lab. 2026030801 3600 600 86400 600
+zonetransfer.key.	0	ANY	TSIG	hmac-md5.sig-alg.reg.int. 1773162410 300 16 GR4tzY39ryGUEy9tkDappA== 11393 NOERROR 0
+;; Query time: 0 msec
+;; SERVER: 192.168.50.10#53(192.168.50.10) (TCP)
+;; WHEN: Tue Mar 10 20:06:50 MSK 2026
+;; XFR size: 8 records (messages 1, bytes 339)
+```
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
