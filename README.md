@@ -8826,6 +8826,7 @@ client2 | SUCCESS => {
 - **➜  provisioning git:(master) ✗ tree**
 ```bash
 .
+├── ansible.cfg
 ├── client-motd
 ├── client-resolv.conf
 ├── files
@@ -8849,19 +8850,24 @@ client2 | SUCCESS => {
 
 2 directories, 19 files
 ```
+- **➜  provisioning git:(master) ✗ cat ansible.cfg** 
+```bash
+[defaults]
+inventory = inventory.ini
+host_key_checking = False
+retry_files_enabled = False
+stdout_callback = default
+result_format = yaml
+```
 - **➜  provisioning git:(master) ✗ cat inventory.ini** 
 ```bash
 [ns]
-ns01 ansible_host=10.0.77.186
-ns02 ansible_host=10.0.77.156
-#ns01 ansible_host=192.168.50.10
-#ns02 ansible_host=192.168.50.11
+ns01 ansible_host=192.168.50.10
+ns02 ansible_host=192.168.50.11
 
 [clients]
-client ansible_host=10.0.77.181
-client2 ansible_host=10.0.77.170
-#client ansible_host=192.168.50.15
-#client2 ansible_host=192.168.50.16
+client ansible_host=192.168.50.15
+client2 ansible_host=192.168.50.16
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3.12
@@ -8938,9 +8944,9 @@ ansible_user=spg
         group: bind
         mode: '0664'
       loop:
-        - files/named.dns.lab
-        - files/named.dns.lab.rev
-        - files/named.ddns.lab
+        - named.dns.lab
+        - named.dns.lab.rev
+        - named.ddns.lab
       notify: restart bind
 
     - name: Create DNSSEC directory
@@ -8983,6 +8989,14 @@ ansible_user=spg
 
   tasks:
 
+    - name: Configure resolv.conf for slave
+      copy:
+        dest: /etc/resolv.conf
+        content: |
+          nameserver 192.168.50.11
+          search lab
+        mode: '0644'
+
     - name: Install slave config
       copy:
         src: slave-named.conf
@@ -8997,7 +9011,15 @@ ansible_user=spg
         path: /etc/bind
         owner: root
         group: bind
-        mode: '0755'
+        mode: '0775'
+
+    - name: Ensure cache directory exists for slave zones
+      file:
+        path: /var/cache/bind/slaves
+        state: directory
+        owner: bind
+        group: bind
+        mode: '0775'
 
     - name: Create DNSSEC directory
       file:
@@ -9009,6 +9031,9 @@ ansible_user=spg
 
     - name: Check bind config
       command: named-checkconf /etc/bind/named.conf
+
+    - name: Check zone from slave
+      command: dig @192.168.50.11 dns.lab SOA
 
     - name: Configure resolv.conf
       copy:
@@ -9046,10 +9071,11 @@ ansible_user=spg
         mode: '0644'
 ```      
 - **➜  provisioning git:(master) ✗ cat ./files/master-named.conf** 
-options {
 ```bash
+options {
+
     // network 
-	listen-on port 53 { 192.168.50.10; };
+	listen-on port 53 { 127.0.0.1; 192.168.50.10; };
 	listen-on-v6 port 53 { ::1; };
 
     // data
@@ -9129,7 +9155,7 @@ zone "ddns.lab" {
 options {
 
     // network 
-    listen-on port 53 { 192.168.50.10; };
+    listen-on port 53 { 127.0.0.1; 192.168.50.11; };
     listen-on-v6 port 53 { ::1; };
 
     // data
@@ -9141,7 +9167,7 @@ options {
     // server
     recursion yes;
     allow-query     { any; };
-    allow-transfer { any; };
+    allow-transfer { none; };
     
     // dnssec
     dnssec-validation auto;
@@ -9166,12 +9192,12 @@ key "rndc-key" {
     secret "GrtiE9kz16GK+OKKU/qJvQ==";
 };
 controls {
-    inet 192.168.50.10 allow { 192.168.50.15; } keys { "rndc-key"; }; 
+    inet 127.0.0.1 allow { localhost; } keys { "rndc-key"; }; 
 };
 
 // ZONE TRANSFER WITH TSIG
 include "/etc/bind/named.zonetransfer.key"; 
-server 192.168.50.11 {
+server 192.168.50.10 {
     keys { "zonetransfer.key"; };
 };
 
@@ -9184,137 +9210,146 @@ zone "." IN {
 
 // lab's zone
 zone "dns.lab" {
-    type master;
-    allow-transfer { key "zonetransfer.key"; };
-    file "/etc/bind/named.dns.lab";
+    type slave;
+    primaries { 192.168.50.10; };
+    allow-transfer { key none; };
+    file "slaves/named.dns.lab";
 };
 
 // lab's zone reverse
 zone "50.168.192.in-addr.arpa" {
-    type master;
-    allow-transfer { key "zonetransfer.key"; };
-    file "/etc/bind/named.dns.lab.rev";
+    type slave;
+    primaries { 192.168.50.10; };
+    file "slaves/named.dns.lab.rev";
 };
 
 // lab's ddns zone
 zone "ddns.lab" {
-    type master;
-    allow-transfer { key "zonetransfer.key"; };
-    allow-update { key "zonetransfer.key"; };
-    file "/etc/bind/named.ddns.lab";
+    type slave;
+    primaries { 192.168.50.10; };
+    file "slaves/named.ddns.lab";
 };
 ```
 ### Все же Ansible отработал 
-- **➜  provisioning git:(master) ✗ ansible-playbook -i inventory.ini playbook.yml -k -K**                               
+- **➜  provisioning git:(master) ✗ ansible-playbook playbook.yml -k -K**                               
 ```bash
 SSH password: 
 BECOME password[defaults to SSH password]: 
 
-PLAY [all] ******************************************************************************************************************
+PLAY [all] ***********************************************************************************************
 
-TASK [Gathering Facts] ******************************************************************************************************
-ok: [ns02]
+TASK [Gathering Facts] ***********************************************************************************
 ok: [client2]
 ok: [client]
+ok: [ns02]
 ok: [ns01]
 
-TASK [Temporary DNS] ********************************************************************************************************
-changed: [client]
-changed: [client2]
-changed: [ns02]
-changed: [ns01]
-
-TASK [Wait for dpkg lock] ***************************************************************************************************
+TASK [Temporary DNS] *************************************************************************************
 changed: [ns02]
 changed: [client]
 changed: [client2]
 changed: [ns01]
 
-TASK [Update apt cache] *****************************************************************************************************
+TASK [Wait for dpkg lock] ********************************************************************************
 changed: [ns02]
-changed: [client2]
 changed: [client]
-changed: [ns01]
-
-TASK [Install packages] *****************************************************************************************************
-ok: [ns02]
-ok: [ns01]
-ok: [client]
-ok: [client2]
-
-TASK [Copy transfer key] ****************************************************************************************************
-ok: [ns02]
-ok: [client]
-ok: [client2]
-ok: [ns01]
-
-PLAY [ns01] *****************************************************************************************************************
-
-TASK [Gathering Facts] ******************************************************************************************************
-ok: [ns01]
-
-TASK [Install master config] ************************************************************************************************
-ok: [ns01]
-
-TASK [Copy zone files] ******************************************************************************************************
-ok: [ns01] => (item=files/named.dns.lab)
-ok: [ns01] => (item=files/named.dns.lab.rev)
-ok: [ns01] => (item=files/named.ddns.lab)
-
-TASK [Create DNSSEC directory] **********************************************************************************************
-ok: [ns01]
-
-TASK [Check bind config] ****************************************************************************************************
-changed: [ns01]
-
-TASK [Check forward zone] ***************************************************************************************************
-changed: [ns01]
-
-TASK [Check reverse zone] ***************************************************************************************************
-changed: [ns01]
-
-TASK [Configure resolv.conf] ************************************************************************************************
-changed: [ns01]
-
-PLAY [ns02] *****************************************************************************************************************
-
-TASK [Gathering Facts] ******************************************************************************************************
-ok: [ns02]
-
-TASK [Install slave config] *************************************************************************************************
-ok: [ns02]
-
-TASK [Ensure bind directory permissions] ************************************************************************************
-ok: [ns02]
-
-TASK [Create DNSSEC directory] **********************************************************************************************
-ok: [ns02]
-
-TASK [Check bind config] ****************************************************************************************************
-changed: [ns02]
-
-TASK [Configure resolv.conf] ************************************************************************************************
-changed: [ns02]
-
-PLAY [clients] **************************************************************************************************************
-
-TASK [Gathering Facts] ******************************************************************************************************
-ok: [client2]
-ok: [client]
-
-TASK [Configure DNS resolver] ***********************************************************************************************
 changed: [client2]
-changed: [client]
+changed: [ns01]
 
-TASK [Install MOTD] *********************************************************************************************************
+TASK [Update apt cache] **********************************************************************************
+changed: [ns01]
+changed: [client]
+changed: [client2]
+changed: [ns02]
+
+TASK [Install packages] **********************************************************************************
+ok: [ns02]
+ok: [ns01]
 ok: [client]
 ok: [client2]
 
-PLAY RECAP ******************************************************************************************************************
+TASK [Copy transfer key] *********************************************************************************
+ok: [ns02]
+ok: [client]
+ok: [client2]
+ok: [ns01]
+
+PLAY [ns01] **********************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************
+ok: [ns01]
+
+TASK [Install master config] *****************************************************************************
+ok: [ns01]
+
+TASK [Copy zone files] ***********************************************************************************
+ok: [ns01] => (item=named.dns.lab)
+ok: [ns01] => (item=named.dns.lab.rev)
+ok: [ns01] => (item=named.ddns.lab)
+
+TASK [Create DNSSEC directory] ***************************************************************************
+ok: [ns01]
+
+TASK [Check bind config] *********************************************************************************
+changed: [ns01]
+
+TASK [Check forward zone] ********************************************************************************
+changed: [ns01]
+
+TASK [Check reverse zone] ********************************************************************************
+changed: [ns01]
+
+TASK [Configure resolv.conf] *****************************************************************************
+changed: [ns01]
+
+PLAY [ns02] **********************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************
+ok: [ns02]
+
+TASK [Configure resolv.conf for slave] *******************************************************************
+changed: [ns02]
+
+TASK [Install slave config] ******************************************************************************
+ok: [ns02]
+
+TASK [Ensure bind directory permissions] *****************************************************************
+ok: [ns02]
+
+TASK [Ensure cache directory exists for slave zones] *****************************************************
+ok: [ns02]
+
+TASK [Create DNSSEC directory] ***************************************************************************
+ok: [ns02]
+
+TASK [Check bind config] *********************************************************************************
+changed: [ns02]
+
+TASK [Check zone from slave] *****************************************************************************
+changed: [ns02]
+
+TASK [Configure resolv.conf] *****************************************************************************
+changed: [ns02]
+
+PLAY [clients] *******************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************
+ok: [client2]
+ok: [client]
+
+TASK [Configure DNS resolver] ****************************************************************************
+changed: [client]
+changed: [client2]
+
+TASK [Install MOTD] **************************************************************************************
+ok: [client2]
+ok: [client]
+
+PLAY RECAP ***********************************************************************************************
 client                     : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 client2                    : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ns01                       : ok=14   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-ns02                       : ok=12   changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ns02                       : ok=15   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ➜  provisioning git:(master) ✗ 
 ```
