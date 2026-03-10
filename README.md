@@ -10056,6 +10056,95 @@ zonetransfer.key.	0	ANY	TSIG	hmac-md5.sig-alg.reg.int. 1773162410 300 16 GR4tzY3
 ;; WHEN: Tue Mar 10 20:06:50 MSK 2026
 ;; XFR size: 8 records (messages 1, bytes 339)
 ```
+### Для Ansible скопировать проект, чтобы не портить часть проектной работы и положил туда файлы named.dns.lab.client и named.newdns.lab
+- **➜  DNS tree**
+```bash
+.
+├── ansible.cfg
+├── client-motd
+├── client-resolv.conf
+├── files
+│   ├── master-named.conf
+│   ├── named.ddns.lab
+│   ├── named.dns.lab
+│   ├── named.dns.lab.client
+│   ├── named.dns.lab.rev
+│   ├── named.newdns.lab
+│   └── named.zonetransfer.key
+├── inventory.ini
+├── master-named.conf.old
+├── playbook.all
+├── playbook.bkp
+├── playbook.last
+├── playbook.ns2
+├── playbook.yml
+├── rndc.conf
+├── servers-resolv.conf
+├── slave-named.conf
+├── slave-named.conf.old
+└── zonetransfer.key
+
+2 directories, 22 files
+```
+### Ansible отработал без ошибок: 
+```bash
+PLAY RECAP ****************************************************************************************************
+client                     : ok=18   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+client2                    : ok=18   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ns01                       : ok=24   changed=13   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ns02                       : ok=24   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+➜  DNS date
+Tue Mar 10 21:19:42 MSK 2026
+```
+### Тесты прошли успешно и на этом ДЗ закончено наконец...
+```bash
+root@client1otus:~# ping www.newdns.lab
+PING www.newdns.lab (192.168.50.15) 56(84) bytes of data.
+64 bytes from 192.168.50.15: icmp_seq=1 ttl=64 time=0.020 ms
+64 bytes from 192.168.50.15: icmp_seq=2 ttl=64 time=0.016 ms
+^C
+--- www.newdns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1024ms
+rtt min/avg/max/mdev = 0.016/0.018/0.020/0.002 ms
+
+root@client1otus:~# ping web1.dns.lab
+PING web1.dns.lab (192.168.50.15) 56(84) bytes of data.
+64 bytes from 192.168.50.15: icmp_seq=1 ttl=64 time=0.009 ms
+64 bytes from 192.168.50.15: icmp_seq=2 ttl=64 time=0.018 ms
+^C
+--- web1.dns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1043ms
+rtt min/avg/max/mdev = 0.009/0.013/0.018/0.004 ms
+
+root@client1otus:~# ping web2.dns.lab
+ping: web2.dns.lab: Name or service not known
+
+root@client2otus:~# ping www.newdns.lab
+ping: www.newdns.lab: Name or service not known
+
+root@client2otus:~# ping web1.dns.lab
+PING web1.dns.lab (192.168.50.15) 56(84) bytes of data.
+64 bytes from 192.168.50.15: icmp_seq=1 ttl=64 time=0.102 ms
+64 bytes from 192.168.50.15: icmp_seq=2 ttl=64 time=0.104 ms
+^C
+--- web1.dns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1056ms
+rtt min/avg/max/mdev = 0.102/0.103/0.104/0.001 ms
+
+root@client2otus:~# ping web2.dns.lab
+PING web2.dns.lab (192.168.50.16) 56(84) bytes of data.
+64 bytes from 192.168.50.16: icmp_seq=1 ttl=64 time=0.024 ms
+64 bytes from 192.168.50.16: icmp_seq=2 ttl=64 time=0.018 ms
+^C
+--- web2.dns.lab ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1050ms
+rtt min/avg/max/mdev = 0.018/0.021/0.024/0.003 ms
+
+root@client2otus:~# date
+Tue Mar 10 09:26:19 PM MSK 2026
+```
+
 
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
