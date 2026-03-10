@@ -9696,9 +9696,92 @@ web1.dns.lab.		3600	IN	A	192.168.50.15
 ;; SERVER: 192.168.50.10#53(192.168.50.10) (UDP)
 ;; WHEN: Tue Mar 10 07:23:47 UTC 2026
 ;; MSG SIZE  rcvd: 85
-
-
 ```
+- **root@client1otus:~# dig @192.168.50.11 web2.dns.lab**
+```bash
+; <<>> DiG 9.18.39-0ubuntu0.24.04.2-Ubuntu <<>> @192.168.50.11 web2.dns.lab
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 63665
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 86bdf845caedfd970100000069affd4bf8f3154d8d91cf22 (good)
+;; QUESTION SECTION:
+;web2.dns.lab.			IN	A
+
+;; ANSWER SECTION:
+web2.dns.lab.		3600	IN	A	192.168.50.16
+
+;; Query time: 1 msec
+;; SERVER: 192.168.50.11#53(192.168.50.11) (UDP)
+;; WHEN: Tue Mar 10 14:15:23 MSK 2026
+;; MSG SIZE  rcvd: 85
+```
+### Пропишем новую зону на DNS-серверах:
+- **root@ns01:~# vi /etc/bind/named.conf**
+```bash
+...
+// lab's newdns zone
+zone "newdns.lab" {
+    type master;
+    allow-transfer { key "zonetransfer.key"; };
+    allow-update { key "zonetransfer.key"; };
+    file "/etc/bind/named.newdns.lab";
+};
+```
+- **root@ns020tus:~# vi /etc/bind/named.conf**
+```bash
+...
+// lab's newdns zone
+zone "newdns.lab" {
+    type slave;
+    primaries { 192.168.50.10; };
+    file "slaves/named.newdns.lab";
+};
+```
+- **root@ns01:~# cat /etc/bind/named.newdns.lab** # сам файл
+```bash
+$TTL 3600
+$ORIGIN newdns.lab.
+@               IN      SOA     ns01.dns.lab. root.dns.lab. (
+                            2026031001 ; serial
+                            3600       ; refresh (1 hour)
+                            600        ; retry (10 minutes)
+                            86400      ; expire (1 day)
+                            600        ; minimum (10 minutes)
+                        )
+
+                IN      NS      ns01.dns.lab.
+                IN      NS      ns02.dns.lab.
+
+; DNS Servers
+ns01            IN      A       192.168.50.10
+ns02            IN      A       192.168.50.11
+
+;WWW
+www             IN      A       192.168.50.15
+www             IN      A       192.168.50.16
+```
+- **root@ns01:~# ls -hal  /etc/bind/named.newdns.lab**
+```bash
+-rw-rw---- 1 root bind 700 Mar 10 14:29 /etc/bind/named.newdns.lab
+```
+### увеличиваем счетчик 2026031001 ; serial на 1 и перезапускаем bind - systemctl restart named
+- **root@ns020tus:~# ls /var/cache/bind/slaves/ | grep newdns** # на slave появилась новая зона
+```bind
+named.newdns.lab
+```
+
+
+
+
+
+
+
+
 ## 38 урок LDAP. Централизованная авторизация и аутентификация 
 
 **Домашнее задание** <ins>"LDAP"</ins>
