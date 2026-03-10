@@ -9534,15 +9534,19 @@ ns02                       : ok=24   changed=11   unreachable=0    failed=0    s
 ➜  provisioning git:(master) ✗ 
 ```
 ### Для того, чтобы при установке ПО на машины стенда у них был доступ в Интернет развернул еще один сервер inetServer с двумя сетевыми интерфейсами в качестве шлюза с NAT-ом и прокидыванием порта для доступа извне по ssh.
+
 <img width="1202" height="527" alt="Screenshot 2026-03-10 at 10 07 04" src="https://github.com/user-attachments/assets/13e00436-dd11-447a-a8db-33ebb12a1141" />
+
 ### В предверии защиты проекта его разворачивание реализовал через Ansible:
 - **➜  provisioning git:(master) ✗ cd ../../inetrouter** 
 - **➜  inetrouter tree**
+  
 ```bash
 .
 ├── inventory.ini
 └── playbook.yml
 ```
+
 - **➜  inetrouter cat inventory.ini** 
 ```bash
 [routers]
