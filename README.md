@@ -9774,8 +9774,83 @@ www             IN      A       192.168.50.16
 ```bind
 named.newdns.lab
 ```
+## 2. Настройка Split-DNS 
+```bind
+У нас уже есть прописанные зоны dns.lab и newdns.lab. Однако по заданию client1  должен видеть запись web1.dns.lab и не видеть запись web2.dns.lab. Client2 может видеть обе записи из домена dns.lab, но не должен видеть записи домена newdns.lab Осуществить данные настройки нам поможет технология Split-DNS.  
+Для настройки Split-DNS нужно: 
+1) Создать дополнительный файл зоны dns.lab, в котором будет прописана только одна запись: vim /etc/named/named.dns.lab.client
+```
+- **root@ns01:~# cat  /etc/bind/named.dns.lab.client**
+```bash
+$TTL 3600
+$ORIGIN dns.lab.
+@               IN      SOA     ns01.dns.lab. root.dns.lab. (
+                            2026031001 ; serial
+                            3600       ; refresh (1 hour)
+                            600        ; retry (10 minutes)
+                            86400      ; expire (1 day)
+                            600        ; minimum (10 minutes)
+                        )
 
+                IN      NS      ns01.dns.lab.
+                IN      NS      ns02.dns.lab.
 
+; DNS Servers
+ns01            IN      A       192.168.50.10
+ns02            IN      A       192.168.50.11
+
+;Web
+web1            IN      A       192.168.50.15
+```
+- **root@ns01:~# ls -hal /etc/bind/named.dns.lab.client**
+```bash
+-rw-rw---- 1 root bind 651 Mar 10 14:55 /etc/bind/named.dns.lab.client
+```
+### сгенерируем ключи для хостов client и client2
+- **root@ns01:/etc/bind# sudo rndc-confgen -a -b 256 -k tsig-client -c /etc/bind/tsig-client.key**
+```bash
+wrote key file "/etc/bind/tsig-client.key"
+```
+- **root@ns01:/etc/bind# cat /etc/bind/tsig-client.key**
+```bash
+key "tsig-client" {
+	algorithm hmac-sha256;
+	secret "Vmu2YJy3PxwOP2IYUSEfTgSPHjZt54WYpZYD9seU9DI=";
+};
+```
+- **root@ns01:/etc/bind# sudo rndc-confgen -a -b 256 -k tsig-client2 -c /etc/bind/tsig-client2.key
+cat /etc/bind/tsig-client2.key**
+```bash
+wrote key file "/etc/bind/tsig-client2.key"
+key "tsig-client2" {
+	algorithm hmac-sha256;
+	secret "2fOKPhzHxkN+aNNckFhfnNWX3b5davBppBhJSNjrn7Q=";
+};
+```
+### добавим блок с access листами в конец файла /etc/named.conf на обоих серверах в конец:
+```bash
+#Описание ключа для хоста client
+key "client-key" {
+    algorithm hmac-sha256;
+    secret "Vmu2YJy3PxwOP2IYUSEfTgSPHjZt54WYpZYD9seU9DI=";
+};
+#Описание ключа для хоста client2
+key "client2-key" {
+    algorithm hmac-sha256;
+    secret "2fOKPhzHxkN+aNNckFhfnNWX3b5davBppBhJSNjrn7Q=";
+};
+#Описание access-листов
+acl client { !key client2-key; key client-key; 192.168.50.15; };
+acl client2 { !key client-key; key client2-key; 192.168.50.16; };
+```
+### client имеет адрес 192.168.50.15, использует client-key и не использует client2-key
+### client2 имеет адрес 192ю168.50.16, использует clinet2-key и не использует client-key
+### /etc/bind/named.dns.lab.client файл у нас уже создан выше
+### Теперь можно внести правки в /etc/named.conf
+
+### Технология Split-DNS реализуется с помощью описания представлений (view), для каждого отдельного acl. В каждое представление (view) добавляются только те зоны, которые разрешено видеть хостам, адреса которых указаны в access листе.
+
+### Все ранее описанные зоны должны быть перенесены в модули view. Вне view зон быть недолжно, зона any должна всегда находиться в самом низу. 
 
 
 
