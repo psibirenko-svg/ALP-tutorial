@@ -9996,7 +9996,7 @@ zone "ddns.lab" {
 ```
 
 
-### Проверка на клиенте 1 и 2 прошли успешно (и при остановленной службе named) :
+### Проверка на клиенте 1 и 2 прошли успешно (и при остановленной службе named на ns01) :
 ```bash
 root@client1otus:~# ping www.newdns.lab
 PING www.newdns.lab (192.168.50.15) 56(84) bytes of data.
