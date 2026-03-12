@@ -10060,7 +10060,7 @@ zonetransfer.key.	0	ANY	TSIG	hmac-md5.sig-alg.reg.int. 1773162410 300 16 GR4tzY3
 ;; WHEN: Tue Mar 10 20:06:50 MSK 2026
 ;; XFR size: 8 records (messages 1, bytes 339)
 ```
-### Для Ansible скопировать проект, чтобы не портить часть проектной работы и положил туда файлы named.dns.lab.client и named.newdns.lab
+### Добавил в Ansible проект файлы named.dns.lab.client и named.newdns.lab
 - **➜  DNS tree**
 ```bash
 .
