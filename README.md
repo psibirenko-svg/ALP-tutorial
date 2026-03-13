@@ -10891,11 +10891,11 @@ hot_standby = on
 - web1-psql-master 192.168.50.15 # из урока DNS (для проекта)
 - web2-psql-replica 192.168.50.16 # из урока DNS (для проекта)
 - barman-graylog-zabbix 192.168.50.23 новая (для проекта)
-- 
+
 <img width="1229" height="471" alt="Screenshot 2026-03-12 at 16 57 06" src="https://github.com/user-attachments/assets/8a6e0dc4-f846-4327-aa90-ec229a2c3366" />
 
 - **root@web1-psql-master:~# apt update** # обновляем список пакетов
-- **root@web1-psql-master:~# apt upgrade** -y # обновляем пакеты по списку
+- **root@web1-psql-master:~# apt upgrade -y** # обновляем пакеты по списку
 - **root@web1-psql-master:~# apt search postgresql-** # ищем доступные 
 - **root@web1-psql-master:~# apt install postgresql postgresql-contrib** # устанавливаем последнюю доступную (без опыта потому что)
 - **root@web1-psql-master:~# systemctl start postgresql** #  стартуем
@@ -10914,4 +10914,58 @@ hot_standby = on
 ```bash
 psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 ```
+- **root@web2-psql-replica:~# psql --version** # на машине web2-psql-replica выполняем те же действия по установке psql и проверяем версию (совпадают)
+```bash
+psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+```
+- **root@web1-psql-master:~# sudo -u postgres psql** # подключимся к PostgreSQL
+- **postgres=#**
+- **postgres=# \l** # Посмотрим БД
 
+```bash
+                                                       List of databases
+   Name    |  Owner   | Encoding | Locale Provider |   Collate   |    Ctype    | ICU Locale | ICU Rules |   Access privileges
+-----------+----------+----------+-----------------+-------------+-------------+------------+-----------+-----------------------
+ postgres  | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           |
+ template0 | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres          +
+           |          |          |                 |             |             |            |           | postgres=CTc/postgres
+ template1 | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres          +
+           |          |          |                 |             |             |            |           | postgres=CTc/postgres
+(3 rows)
+
+(END)
+```
+- **postgres=# \dt**
+```bash
+Did not find any relations.
+```
+- **postgres=# CREATE TABLE garantusers (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    age INT
+);**
+```bash
+CREATE TABLE
+```
+- **postgres=# \dt**
+```bash
+  List of relations
+ Schema |    Name     | Type  |  Owner
+--------+-------------+-------+----------
+ public | garantusers | table | postgres
+(1 row)
+```
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Pavel', 63);
+INSERT 0 1**
+
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Oleg', 39);
+INSERT 0 1**
+```bash
+- **postgres=# SELECT * FROM garantusers;**
+
+ id | name  | age
+----+-------+-----
+  1 | Pavel |  63
+  2 | Oleg  |  39
+(2 rows)
+``` 
