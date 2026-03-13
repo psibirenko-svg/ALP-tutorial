@@ -10886,7 +10886,7 @@ hot_standby = on
 ```
 </details>
 
-### Выполнение
+- ### Выполнение
 - создал три ВМ:
 - web1-psql-master 192.168.50.15 # из урока DNS (для проекта)
 - web2-psql-replica 192.168.50.16 # из урока DNS (для проекта)
@@ -10918,7 +10918,7 @@ psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 ```bash
 psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 ```
-### Действия на машине web1-psql-master (MASTER DB)
+- ### Действия на машине web1-psql-master (MASTER DB)
 
 - **root@web1-psql-master:~# sudo -u postgres psql** # подключимся к PostgreSQL
 - **postgres=#**
@@ -10982,7 +10982,7 @@ INSERT 0 1**
 Indexes:
     "garantusers_pkey" PRIMARY KEY, btree (id)
 ```
-### Далее приступаем к настройке репликации: 
+- ### Далее приступаем к настройке репликации: 
 - **postgres=# CREATE USER replicator WITH REPLICATION Encrypted PASSWORD 'Otus2026!';** # В psql создаём пользователя replicator c правами репликации и паролем «Otus2026!»
 ```bash
 CREATE ROLE
@@ -11042,9 +11042,9 @@ listen_addresses = 'localhost, 192.168.50.16'           # what IP address(es) to
 - **root@web2-psql-replica:~# sudo systemctl start postgresql**
 
 - **root@web2-psql-replica:~# sudo -u postgres psql**
-**psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+- **psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
 	Is the server running locally and accepting connections on that socket?**
-### На Ubuntu 22.04+ и PostgreSQL 16 сервер на слейве не стартует просто через systemctl start postgresql, потому что systemd unit postgresql.service просто поднимает кластеры, но если они уже существуют как hot_standby — service завершается exited. Видимо, этого не было в 14 версии и поэтому не отражено в методичке)
+- ### На Ubuntu 22.04+ и PostgreSQL 16 сервер на слейве не стартует просто через systemctl start postgresql, потому что systemd unit postgresql.service просто поднимает кластеры, но если они уже существуют как hot_standby — service завершается exited. Видимо, этого не было в 14 версии и поэтому не отражено в методичке)
 - **root@web2-psql-replica:~# sudo systemctl start postgresql@16-main**
 - **root@web2-psql-replica:~# sudo systemctl status postgresql@16-main**
 ```bash
@@ -11052,7 +11052,7 @@ listen_addresses = 'localhost, 192.168.50.16'           # what IP address(es) to
      Loaded: loaded (/usr/lib/systemd/system/postgresql@.service; enabled-runtime; preset: enabled)
      Active: active (running) since Fri 2026-03-13 12:50:24 MSK; 19min ago
 ```
-### Действия на машине web1-psql-master (MASTER DB)
+- ### Действия на машине web1-psql-master (MASTER DB)
 - **root@web1-psql-master:~# sudo -u postgres psql
 psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
 Type "help" for help.**
@@ -11074,7 +11074,7 @@ postgres=# \l** Создали новую БД otus-test
 
 (END)
 ```
-### Действия на машине web2-psql-replica (REPLICA DB)
+- ### Действия на машине web2-psql-replica (REPLICA DB)
 - **root@web2-psql-replica:~# sudo -u postgres psql**
 ```bash
 psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
@@ -11095,8 +11095,9 @@ Type "help" for help.
 
 (END)
 ```
+- ### Дополнительный проверки репликации
 
-### Действия на машине web1-psql-master (MASTER DB)
+- ### Действия на машине web1-psql-master (MASTER DB)
 - **postgres=# select * from pg_stat_replication;**
 ```bash
   pid  | usesysid |  usename   | application_name |  client_addr  | client_hostname | client_port |         backend_start         | backend_xmin |   state   | sent_lsn  | write_lsn | flush_lsn | replay_lsn |    write_lag    |    flush_lag    |   replay_lag    | sync_priority | sync_state |          reply_time
@@ -11104,7 +11105,7 @@ Type "help" for help.
  18225 |    16397 | replicator | 16/main          | 192.168.50.16 |                 |       60866 | 2026-03-13 12:50:22.562685+03 |              | streaming | 0/342DAC8 | 0/342DAC8 | 0/342DAC8 | 0/342DAC8  | 00:00:00.000269 | 00:00:00.000585 | 00:00:00.000688 |             0 | async      | 2026-03-13 12:52:39.277268+03
 (1 row)
 ```
-### Действия на машине web2-psql-replica (REPLICA DB)
+- ### Действия на машине web2-psql-replica (REPLICA DB)
 - **select * from pg_stat_wal_receiver;**
 ```bash
 ...skipping...
@@ -11114,4 +11115,45 @@ Type "help" for help.
 (1 row)
 
 ```
+- ### На этом настройка репликации завершена. 
+
+- ### В случае выхода из строя master-хоста (node1), на slave-сервере (node2) в psql необхоимо выполнить команду select pg_promote(); Также можно создать триггер-файл. Если в дальнейшем хост node1 заработает корректно, то для восстановления его работы (как master-сервера) необходимо наастроить сервер node1 как slave-сервер. Также с помощью команды select pg_promote(); перевести режим его работы в master.
+
+- ### Действия на машине web2-psql-replica (REPLICA DB)
+-** postgres=# SELECT pg_is_in_recovery();
+ pg_is_in_recovery
+-------------------
+- t - **слейв в режиме репликации.**
+- (1 row)**
+- ### Действия на машине web1-psql-master (MASTER DB)
+- **root@web1-psql-master:~# shutdown now** # выводим из строя мастера
+
+- ### Действия на машине web2-psql-replica (REPLICA DB)
+- **postgres=# SELECT pg_promote(wait_seconds => 60);
+ pg_promote
+------------**
+-  t - промоуция завершена
+- (1 row)
+  
+**postgres=# SELECT pg_is_in_recovery();
+ pg_is_in_recovery
+-------------------**
+-  f - значит слейв стал полноценным мастером (read-write).
+- (1 row)
+- **postgres=# \dt
+            List of relations
+ Schema |    Name     | Type  |  Owner
+--------+-------------+-------+----------
+ public | garantusers | table | postgres
+(1 row)**
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Mariya', 63); # попробуем записать
+INSERT 0 1**
+**postgres=# SELECT * FROM garantusers; # проверка что запись добавилась
+ id |  name  | age
+----+--------+-----
+  1 | Pavel  |  63
+  2 | Oleg   |  39
+  3 | Test   |  99
+  4 | Mariya |  63
+(4 rows)**
 
