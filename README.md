@@ -10891,7 +10891,9 @@ hot_standby = on
 - web1-psql-master 192.168.50.15 # из урока DNS (для проекта)
 - web2-psql-replica 192.168.50.16 # из урока DNS (для проекта)
 - barman-graylog-zabbix 192.168.50.23 новая (для проекта)
+- 
 <img width="1229" height="471" alt="Screenshot 2026-03-12 at 16 57 06" src="https://github.com/user-attachments/assets/8a6e0dc4-f846-4327-aa90-ec229a2c3366" />
+
 - **root@web1-psql-master:~# apt update** # обновляем список пакетов
 - **root@web1-psql-master:~# apt upgrade** -y # обновляем пакеты по списку
 - **root@web1-psql-master:~# apt search postgresql-** # ищем доступные 
@@ -10899,6 +10901,7 @@ hot_standby = on
 - **root@web1-psql-master:~# systemctl start postgresql** #  стартуем
 - **root@web1-psql-master:~# systemctl enable postgresql** # включаем автозапуск при загрузке системы
 - **root@web1-psql-master:~# systemctl status postgresql** # проверяем состояние
+
 ```bash
 ● postgresql.service - PostgreSQL RDBMS
      Loaded: loaded (/usr/lib/systemd/system/postgresql.service; enabled; preset: enabled)
@@ -10906,6 +10909,7 @@ hot_standby = on
    Main PID: 16190 (code=exited, status=0/SUCCESS)
         CPU: 967us
 ```
+
 - **root@web1-psql-master:~# psql --version** # смотрим версию psql
 ```bash
 psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
