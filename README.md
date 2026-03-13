@@ -10918,6 +10918,8 @@ psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 ```bash
 psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 ```
+### Действия на машине web1-psql-master (MASTER DB)
+
 - **root@web1-psql-master:~# sudo -u postgres psql** # подключимся к PostgreSQL
 - **postgres=#**
 - **postgres=# \l** # Посмотрим БД, все стандартные
@@ -11006,3 +11008,110 @@ max_replication_slots = 3               # max number of replication slots
 hot_standby_feedback = on               # send info from standby to prevent
 password_encryption = scram-sha-256     # scram-sha-256 or md5
 ```
+- **root@web1-psql-master:~# vim /etc/postgresql/16/main/pg_hba.conf** # в файле управления доступом добавляем две последние строки, которые разрешают репликацию пользователю replicator (в методичке ошибка - replication).
+```bash
+host    replication replicator         192.168.50.15/32        scram-sha-256
+host    replication replicator         192.168.50.16/32        scram-sha-256
+```
+- **root@web1-psql-master:~# systemctl restart postgresql** # Перезапускаем postgresql-server
+
+### Действия на машине web2-psql-replica (REPLICA DB)
+
+- **root@web2-psql-replica:~# systemctl stop postgresql** # Останавливаем postgresql-server
+- **root@web2-psql-replica:~# ls /var/lib/postgresql/16/main/** # директория данных
+base          pg_dynshmem   pg_notify    pg_snapshots  pg_subtrans  PG_VERSION  postgresql.auto.conf
+global        pg_logical    pg_replslot  pg_stat       pg_tblspc    pg_wal      postmaster.opts
+pg_commit_ts  pg_multixact  pg_serial    pg_stat_tmp   pg_twophase  pg_xact
+- **root@web2-psql-replica:~# sudo rm -rf /var/lib/postgresql/16/main/*** # очищаем директорию данных (в методичке пропущено)
+- **root@web2-psql-replica:~# pg_basebackup -h 192.168.50.15 -U replicator -D /var/lib/postgresql/16/main -R -P** # копируем БД с мастера на реплику утилитой pg_basebackup (в методичке пропущен пользователь replicator)
+```bash
+Password: Otus2026!
+23249/23249 kB (100%), 1/1 tablespace
+```
+- **root@web2-psql-replica:~# ls /var/lib/postgresql/16/main** # директория данных после копирования
+```bash
+backup_label     pg_commit_ts  pg_notify     pg_stat      pg_twophase  postgresql.auto.conf
+backup_manifest  pg_dynshmem   pg_replslot   pg_stat_tmp  PG_VERSION   standby.signal
+base             pg_logical    pg_serial     pg_subtrans  pg_wal
+global           pg_multixact  pg_snapshots  pg_tblspc    pg_xact
+```
+- **root@web2-psql-replica:~# vim  /etc/postgresql/16/main/postgresql.conf** # меняем одну строку
+```bash
+listen_addresses = 'localhost, 192.168.50.16'           # what IP address(es) to listen on;
+```
+- **root@web2-psql-replica:~# sudo systemctl start postgresql**
+
+- **root@web2-psql-replica:~# sudo -u postgres psql**
+**psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?**
+### На Ubuntu 22.04+ и PostgreSQL 16 сервер на слейве не стартует просто через systemctl start postgresql, потому что systemd unit postgresql.service просто поднимает кластеры, но если они уже существуют как hot_standby — service завершается exited.
+- **root@web2-psql-replica:~# sudo systemctl start postgresql@16-main**
+- **root@web2-psql-replica:~# sudo systemctl status postgresql@16-main**
+```bash
+● postgresql@16-main.service - PostgreSQL Cluster 16-main
+     Loaded: loaded (/usr/lib/systemd/system/postgresql@.service; enabled-runtime; preset: enabled)
+     Active: active (running) since Fri 2026-03-13 12:50:24 MSK; 19min ago
+```
+### Действия на машине web1-psql-master (MASTER DB)
+- **root@web1-psql-master:~# sudo -u postgres psql
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.**
+
+- **postgres=# CREATE DATABASE otus_test;
+CREATE DATABASE
+postgres=# \l** Создали новую БД otus-test
+```bash
+                                                       List of databases
+   Name    |  Owner   | Encoding | Locale Provider |   Collate   |    Ctype    | ICU Locale | ICU Rules |   Access privileges
+-----------+----------+----------+-----------------+-------------+-------------+------------+-----------+-----------------------
+ otus_test | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           |
+ postgres  | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           |
+ template0 | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres          +
+           |          |          |                 |             |             |            |           | postgres=CTc/postgres
+ template1 | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres          +
+           |          |          |                 |             |             |            |           | postgres=CTc/postgres
+(4 rows)
+
+(END)
+```
+### Действия на машине web2-psql-replica (REPLICA DB)
+- **root@web2-psql-replica:~# sudo -u postgres psql**
+```bash
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.
+```
+- **postgres=# \l** # Увидели созданную на MASTER БД, репликация работает
+
+```bash                                                       List of databases
+   Name    |  Owner   | Encoding | Locale Provider |   Collate   |    Ctype    | ICU Locale | ICU Rules |   Access privileges
+-----------+----------+----------+-----------------+-------------+-------------+------------+-----------+-----------------------
+ otus_test | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           |
+ postgres  | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           |
+ template0 | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres          +
+           |          |          |                 |             |             |            |           | postgres=CTc/postgres
+ template1 | postgres | UTF8     | libc            | en_US.UTF-8 | en_US.UTF-8 |            |           | =c/postgres          +
+           |          |          |                 |             |             |            |           | postgres=CTc/postgres
+(4 rows)
+
+(END)
+```
+
+### Действия на машине web1-psql-master (MASTER DB)
+- **postgres=# select * from pg_stat_replication;**
+```bash
+  pid  | usesysid |  usename   | application_name |  client_addr  | client_hostname | client_port |         backend_start         | backend_xmin |   state   | sent_lsn  | write_lsn | flush_lsn | replay_lsn |    write_lag    |    flush_lag    |   replay_lag    | sync_priority | sync_state |          reply_time
+-------+----------+------------+------------------+---------------+-----------------+-------------+-------------------------------+--------------+-----------+-----------+-----------+-----------+------------+-----------------+-----------------+-----------------+---------------+------------+-------------------------------
+ 18225 |    16397 | replicator | 16/main          | 192.168.50.16 |                 |       60866 | 2026-03-13 12:50:22.562685+03 |              | streaming | 0/342DAC8 | 0/342DAC8 | 0/342DAC8 | 0/342DAC8  | 00:00:00.000269 | 00:00:00.000585 | 00:00:00.000688 |             0 | async      | 2026-03-13 12:52:39.277268+03
+(1 row)
+```
+### Действия на машине web2-psql-replica (REPLICA DB)
+- **select * from pg_stat_wal_receiver;**
+```bash
+...skipping...
+ pid  |  status   | receive_start_lsn | receive_start_tli | written_lsn | flushed_lsn | received_tli |      last_msg_send_time       |     last_msg_receipt_time     | latest_end_lsn |        latest_end_time        | slot_name |  sender_host  | sender_port |                                                                                                                                                                     conninfo
+-------+-----------+-------------------+-------------------+-------------+-------------+--------------+-------------------------------+-------------------------------+----------------+-------------------------------+-----------+---------------+-------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 17363 | streaming | 0/3000000         |                 1 | 0/342DAC8   | 0/342DAC8   |            1 | 2026-03-13 12:52:39.276428+03 | 2026-03-13 12:52:39.276806+03 | 0/342DAC8      | 2026-03-13 12:52:39.276428+03 |           | 192.168.50.15 |        5432 | user=replicator password=******** channel_binding=prefer dbname=replication host=192.168.50.15 port=5432 fallback_application_name=16/main sslmode=prefer sslcompression=0 sslcertmode=allow sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres gssdelegation=0 target_session_attrs=any load_balance_hosts=disable
+(1 row)
+
+```
+
