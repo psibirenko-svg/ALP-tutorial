@@ -11044,7 +11044,7 @@ listen_addresses = 'localhost, 192.168.50.16'           # what IP address(es) to
 - **root@web2-psql-replica:~# sudo -u postgres psql**
 **psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
 	Is the server running locally and accepting connections on that socket?**
-### На Ubuntu 22.04+ и PostgreSQL 16 сервер на слейве не стартует просто через systemctl start postgresql, потому что systemd unit postgresql.service просто поднимает кластеры, но если они уже существуют как hot_standby — service завершается exited.
+### На Ubuntu 22.04+ и PostgreSQL 16 сервер на слейве не стартует просто через systemctl start postgresql, потому что systemd unit postgresql.service просто поднимает кластеры, но если они уже существуют как hot_standby — service завершается exited. Видимо, этого не было в 14 версии и поэтому не отражено в методичке)
 - **root@web2-psql-replica:~# sudo systemctl start postgresql@16-main**
 - **root@web2-psql-replica:~# sudo systemctl status postgresql@16-main**
 ```bash
