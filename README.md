@@ -10803,8 +10803,7 @@ PLAY RECAP *********************************************************************
 
 ## УРОК 46 Postgres SQL: Backup + Репликация 
 
-- **Домашнее задание**
-- **Репликация postgres**
+- **Домашнее задание "Репликация postgres"**
 - 🎯 Цель:
 - **Научиться настраивать репликацию и создавать резервные копии в СУБД PostgreSQL;**
 - 🎯 Что нужно сделать?
@@ -10886,3 +10885,29 @@ hot_standby = on
 После создания слота удалять его аккуратно, иначе WAL будут накапливаться и дисковое пространство уйдёт.
 ```
 </details>
+
+### Выполнение
+- создал три ВМ:
+- web1-psql-master 192.168.50.15 # из урока DNS (для проекта)
+- web2-psql-replica 192.168.50.16 # из урока DNS (для проекта)
+- barman-graylog-zabbix 192.168.50.23 новая (для проекта)
+<img width="1229" height="471" alt="Screenshot 2026-03-12 at 16 57 06" src="https://github.com/user-attachments/assets/8a6e0dc4-f846-4327-aa90-ec229a2c3366" />
+- **root@web1-psql-master:~# apt update** # обновляем список пакетов
+- **root@web1-psql-master:~# apt upgrade** -y # обновляем пакеты по списку
+- **root@web1-psql-master:~# apt search postgresql-** # ищем доступные 
+- **root@web1-psql-master:~# apt install postgresql postgresql-contrib** # устанавливаем последнюю доступную (без опыта потому что)
+- **root@web1-psql-master:~# systemctl start postgresql** #  стартуем
+- **root@web1-psql-master:~# systemctl enable postgresql** # включаем автозапуск при загрузке системы
+- **root@web1-psql-master:~# systemctl status postgresql** # проверяем состояние
+```bash
+● postgresql.service - PostgreSQL RDBMS
+     Loaded: loaded (/usr/lib/systemd/system/postgresql.service; enabled; preset: enabled)
+     Active: active (exited) since Fri 2026-03-13 09:17:59 MSK; 1min 17s ago
+   Main PID: 16190 (code=exited, status=0/SUCCESS)
+        CPU: 967us
+```
+- **root@web1-psql-master:~# psql --version** # смотрим версию psql
+```bash
+psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+```
+
