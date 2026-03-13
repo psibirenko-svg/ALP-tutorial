@@ -10920,7 +10920,7 @@ psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 ```
 - **root@web1-psql-master:~# sudo -u postgres psql** # подключимся к PostgreSQL
 - **postgres=#**
-- **postgres=# \l** # Посмотрим БД
+- **postgres=# \l** # Посмотрим БД, все стандартные
 
 ```bash
                                                        List of databases
@@ -10935,7 +10935,7 @@ psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 
 (END)
 ```
-- **postgres=# \dt**
+- **postgres=# \dt** # посмотрим таблицы, их нет
 ```bash
 Did not find any relations.
 ```
@@ -10943,11 +10943,11 @@ Did not find any relations.
     id SERIAL PRIMARY KEY,
     name TEXT,
     age INT
-);**
+);** # создадим свою таблицу в БД postdres
 ```bash
 CREATE TABLE
 ```
-- **postgres=# \dt**
+- **postgres=# \dt** # теперь есть одна таблица
 ```bash
   List of relations
  Schema |    Name     | Type  |  Owner
@@ -10955,17 +10955,54 @@ CREATE TABLE
  public | garantusers | table | postgres
 (1 row)
 ```
-- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Pavel', 63);
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Pavel', 63); # добавим запись в таблицу из двух полей
 INSERT 0 1**
 
-- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Oleg', 39);
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Oleg', 39); # --"--
 INSERT 0 1**
-```bash
+
 - **postgres=# SELECT * FROM garantusers;**
-
+```bash
  id | name  | age
 ----+-------+-----
   1 | Pavel |  63
   2 | Oleg  |  39
 (2 rows)
 ``` 
+- **postgres=# \d garantusers** # Проверка структуры таблицы
+```bash
+                            Table "public.garantusers"
+ Column |  Type   | Collation | Nullable |                 Default
+--------+---------+-----------+----------+-----------------------------------------
+ id     | integer |           | not null | nextval('garantusers_id_seq'::regclass)
+ name   | text    |           |          |
+ age    | integer |           |          |
+Indexes:
+    "garantusers_pkey" PRIMARY KEY, btree (id)
+```
+### Далее приступаем к настройке репликации: 
+- **postgres=# CREATE USER replicator WITH REPLICATION Encrypted PASSWORD 'Otus2026!';** # В psql создаём пользователя replicator c правами репликации и паролем «Otus2026!»
+```bash
+CREATE ROLE
+```
+- **postgres=# SHOW config_file;** # проверяем, где расположен наш конфигурационный файл
+```bash
+			   config_file
+-----------------------------------------
+ /etc/postgresql/16/main/postgresql.conf
+(1 row)
+```
+- **postgres=# quit**
+- **root@web1-psql-master:~# vim /etc/postgresql/16/main/postgresql.conf** # указываем следующие параметры:
+```bash
+listen_addresses = 'localhost,192.168.50.15'            # what IP address(es) to listen on;
+port = 5432                             # (change requires restart)
+max_connections = 100                   # (change requires restart)
+log_timezone = 'Europe/Moscow'
+hot_standby = on                        # "off" disallows queries during recovery
+wal_level = replica                     # minimal, replica, or logical
+max_wal_senders = 3                     # max number of walsender processes
+max_replication_slots = 3               # max number of replication slots
+hot_standby_feedback = on               # send info from standby to prevent
+password_encryption = scram-sha-256     # scram-sha-256 or md5
+```
