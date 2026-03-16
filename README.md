@@ -11120,35 +11120,42 @@ Type "help" for help.
 - ### В случае выхода из строя master-хоста (node1), на slave-сервере (node2) в psql необхоимо выполнить команду select pg_promote(); Также можно создать триггер-файл. Если в дальнейшем хост node1 заработает корректно, то для восстановления его работы (как master-сервера) необходимо наастроить сервер node1 как slave-сервер. Также с помощью команды select pg_promote(); перевести режим его работы в master.
 
 - ### Действия на машине web2-psql-replica (REPLICA DB)
+
 -** postgres=# SELECT pg_is_in_recovery();
  pg_is_in_recovery
 -------------------
 - t - **слейв в режиме репликации.**
 - (1 row)**
 - ### Действия на машине web1-psql-master (MASTER DB)
+
 - **root@web1-psql-master:~# shutdown now** # выводим из строя мастера
 
 - ### Действия на машине web2-psql-replica (REPLICA DB)
+
 - **postgres=# SELECT pg_promote(wait_seconds => 60);
  pg_promote
 ------------**
--  t - промоуция завершена
+```bash
+-  t - **промоуция завершена**
 - (1 row)
-  
+```  
 **postgres=# SELECT pg_is_in_recovery();
  pg_is_in_recovery
 -------------------**
--  f - значит слейв стал полноценным мастером (read-write).
+-  f - **значит слейв стал полноценным мастером (read-write).**
 - (1 row)
-- **postgres=# \dt
+- **postgres=# \dt**
+```bash
             List of relations
  Schema |    Name     | Type  |  Owner
 --------+-------------+-------+----------
  public | garantusers | table | postgres
 (1 row)**
-- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Mariya', 63); # попробуем записать
-INSERT 0 1**
-**postgres=# SELECT * FROM garantusers; # проверка что запись добавилась
+```
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Mariya', 63);** # попробуем записать
+- INSERT 0 1
+- **postgres=# SELECT * FROM garantusers; # проверка что запись добавилась**
+```bash
  id |  name  | age
 ----+--------+-----
   1 | Pavel  |  63
@@ -11156,4 +11163,196 @@ INSERT 0 1**
   3 | Test   |  99
   4 | Mariya |  63
 (4 rows)**
+```
+- ### web1-psql-master (MASTER DB) "восстановили" и нужно вернуться к первоначальной схеме
+- ### Действия на машине web2-psql-replica (REPLICA DB)
+- ### Перенесем данные, которые добавили на slave
+- **root@web2-psql-replica:~# sudo -u postgres pg_dump -Fc -f /tmp/garantusers.dump postgres** # дамп нашей таблицы
+- **root@web2-psql-replica:~# sudo -u postgres pg_dumpall -f /tmp/all_data.sql** # или все БД ...
+- **root@web2-psql-replica:~# scp /tmp/garantusers.dump spg@192.168.50.15:/tmp/** # Передадимм данные на master
+```bash
+spg@192.168.50.15's password:
+garantusers.dump                                                 100% 3049     9.0MB/s   00:00
+```
+- ### Действия на машине web1-psql-master (MASTER DB)
+- **root@web1-psql-master:~# sudo -u postgres pg_restore --clean -d postgres /tmp/garantusers.dump**
+- **root@web1-psql-master:~# sudo -u postgres psql**
+```bash
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.
+```
+- **postgres=# SELECT * FROM garantusers;** # выровняли
+```bash
+ id |  name  | age
+----+--------+-----
+  1 | Pavel  |  63
+  2 | Oleg   |  39
+  3 | Test   |  99
+  4 | Mariya |  63
+(4 rows)
+```
+- ### Эту тему до конца довести не удалось (она и не была заявлена к выполнению в ДЗ). Нужно отдельно разбираться в восстановлении данных на мастере и приведении репликации в исходное положение после промоушена реплики в отдельный мастер. Стало понятно, что одним  select "pg_promote()" это не решить. Интересная тема для администратора баз данных.
+  
+- ### Настройка резервного копирования
+root@web1-psql-master:~# apt install barman-cli
 
+root@web2-psql-replica:~# apt install barman-cli
+
+root@barmen-graylog-zabbix:~# apt install barman-cli barman postgresql
+
+root@barmen-graylog-zabbix:~# su barman
+barman@barmen-graylog-zabbix:/root$ cd
+barman@barmen-graylog-zabbix:~$ pwd
+/var/lib/barman
+barman@barmen-graylog-zabbix:~$ ssh-keygen -t rsa -b 4096
+Generating public/private rsa key pair.
+Enter file in which to save the key (/var/lib/barman/.ssh/id_rsa):
+Created directory '/var/lib/barman/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /var/lib/barman/.ssh/id_rsa
+Your public key has been saved in /var/lib/barman/.ssh/id_rsa.pub
+The key fingerprint is:
+
+root@web1-psql-master:~# su postgres
+postgres@web1-psql-master:/root$ cd
+postgres@web1-psql-master:~$ pwd
+/var/lib/postgresql
+postgres@web1-psql-master:~$ ssh-keygen -t rsa -b 4096
+Generating public/private rsa key pair.
+Enter file in which to save the key (/var/lib/postgresql/.ssh/id_rsa):
+Created directory '/var/lib/postgresql/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /var/lib/postgresql/.ssh/id_rsa
+Your public key has been saved in /var/lib/postgresql/.ssh/id_rsa.pub
+The key fingerprint is:
+После генерации ключа, выводим содержимое файла ~/.ssh/id_rsa.pub: 
+cat ~/.ssh/id_rsa.pub 
+Копируем содержимое файла на сервер postgres в файл /var/lib/postgresql/.ssh/authorized_keys
+После генерации ключа, выводим содержимое файла ~/.ssh/id_rsa.pub: 
+cat ~/.ssh/id_rsa.pub 
+Копируем содержимое файла на сервер barman в файл /var/lib/barman/.ssh/authorized_keys
+
+postgres@web1-psql-master:~$ psql
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.
+
+postgres=# CREATE USER barman WITH REPLICATION Encrypted PASSWORD 'Otus2026!';
+CREATE ROLE
+postgres=# \q
+postgres@web1-psql-master:~$ vim /etc/postgresql/16/main/pg_hba.conf
+exit
+root@web1-psql-master:~# systemctl restart postgresql
+root@web1-psql-master:~# sudo -u postgres psql
+postgres=# CREATE DATABASE otus;
+CREATE DATABAS
+otus=# CREATE TABLE test (id int, name varchar(30));
+CREATE TABLE
+otus=# \d
+        List of relations
+ Schema | Name | Type  |  Owner
+--------+------+-------+----------
+ public | test | table | postgres
+(1 row)
+
+postgres=# \c otus;
+otus=# CREATE TABLE garantusers (
+    НОМЕР SERIAL PRIMARY KEY,
+    ИМЯ VARCHAR(100) NOT NULL,
+    ВОЗРАСТ INTEGER,
+    ПОЛ VARCHAR(10)
+);
+otus=# INSERT INTO garantusers (ИМЯ, ВОЗРАСТ, ПОЛ)
+VALUES
+    ('Ольга Новикова', 22, 'Женский'),
+    ('Дмитрий Соколов', 40, 'Мужской'),
+    ('Елена Воробьева', 31, 'Женский'),
+    ('Алексей Крылов', 29, 'Мужской');
+INSERT 0 4
+otus=# SELECT * FROM garantusers;
+ НОМЕР |       ИМЯ       | ВОЗРАСТ |   ПОЛ
+-------+-----------------+---------+---------
+     1 | Ольга Новикова  |      22 | Женский
+     2 | Дмитрий Соколов |      40 | Мужской
+     3 | Елена Воробьева |      31 | Женский
+     4 | Алексей Крылов  |      29 | Мужской
+(4 rows)
+root@web2-psql-replica:~# sudo -u postgres psql
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.
+
+postgres=# \l
+postgres=# \d otus
+Did not find any relation named "otus".
+postgres=# \c otus
+You are now connected to database "otus" as user "postgres".
+otus=# \d
+                  List of relations
+ Schema |         Name          |   Type   |  Owner
+--------+-----------------------+----------+----------
+ public | garantusers           | table    | postgres
+ public | garantusers_НОМЕР_seq | sequence | postgres
+ public | test                  | table    | postgres
+(3 rows)
+otus=# SELECT * FROM garantusers;
+ НОМЕР |       ИМЯ       | ВОЗРАСТ |   ПОЛ
+-------+-----------------+---------+---------
+     1 | Ольга Новикова  |      22 | Женский
+     2 | Дмитрий Соколов |      40 | Мужской
+     3 | Елена Воробьева |      31 | Женский
+     4 | Алексей Крылов  |      29 | Мужской
+(4 rows)
+barman@barmen-graylog-zabbix:~$ cat ~/.pgpass
+192.168.50.15:5432:*:barman:Otus2026!
+barman@barmen-graylog-zabbix:~$ chmod 600  ~/.pgpass
+barman@barmen-graylog-zabbix:~$ ls -hal  ~/.pgpass
+-rw------- 1 barman barman 38 Mar 16 08:07 /var/lib/barman/.pgpass
+barman@barmen-graylog-zabbix:~$ psql -h 192.168.50.15 -U barman -d postgres
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off)
+Type "help" for help.
+
+postgres=> \q
+barman@barmen-graylog-zabbix:~$ psql -h 192.168.50.15 -U barman -c "IDENTIFY_SYSTEM" replication=1
+      systemid       | timeline |  xlogpos  | dbname
+---------------------+----------+-----------+--------
+ 7617513940940913251 |        1 | 0/745A9D8 |
+(1 row)
+>
+postgres=# GRANT EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) TO barman;
+GRANT EXECUTE ON FUNCTION pg_stop_backup() TO barman;
+GRANT EXECUTE ON FUNCTION pg_stop_backup(boolean, boolean) TO barman;
+GRANT EXECUTE ON FUNCTION pg_switch_wal() TO barman;
+GRANT EXECUTE ON FUNCTION pg_create_restore_point(text) TO barman;
+ERROR:  function pg_start_backup(text, boolean, boolean) does not exist
+ERROR:  function pg_stop_backup() does not exist
+ERROR:  function pg_stop_backup(boolean, boolean) does not exist
+GRANT
+GRANT
+postgres=# SELECT rolname FROM pg_roles WHERE rolname = 'barman';
+ rolname
+---------
+ barman
+(1 row)
+
+postgres=# CREATE TABLE test_wal(id serial);
+CREATE TABLE
+postgres=# INSERT INTO test_wal DEFAULT VALUES;
+INSERT 0 1
+barman@barmen-graylog-zabbix:/root$ sudo pkill -u barman<img width="698" height="520" alt="Screenshot 2026-03-16 at 18 51 27" src="https://github.com/user-attachments/assets/bd8a4e31-f37b-49b3-abc2-752e9e41fd9b" />
+ -f receive-wal
+barman@barmen-graylog-zabbix:/root$ barman receive-wal node1
+Starting receive-wal for server node1
+node1: pg_receivewal: starting log streaming at 0/16000000 (timeline 1)
+node1: pg_receivewal: finished segment at 0/17000000 (timeline 1)
+node1: pg_receivewal: finished segment at 0/18000000 (timeline 1)
+barman@barmen-graylog-zabbix:/root$ rm -rf /var/lib/barman/node1/incoming/*
+
+Картинки!!!
+
+На этом процесс настройки бекапа закончен, для удобства команду barman backup node1 требуется добавить в crontab. 
+
+### Проверка восстановления из бекапов:
+postgres=# DROP DATABASE otus;
+DROP DATABASE
