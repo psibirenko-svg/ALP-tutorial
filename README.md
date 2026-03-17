@@ -11414,3 +11414,397 @@ node1: pg_receivewal: finished segment at 0/18000000 (timeline 1)
 
 ### На этом процесс настройки бекапа закончен, для удобства команду barman backup node1 требуется добавить в crontab. 
 
+
+### 2. Настройка hot_standby репликации с использованием слотов и резервного копирования с помощью Ansible
+
+<img width="266" height="1031" alt="Screenshot 2026-03-17 at 14 26 37" src="https://github.com/user-attachments/assets/fdeb824b-c38b-4598-a58c-6c539461b375" />
+### Содержимое файлов:
+- **➜  ansible cat ansible.cfg**
+```bash
+[defaults]
+host_key_checking = False
+allow_world_readable_tmpfiles = True
+
+[ssh_connection]
+pipelining = True
+```
+- **➜  ansible cat inventory/hosts** 
+```bash
+[master]
+node1 ansible_host=192.168.50.15
+
+[replica]
+node2 ansible_host=192.168.50.16
+
+[barman]
+barman ansible_host=192.168.50.23
+
+[master:vars]
+listen_addresses='localhost,192.168.50.15'
+
+[replica:vars]
+listen_addresses='localhost,192.168.50.16'
+
+[all:vars]
+ansible_user=spg
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_python_interpreter=/usr/bin/python3.12
+```
+- **➜  ansible cat provision.yml** 
+```bash
+---
+- name: Postgres
+  hosts: all
+  become: yes
+  tasks:
+#Устанавливаем vim и telnet (для более удобной работы с хостами)
+    - name: install base tools
+      apt:
+        name:
+         - vim
+         - telnet
+        state: present
+        update_cache: true
+
+#Запуск ролей install_postgres и postgres_replication на хостах node1 и node2
+- name: install postgres 16 and set up replication
+  hosts: node1,node2
+  become: yes
+  roles:
+   - install_postgres
+   - postgres_replication
+
+#Запуск роли install_barman на всех хостах
+- name: set up backup
+  hosts: all
+  become: yes
+  roles:
+   - install_barman
+```
+ - **➜  ansible cat install_postgres/tasks/main.yml**
+```bash
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for install_postgres
+- name: install postgresql-server 16
+  apt: 
+    name: 
+        - postgresql-16 
+        - postgresql-client-16 
+        - postgresql-contrib
+    state: present
+    update_cache: true
+
+# Запускаем postgresql-16
+- name: Start PostgreSQL cluster 16-main
+  service:
+    name: postgresql@16-main
+    state: started
+    enabled: yes
+  when: "'replica' not in group_names"
+```
+- **➜  ansible cat postgres_replication/defaults/main.yml** 
+```bash
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for postgres_replication
+replicator_password: 'Otus2026!'
+master_ip: '192.168.50.15'
+slave_ip: '192.168.50.16'
+```
+- **➜  ansible cat postgres_replication/tasks/main.yml**   
+```bash
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for postgres_replication
+- name: install base tools
+  apt:
+    name:
+      - python3-pexpect
+      - python3-psycopg2
+    state: present
+    update_cache: true
+
+#CREATE USER replicator WITH REPLICATION Encrypted PASSWORD 'Otus2022!';
+- name: Create replicator user
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: replicator
+    password: "{{ replicator_password }}"
+    role_attr_flags: REPLICATION
+  when: "'master' in group_names"
+
+#Останавливаем postgresql-16 на хосте psql-replica
+- name: stop postgresql-server on psql-replica
+  service: 
+    name: postgresql
+    state: stopped
+  when: "'replica' in group_names"
+
+#Копируем конфигурационный файл postgresql.conf
+- name: copy postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: /etc/postgresql/16/main/postgresql.conf
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  when: "'master' in group_names"
+
+#Копируем конфигурационный файл pg_hba.conf
+- name: copy pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: /etc/postgresql/16/main/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  when: "'master' in group_names"
+#Перезапускаем службу  postgresql-16
+- name: restart postgresql-server on psql-master
+  service: 
+    name: postgresql
+    state: restarted
+  when: "'master' in group_names"
+
+#Удаляем содержимое каталога /var/lib/postgresql/16/main/
+- name: Remove files from data catalog
+  file:
+    path: /var/lib/postgresql/16/main/
+    state: absent
+  when: "'replica' in group_names"
+
+#Копируем данные с psql-master на psql-replica
+- name: copy files from master to slave
+  become_user: postgres
+  expect:
+    command: 'pg_basebackup -h {{ master_ip }} -U  replication -p 5432 -D /var/lib/postgresql/16/main/ -R -P'
+    responses: 
+      '.*Password*': "{{ replicator_password }}"
+  when: "'replica' in group_names"
+
+#Копируем конфигурационный файл postgresql.conf
+- name: copy postgresql.conf
+  become: yes
+  become_user: postgres
+  template:
+    src: postgresql.conf.j2
+    dest:  /etc/postgresql/16/main/postgresql.conf
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  when: "'replica' in group_names"
+
+#Копируем конфигурационный файл pg_hba.conf
+- name: copy pg_hba.conf
+  become: yes
+  become_user: postgres
+  template:
+    src: pg_hba.conf.j2
+    dest:  /etc/postgresql/16/main/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  when: "'replica' in group_names"
+ 
+#Запускаем службу postgresql-16 на хосте psql-replica
+- name: start postgresql-server on psql-replica
+  service: 
+    name: postgresql
+    state: started
+  when: "'replica' in group_names"
+```
+- ➜  ansible cat install_barman/defaults/main.yml 
+```bash
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for install_barman
+master_ip: '192.168.50.15'
+master_user: 'postgres'
+barman_ip: '192.168.50.23'
+barman_user: 'barman'
+barman_user_password: 'Otus2026!'
+```
+- **➜  ansible cat install_barman/tasks/main.yml**  
+```bash
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for install_barman
+# Установка необходимых пакетов для работы с postgres и пользователями
+  - name: install base tools
+    apt:
+      name:
+        - python3-pexpect
+        - python3-psycopg2
+        - bash-completion 
+        - wget 
+      state: present
+      update_cache: true
+
+  #  Установка пакетов barman и postgresql-client на сервер barman 
+  - name: install barman and postgresql packages on barman
+    apt:
+      name:
+        - barman
+        - barman-cli
+        - postgresql
+      state: present
+      update_cache: true
+    when: "'barman' in group_names"
+
+ #  Установка пакетов barman-cli на серверах node1 и node2 
+  - name: install barman-cli and postgresql packages on nodes
+    apt:
+      name:
+        - barman-cli
+      state: present
+      update_cache: true
+    when: "'barman' not in group_names"
+
+#  Генерируем SSH-ключ для пользователя postgres на хосте node1
+  - name: generate SSH key for postgres
+    user:
+      name: postgres
+      generate_ssh_key: yes
+      ssh_key_type: rsa
+      ssh_key_bits: 4096
+      force: no
+    when: "'master' in group_names"
+ 
+#  Генерируем SSH-ключ для пользователя barman на хосте barman
+  - name: generate SSH key for barman
+    user:
+      name: barman
+      uid: 994
+      shell: /bin/bash
+      generate_ssh_key: yes
+      ssh_key_type: rsa
+      ssh_key_bits: 4096
+      force: no
+    when: "'barman' in group_names"
+
+  #  Забираем содержимое открытого ключа postgres c хоста node1
+  - name: fetch all public ssh keys node1
+    shell: cat /var/lib/postgresql/.ssh/id_rsa.pub
+    register: ssh_keys
+    when: "'master' in group_names"
+
+  #  Копируем ключ с barman на node1
+  - name: transfer public key to barman
+    delegate_to: barman
+    authorized_key:
+      key: "{{ ssh_keys.stdout }}"
+      comment: "{{ ansible_facts['hostname'] }}"
+      user: barman
+    when: "'master' in group_names"
+
+  #  Забираем содержимое открытого ключа barman c хоста barman 
+  - name: fetch all public ssh keys barman
+    shell: cat /var/lib/barman/.ssh/id_rsa.pub
+    register: ssh_keys
+    when: "'barman' in group_names"
+
+ #  Копируем ключ с node1 на barman
+  - name: transfer public key to barman
+    delegate_to: node1
+    authorized_key:
+      key: "{{ ssh_keys.stdout }}"
+      comment: "{{ ansible_facts['hostname'] }}"
+      user: postgres
+    when: "'barman' in group_names"
+
+  #CREATE USER barman SUPERUSER;
+  - name: Create barman user
+    become_user: postgres
+    postgresql_user:
+      name: barman
+      password: '{{ barman_user_password }}'
+      role_attr_flags: SUPERUSER 
+    ignore_errors: true
+    when: "'master' in group_names"
+
+   # Добавляем разрешения для подключения с хоста barman
+  - name: Add permission for barman
+    lineinfile:
+      path: /etc/postgresql/16/main/pg_hba.conf
+      line: 'host    all   {{ barman_user }}    {{ barman_ip }}/32    scram-sha-256'
+    when: "'master' in group_names or 'replica' in group_names"
+
+  # Добавляем разрешения для подключения с хоста barman
+  - name: Add permission for barman
+    lineinfile:
+      path: /etc/postgresql/16/main/pg_hba.conf
+      line: 'host    replication   {{ barman_user }}    {{ barman_ip }}/32    scram-sha-256'
+    when: "'master' in group_names or 'replica' in group_names"
+
+  # Перезагружаем службу postgresql-server
+  - name: restart postgresql-server on node1
+    service: 
+      name: postgresql
+      state: restarted
+    when: "'master' in group_names"
+
+  # Создаём БД otus;
+  - name: Create DB for backup
+    become_user: postgres
+    postgresql_db:
+      name: otus
+      encoding: UTF-8
+      template: template0
+      state: present
+    when: "'master' in group_names"
+
+  # Создаем таблицу test1 в БД otus;
+  - name: Add tables to otus_backup
+    become_user: postgres
+    postgresql_table:
+      db: otus
+      name: test1
+      state: present
+    when: "'master' in group_names"
+
+  # Копируем файл .pgpass
+  - name: copy .pgpass
+    template:
+      src: .pgpass.j2
+      dest: /var/lib/barman/.pgpass
+      owner: barman
+      group: barman
+      mode: '0600'
+    when: "'barman' in group_names"
+
+  # Копируем файл barman.conf
+  - name: copy barman.conf
+    template:
+      src: barman.conf.j2
+      dest: /etc/barman.conf 
+      owner: barman
+      group: barman
+      mode: '0755'
+    when: "'barman' in group_names"
+
+ # Копируем файл node1.conf
+  - name: copy node1.conf
+    template:
+      src: node1.conf.j2
+      dest: /etc/barman.d/node1.conf
+      owner: barman
+      group: barman
+      mode: '0755'
+    when: "'barman' in group_names"
+
+  - name: barman switch-wal node1
+    become_user: barman
+    shell: barman switch-wal node1
+    when: "'barman' in group_names"
+
+  - name: barman cron
+    become_user: barman
+    shell: barman cron
+    when: "'barman' in group_names"
+```    
+  
+  
+
+### Настройка бекапа с помощью Ansible завершена.
