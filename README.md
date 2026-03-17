@@ -11243,31 +11243,54 @@ The key fingerprint is:
 psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
 Type "help" for help.
 ```
-- **postgres=# CREATE USER barman WITH REPLICATION Encrypted PASSWORD 'Otus2026!';**
+- **postgres=# CREATE USER barman WITH REPLICATION Encrypted PASSWORD 'Otus2026!';** # В psql создаём пользователя barman c правами суперпользователя
+```bash
 CREATE ROLE
-- postgres=# \q
-- postgres@web1-psql-master:~$ vim /etc/postgresql/16/main/pg_hba.conf
-exit
-- root@web1-psql-master:~# systemctl restart postgresql
-- root@web1-psql-master:~# sudo -u postgres psql
-- postgres=# CREATE DATABASE otus;
+```
+- **postgres=# \q** # выходим
+- **postgres@web1-psql-master:~$ vim /etc/postgresql/16/main/pg_hba.conf** # добавляем разрешения для пользователя barman (2 последние стрки)
+```bash
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            scram-sha-256
+# IPv6 local connections:
+host    all             all             ::1/128                 scram-sha-256
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            scram-sha-256
+host    replication     all             ::1/128                 scram-sha-256
+host    replication 	replication	192.168.50.15/32        scram-sha-256
+host    replication 	replication	192.168.50.16/32        scram-sha-256
+host	all		barman		192.168.50.23/32        scram-sha-256
+host	replication	barman		192.168.50.23/32	scram-sha-256
+```
+- **root@web1-psql-master:~# systemctl restart postgresql** # перезапускаем psql
+- **root@web1-psql-master:~# sudo -u postgres psql** # заходим в psql
+- **postgres=# CREATE DATABASE otus**; создаем тестовую базу otus
+```bash
 CREATE DATABAS otus=# CREATE TABLE test (id int, name varchar(30));
 CREATE TABLE
-otus=# \d
-        List of relations
+```
+- **otus=# \d**
+```bash
+		List of relations
  Schema | Name | Type  |  Owner
 --------+------+-------+----------
  public | test | table | postgres
 (1 row)
-
-- postgres=# \c otus;
+```
+- **postgres=# \c otus;** # создаём таблицу garantusers в базе otus, добавляем записи и проверяем содержимое
+```bash
 otus=# CREATE TABLE garantusers (
     НОМЕР SERIAL PRIMARY KEY,
     ИМЯ VARCHAR(100) NOT NULL,
     ВОЗРАСТ INTEGER,
     ПОЛ VARCHAR(10)
 );
-- otus=# INSERT INTO garantusers (ИМЯ, ВОЗРАСТ, ПОЛ)
+
+otus=# INSERT INTO garantusers (ИМЯ, ВОЗРАСТ, ПОЛ)
 VALUES
     ('Ольга Новикова', 22, 'Женский'),
     ('Дмитрий Соколов', 40, 'Мужской'),
@@ -11282,24 +11305,32 @@ otus=# SELECT * FROM garantusers;
      3 | Елена Воробьева |      31 | Женский
      4 | Алексей Крылов  |      29 | Мужской
 (4 rows)
-- root@web2-psql-replica:~# sudo -u postgres psql
+```
+- **root@web2-psql-replica:~# sudo -u postgres psql**
+```bash
 psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
 Type "help" for help.
+```
 
-- postgres=# \l
-- postgres=# \d otus
-Did not find any relation named "otus".
-- postgres=# \c otus
+- **postgres=# \l**
+<img width="929" height="200" alt="Screenshot 2026-03-17 at 12 19 42" src="https://github.com/user-attachments/assets/dc4b36f8-1f40-409d-8ca3-2ffc26dcb3f0" />
+
+- **postgres=# \c otus**
+```bash
 You are now connected to database "otus" as user "postgres".
-- otus=# \d
-                  List of relations
+```
+- **otus=# \d** # структура таблицы
+```bash
+				  List of relations
  Schema |         Name          |   Type   |  Owner
 --------+-----------------------+----------+----------
  public | garantusers           | table    | postgres
  public | garantusers_НОМЕР_seq | sequence | postgres
  public | test                  | table    | postgres
 (3 rows)
-- otus=# SELECT * FROM garantusers;
+```
+- **otus=# SELECT * FROM garantusers;** # выборка
+```bash
  НОМЕР |       ИМЯ       | ВОЗРАСТ |   ПОЛ
 -------+-----------------+---------+---------
      1 | Ольга Новикова  |      22 | Женский
@@ -11307,24 +11338,34 @@ You are now connected to database "otus" as user "postgres".
      3 | Елена Воробьева |      31 | Женский
      4 | Алексей Крылов  |      29 | Мужской
 (4 rows)
-- barman@barmen-graylog-zabbix:~$ cat ~/.pgpass
+```
+- **barman@barmen-graylog-zabbix:~$ cat ~/.pgpass** # Находясь в пользователе barman создаём файл ~/.pgpass со следующим содержимым: 
+```bash
 192.168.50.15:5432:*:barman:Otus2026!
-- barman@barmen-graylog-zabbix:~$ chmod 600  ~/.pgpass
-- barman@barmen-graylog-zabbix:~$ ls -hal  ~/.pgpass
+```
+- **barman@barmen-graylog-zabbix:~$ chmod 600  ~/.pgpass** # Файл должен быть с правами 600, владелец файла barman.
+- **barman@barmen-graylog-zabbix:~$ ls -hal  ~/.pgpass**
+```bash
 -rw------- 1 barman barman 38 Mar 16 08:07 /var/lib/barman/.pgpass
-- barman@barmen-graylog-zabbix:~$ psql -h 192.168.50.15 -U barman -d postgres
+```
+- **barman@barmen-graylog-zabbix:~$ psql -h 192.168.50.15 -U barman -d postgres** # проверяем, что права для пользователя настроены корректно
+```bash
 psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
 SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off)
 Type "help" for help.
-
-- postgres=> \q
-- barman@barmen-graylog-zabbix:~$ psql -h 192.168.50.15 -U barman -c "IDENTIFY_SYSTEM" replication=1
-      systemid       | timeline |  xlogpos  | dbname
+```
+- **postgres=> \q** # выход
+- **barman@barmen-graylog-zabbix:~$ psql -h 192.168.50.15 -U barman -c "IDENTIFY_SYSTEM" replication=1** # Проверяем репликацию
+```bash
+	  systemid       | timeline |  xlogpos  | dbname
 ---------------------+----------+-----------+--------
  7617513940940913251 |        1 | 0/745A9D8 |
 (1 row)
 >
-- postgres=# GRANT EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) TO barman;
+```
+- **postgres=#** # даем дополнительные права для barman (что-то не работает...)
+```bash
+GRANT EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) TO barman;
 GRANT EXECUTE ON FUNCTION pg_stop_backup() TO barman;
 GRANT EXECUTE ON FUNCTION pg_stop_backup(boolean, boolean) TO barman;
 GRANT EXECUTE ON FUNCTION pg_switch_wal() TO barman;
@@ -11334,25 +11375,37 @@ ERROR:  function pg_stop_backup() does not exist
 ERROR:  function pg_stop_backup(boolean, boolean) does not exist
 GRANT
 GRANT
-- postgres=# SELECT rolname FROM pg_roles WHERE rolname = 'barman';
+```
+- **postgres=# SELECT rolname FROM pg_roles WHERE rolname = 'barman';** # проверяем
+```bash
  rolname
 ---------
  barman
 (1 row)
-
-- postgres=# CREATE TABLE test_wal(id serial);
+```
+**root@barmen-graylog-zabbix:~# barman receive-wal --create-slot node1** # создаёт replication slot на PostgreSQL для стриминга WAL
+```bash
+Creating physical replication slot 'node1' on server 'node1'
+```
+- **postgres=#**
+```bash
+CREATE TABLE test_wal(id serial); # делаем изменения в данных, чтобы пошли wal-файлы на barman
 CREATE TABLE
-- postgres=# INSERT INTO test_wal DEFAULT VALUES;
+```
+- **postgres=#**
+```bash
+INSERT INTO test_wal DEFAULT VALUES;
 INSERT 0 1
-- barman@barmen-graylog-zabbix:/root$ sudo pkill -u barman<img width="698" height="520" alt="Screenshot 2026-03-16 at 18 51 27" src="https://github.com/user-attachments/assets/bd8a4e31-f37b-49b3-abc2-752e9e41fd9b" />
- -f receive-wal
+```
+- **barman@barmen-graylog-zabbix:/root$ sudo pkill -u barman -f receive-wal** # удаляем лишние процессы, которые мешают запустить 
 
-- barman@barmen-graylog-zabbix:/root$ barman receive-wal node1
+- **barman@barmen-graylog-zabbix:/root$ barman receive-wal node1**
+```bash
 Starting receive-wal for server node1
 node1: pg_receivewal: starting log streaming at 0/16000000 (timeline 1)
 node1: pg_receivewal: finished segment at 0/17000000 (timeline 1)
 node1: pg_receivewal: finished segment at 0/18000000 (timeline 1)
-
+```
 ### Долгожданный результат. С Postgresql еще надо попрактиковаться...
 <img width="891" height="529" alt="Screenshot 2026-03-17 at 10 48 47" src="https://github.com/user-attachments/assets/dc33951b-42b9-4bce-b004-c58f5098c792" />
 
