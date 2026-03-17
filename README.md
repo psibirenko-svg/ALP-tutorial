@@ -11418,7 +11418,9 @@ node1: pg_receivewal: finished segment at 0/18000000 (timeline 1)
 ### 2. Настройка hot_standby репликации с использованием слотов и резервного копирования с помощью Ansible
 
 <img width="266" height="1031" alt="Screenshot 2026-03-17 at 14 26 37" src="https://github.com/user-attachments/assets/fdeb824b-c38b-4598-a58c-6c539461b375" />
+
 ### Содержимое файлов:
+
 - **➜  ansible cat ansible.cfg**
 ```bash
 [defaults]
@@ -11804,7 +11806,9 @@ barman_user_password: 'Otus2026!'
     shell: barman cron
     when: "'barman' in group_names"
 ```    
-  
-  
+<img width="961" height="1031" alt="Screenshot 2026-03-17 at 16 43 26" src="https://github.com/user-attachments/assets/4ee8d971-fd77-4b5d-88ee-731486088061" />
+<img width="963" height="1043" alt="Screenshot 2026-03-17 at 16 44 07" src="https://github.com/user-attachments/assets/02b9f7e3-9689-4aa4-8118-b289ef67682c" />
+<img width="952" height="1042" alt="Screenshot 2026-03-17 at 16 45 20" src="https://github.com/user-attachments/assets/5b9a1f45-6415-491e-bb78-9239686be5a4" />
+
 
 ### Настройка бекапа с помощью Ansible завершена.
