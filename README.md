@@ -11813,6 +11813,7 @@ barman_user_password: 'Otus2026!'
 
 ### Настройка бекапа с помощью Ansible завершена.
 ✅ 1. Проверка репликации (master → replica)
+
 📌 1. Проверка на мастере
 - **root@web1-psql-master:~# sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"**
 ```bash
