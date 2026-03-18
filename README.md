@@ -11812,3 +11812,52 @@ barman_user_password: 'Otus2026!'
 
 
 ### Настройка бекапа с помощью Ansible завершена.
+✅ 1. Проверка репликации (master → replica)
+📌 1. Проверка на мастере
+- **root@web1-psql-master:~# sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"**
+```bash
+  pid  | usesysid |   usename   |  application_name  |  client_addr  | client_hostname | client_port |         backend_start         | backend_xmin |   state   | sent_lsn  | write_lsn | flush_lsn | replay_lsn |    write_lag    |    flush_lag    |   replay_lag    | sync_priority | sync_state |          reply_time
+-------+----------+-------------+--------------------+---------------+-----------------+-------------+-------------------------------+--------------+-----------+-----------+-----------+-----------+------------+-----------------+-----------------+-----------------+---------------+------------+-------------------------------
+ 27279 |    16394 | replication | 16/main            | 192.168.50.16 |                 |       43834 | 2026-03-18 14:46:32.515942+03 |          746 | streaming | 0/5000060 | 0/5000060 | 0/5000060 | 0/5000060  |                 |                 |                 |             0 | async      | 2026-03-18 14:47:42.713356+03
+ 27283 |    16389 | barman      | barman_receive_wal | 192.168.50.23 |                 |       44488 | 2026-03-18 14:46:33.772815+03 |              | streaming | 0/5000060 | 0/5000060 | 0/5000000 |            | 00:00:02.078799 | 00:01:11.055784 | 00:01:11.055784 |             0 | async      | 2026-03-18 14:47:44.845769+03
+(2 rows)
+```
+📌 2. Проверка на реплике
+- **root@web2-psql-replica:~# sudo -u postgres psql -c "SELECT pg_is_in_recovery();"** 
+```bash
+ pg_is_in_recovery
+-------------------
+ t
+(1 row)
+
+
+(END)
+```
+📌 3. Проверка через реальное изменение
+- **root@web1-psql-master:~# sudo -u postgres psql**
+```bash
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.
+```
+- **postgres=# CREATE TABLE test_replication (id int);**
+```bash
+INSERT INTO test_replication VALUES (1);
+CREATE TABLE
+INSERT 0 1
+```
+- **root@web2-psql-replica:~# sudo -u postgres psql**
+```bash
+psql (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1))
+Type "help" for help.
+```
+- **postgres=# SELECT * FROM test_replication;**
+```bash
+ id
+----
+  1 # работает!
+(1 row)
+```
+✅ 2. Проверка backup (Barman)
+📌 1. Проверка сервера в Barman
+<img width="880" height="546" alt="Screenshot 2026-03-18 at 15 00 40" src="https://github.com/user-attachments/assets/357cdb07-2406-40db-8983-fcf3e4d58ad5" />
+
