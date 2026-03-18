@@ -11860,4 +11860,37 @@ Type "help" for help.
 ✅ 2. Проверка backup (Barman)
 📌 1. Проверка сервера в Barman
 <img width="880" height="546" alt="Screenshot 2026-03-18 at 15 00 40" src="https://github.com/user-attachments/assets/357cdb07-2406-40db-8983-fcf3e4d58ad5" />
+📌 2. Сделать backup вручную
+- **root@barman:~# barman backup node1**
+```bash
+2026-03-18 12:05:10,885 [10500] barman.utils WARNING: Failed opening the requested log file. Using standard error instead.
+2026-03-18 12:05:10,886 [10500] barman.config WARNING: Discarding configuration file: .barman.auto.conf (not a file)
+node1 20260318T120129 - Wed Mar 18 15:01:29 2026 - Size: 29.5 MiB - WAL Size: 0 B
+```
+📌 4. Проверка WAL
+- **root@barman:~# barman list-files node1 latest**
+```bash
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6110
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6111
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6112
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6113
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6116
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6117
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6175
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6176
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6228
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6229
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6237
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6238
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/6239
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/826
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/827
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/828
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/PG_VERSION
+/var/lib/barman/node1/base/20260318T120129/data/base/16390/pg_filenode.map
+/var/lib/barman/node1/base/20260318T120129/data/pg_multixact/members/0000
+/var/lib/barman/node1/base/20260318T120129/data/pg_multixact/offsets/0000
+/var/lib/barman/node1/wals/0000000100000000/000000010000000000000006
+```
+
 
