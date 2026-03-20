@@ -10957,12 +10957,14 @@ CREATE TABLE
  public | garantusers | table | postgres
 (1 row)
 ```
-- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Pavel', 63); # добавим запись в таблицу из двух полей
-INSERT 0 1**
-
-- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Oleg', 39); # --"--
-INSERT 0 1**
-
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Pavel', 63);** # добавим запись в таблицу из двух полей
+```bash
+INSERT 0 1
+```
+- **postgres=# INSERT INTO garantusers (name, age) VALUES ('Oleg', 39);** # --"--
+```bash
+INSERT 0 1
+```
 - **postgres=# SELECT * FROM garantusers;**
 ```bash
  id | name  | age
