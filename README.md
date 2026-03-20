@@ -11901,5 +11901,5 @@ node1 20260318T120129 - Wed Mar 18 15:01:29 2026 - Size: 29.5 MiB - WAL Size: 0 
 /var/lib/barman/node1/base/20260318T120129/data/pg_multixact/offsets/0000
 /var/lib/barman/node1/wals/0000000100000000/000000010000000000000006
 ```
-
+### Резюме: Тема сложная. С БД нужно практиковаться.
 
