@@ -11036,62 +11036,46 @@ ansible_python_interpreter=/usr/bin/python3.12
 
 - name: Create application user
   community.mysql.mysql_user:
-    name: appuser
-    password: app63
+    name: "{{ mysql_app_user }}"
+    password: "{{ mysql_app_password }}"
     priv: "appdb.*:ALL"
     host: "%"
     state: present
-    login_user: root
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-
-- name: Create replication user
-  community.mysql.mysql_user:
-    name: repl
-    password: repl63
-    host: "%"
-    priv: "*.*:REPLICATION SLAVE"
-    state: present
-    login_user: root
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-
-- name: Create barman user
-  community.mysql.mysql_user:
-    name: barman
-    password: barman63
-    host: "%"
-    priv: "*.*:SELECT,RELOAD,LOCK TABLES,REPLICATION CLIENT"
-    state: present
-    login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
 ```
 - **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/replication_user.yml**
 ```bash
----
 - name: Create replication user
-  mysql_user:
-    name: repl
-    password: repl_pass
+  community.mysql.mysql_user:
+    name: "{{ mysql_repl_user }}"
+    password: "{{ mysql_repl_password }}"
     priv: "*.*:REPLICATION SLAVE"
     host: "%"
     state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 ```
 - **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/backup_user.yml**
 ```bash
----
-- name: Create backup user for mysqldump
+- name: Create backup user
   community.mysql.mysql_user:
-    name: backup
-    password: "{{ backup_password }}"
+    name: "{{ mysql_backup_user }}"
+    password: "{{ mysql_backup_password }}"
     host: "%"
-    priv: "appdb.*:SELECT,LOCK TABLES,SHOW VIEW"
+    priv: "*.*:PROCESS,SELECT,LOCK TABLES,SHOW VIEW"
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
 ```
 - **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/defaults/main.yml**
 ```bash
 ---
-# defaults file for mysql_master
-backup_password: backup63
+mysql_app_user: appuser
+mysql_app_password: app63
+
+mysql_repl_user: repl
+mysql_repl_password: repl63
+
+mysql_backup_user: backup
+mysql_backup_password: backup63
 ```
 - **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/handlers/main.yml**
 ```bash
@@ -11217,6 +11201,7 @@ mysql_db: appdb
       DATE=$(date +%F_%H-%M)
       BACKUP_DIR="/backup/mysql"
       FILE="$BACKUP_DIR/appdb_${DATE}.sql"
+      mkdir -p "$BACKUP_DIR"
 
       mysqldump -h {{ mysql_master_ip }} \
         -u backup -p'{{ backup_password }}' \
@@ -11338,6 +11323,9 @@ barman                     : ok=5    changed=0    unreachable=0    failed=0    s
 master                     : ok=13   changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 replica                    : ok=11   changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
+### 
+🔁 1. ПРОВЕРКА РЕПЛИКАЦИИ
+📍 на replica
 
 ## УРОК 46 Postgres SQL: Backup + Репликация 
 
