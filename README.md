@@ -11075,35 +11075,163 @@ ansible_python_interpreter=/usr/bin/python3.12
     host: "%"
     state: present
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/backup_user.yml**
 ```bash
-
+---
+- name: Create backup user for mysqldump
+  community.mysql.mysql_user:
+    name: backup
+    password: "{{ backup_password }}"
+    host: "%"
+    priv: "appdb.*:SELECT,LOCK TABLES,SHOW VIEW"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/defaults/main.yml**
 ```bash
-
+---
+# defaults file for mysql_master
+backup_password: backup63
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/handlers/main.yml**
 ```bash
-
+---
+# handlers file for mysql_master
+- name: Restart MySQL
+  service:
+    name: mysql
+    state: restarted
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/tasks/main.yml**
 ```bash
-
+---
+- import_tasks: setup.yml
+- import_tasks: replication.yml
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/tasks/setup.yml**
 ```bash
+---
+- name: Install Python MySQL dependencies
+  apt:
+    name:
+      - python3-pymysql
+      - python3-mysqldb
+    state: present
+    update_cache: yes
 
+- name: Install MySQL
+  apt:
+    name: mysql-server
+    state: present
+    update_cache: yes
+
+- name: Start MySQL
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Configure server-id
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^server-id'
+    line: 'server-id = 2'
+  notify: Restart MySQL
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/tasks/replication.yml**
 ```bash
+---
+- name: Stop replication
+  community.mysql.mysql_replication:
+    mode: stopreplica
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 
+- name: Reset replication
+  community.mysql.mysql_replication:
+    mode: resetreplicaall
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Configure replication source
+  community.mysql.mysql_replication:
+    mode: changeprimary
+    master_host: "192.168.50.15"
+    master_user: "repl"
+    master_password: "repl63"
+    master_log_file: "mysql-bin.000001"
+    master_log_pos: 2118
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Start replication
+  community.mysql.mysql_replication:
+    mode: startreplica
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 ```
-
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/defaults/main.yml**
 ```bash
-
+---
+# defaults file for mysql_replica
+backup_password: backup63
 ```
+-**root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/handlers/main.yml**
+```bash
+---
+- name: Restart MySQL
+  service:
+    name: mysql
+    state: restarted
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/barman/defaults/main.yml**
+```bash
+---
+# defaults file for barman
+mysql_master_ip: 192.168.50.15
+backup_password: backup63
+mysql_db: appdb
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/barman/tasks/main.yml**
+```bash
+---
+- name: Install mysql client
+  apt:
+    name: mysql-client
+    state: present
+    update_cache: yes
 
+- name: Create backup directory
+  file:
+    path: /backup/mysql
+    state: directory
+    mode: '0755'
+
+- name: Create mysql backup script
+  copy:
+    dest: /usr/local/bin/mysql_backup.sh
+    mode: '0755'
+    content: |
+      #!/bin/bash
+
+      DATE=$(date +%F_%H-%M)
+      BACKUP_DIR="/backup/mysql"
+      FILE="$BACKUP_DIR/appdb_${DATE}.sql"
+
+      mysqldump -h {{ mysql_master_ip }} \
+        -u backup -p'{{ backup_password }}' \
+        appdb > $FILE
+
+      find $BACKUP_DIR -type f -mtime +7 -delete
+
+- name: Schedule backup cron
+  cron:
+    name: mysql backup
+    job: "/usr/local/bin/mysql_backup.sh"
+    hour: 2
+    minute: 0
+```
+### Протокол исполнения 
 - **root@ansible:/home/spg/Ansible1603/Ansible/mysql# ansible-playbook -i inventory.ini site.yml -K**
 ```bash
 BECOME password:
