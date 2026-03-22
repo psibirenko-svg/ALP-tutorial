@@ -10801,6 +10801,416 @@ PLAY RECAP *********************************************************************
 
 <img width="806" height="858" alt="Screenshot 2026-02-16 at 11 25 42" src="https://github.com/user-attachments/assets/75a62f4c-dae8-41b4-b728-aff9ed3f67c1" />
 
+## УРОК 44 MySQL: Backup + Репликация
+- **Домашнее задание "Репликация mysql"**
+- 🎯 Цель:
+- **Научиться настраивать репликацию и создавать резервные копии в СУБД MySQL;** # 
+- 🎯 Что нужно сделать?
+- **Базу развернуть на мастере и настроить так, чтобы реплицировались таблицы**
+- **настроить правильное резервное копирование**
+
+- ### Выполнение
+### 
+
+### Делать не собирался, но в ходе подготовки к защите проекта встал перед выбором, какую СУБД использовать: Postgresql или MySQL.
+### Выбор пал на последнюю, и так образовалось еще одно ДЗ, о чем ни разу не пожалел (не было столько мучений, как c psql)
+### Использовал psql-master, web2-psql-replica и barman (master/replica/backup) без переименования дабы не изменять старой русской традиции (запутать врага %)
+### Linux Ubuntu 24.04
+### mysql  Ver 8.0.45-0ubuntu0.24.04.1 for Linux on x86_64 ((Ubuntu))
+### Ansible тоже на Ubuntu (раньше оркестрация выполнялась с машины на MacOS, но появились сомнения в правильности такого выбора)
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# tree** # реализация на Ansible
+```bash
+.
+├── inventory.ini
+├── roles
+│   ├── barman
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── files
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── meta
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   ├── tasks
+│   │   │   └── main.yml
+│   │   ├── templates
+│   │   ├── tests
+│   │   │   ├── inventory
+│   │   │   └── test.yml
+│   │   └── vars
+│   │       └── main.yml
+│   ├── mysql_master
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── files
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── meta
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   ├── tasks
+│   │   │   ├── backup_user.yml
+│   │   │   ├── config.yml
+│   │   │   ├── db_init.yml
+│   │   │   ├── main.yml
+│   │   │   └── replication_user.yml
+│   │   ├── templates
+│   │   ├── tests
+│   │   │   ├── inventory
+│   │   │   └── test.yml
+│   │   └── vars
+│   │       └── main.yml
+│   └── mysql_replica
+│       ├── defaults
+│       │   └── main.yml
+│       ├── files
+│       ├── handlers
+│       │   └── main.yml
+│       ├── meta
+│       │   └── main.yml
+│       ├── README.md
+│       ├── tasks
+│       │   ├── main.yml
+│       │   ├── replication.yml
+│       │   └── setup.yml
+│       ├── templates
+│       ├── tests
+│       │   ├── inventory
+│       │   └── test.yml
+│       └── vars
+│           └── main.yml
+└── site.yml
+
+29 directories, 32 files
+```
+### Выполняем стандартные настройки на хостах из проекта:
+```bash
+Сгенерировать ключ (если нет)
+На машине с Ansible (192.168.50.2):
+
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+-------------------------------------------
+
+Скопировать ключ на ВСЕ хосты
+ssh-copy-id spg@192.168.50.16 # replica
+ssh-copy-id spg@192.168.50.15 # master
+ssh-copy-id spg@192.168.50.23 # backup
+-------------------------------------------
+
+Проверить доступ (ОБЯЗАТЕЛЬНО)
+
+Проверка вручную:
+
+ssh spg@192.168.50.15
+ssh spg@192.168.50.16
+ssh spg@192.168.50.23
+
+Проверка через Ansible
+ansible all -i inventory.ini -m ping
+-------------------------------------------
+```
+### Содержимой файлов проекта (чистовики после нескольких дней ):
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat inventory.ini**
+```bash
+[mysql_master]
+master ansible_host=192.168.50.15
+
+[mysql_replica]
+replica ansible_host=192.168.50.16
+
+[mysql:children]
+mysql_master
+mysql_replica
+
+[barman_server]
+barman ansible_host=192.168.50.23
+
+[all:vars]
+ansible_user=spg
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_python_interpreter=/usr/bin/python3.12
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat site.yml**
+```bash
+---
+- name: MySQL Master
+  hosts: master
+  become: yes
+  roles:
+    - mysql_master
+
+- name: Wait for MySQL master
+  hosts: mysql_replica
+  tasks:
+    - wait_for:
+        host: 192.168.50.15
+        port: 3306
+        timeout: 60
+
+- name: MySQL Replica
+  hosts: replica
+  become: yes
+  roles:
+    - mysql_replica
+
+- name: Barman Backup
+  hosts: barman
+  become: yes
+  roles:
+    - barman
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/main.yml**
+```bash
+---
+- name: Install MySQL server
+  tags: install
+  apt:
+    name:
+      - mysql-server
+      - python3-pymysql
+    state: present
+    update_cache: yes
+
+- name: Ensure MySQL started
+  tags: service
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Configure MySQL
+  tags: config
+  import_tasks: config.yml
+
+- name: Restart MySQL after config
+  tags: service
+  service:
+    name: mysql
+    state: restarted
+
+- name: Wait for MySQL
+  tags: wait
+  wait_for:
+    port: 3306
+    timeout: 30
+
+- name: Initialize databases and users
+  tags: users
+  import_tasks: replication_user.yml
+
+- name: Initialize databases
+  tags: db
+  import_tasks: db_init.yml
+
+- name: Initialize backup user
+  tags: users
+  import_tasks: backup_user.yml
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/config.yml**
+```bash
+---
+- name: Configure bind address
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+
+- name: Enable binary logging
+  blockinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    block: |
+      server-id = 1
+      log_bin = /var/log/mysql/mysql-bin.log
+      binlog_format = ROW
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/db_init.yml**
+```bash
+---
+- name: Create application database
+  community.mysql.mysql_db:
+    name: appdb
+    state: present
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create application user
+  community.mysql.mysql_user:
+    name: appuser
+    password: app63
+    priv: "appdb.*:ALL"
+    host: "%"
+    state: present
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create replication user
+  community.mysql.mysql_user:
+    name: repl
+    password: repl63
+    host: "%"
+    priv: "*.*:REPLICATION SLAVE"
+    state: present
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create barman user
+  community.mysql.mysql_user:
+    name: barman
+    password: barman63
+    host: "%"
+    priv: "*.*:SELECT,RELOAD,LOCK TABLES,REPLICATION CLIENT"
+    state: present
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+```
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_master/tasks/replication_user.yml**
+```bash
+---
+- name: Create replication user
+  mysql_user:
+    name: repl
+    password: repl_pass
+    priv: "*.*:REPLICATION SLAVE"
+    host: "%"
+    state: present
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# ansible-playbook -i inventory.ini site.yml -K**
+```bash
+BECOME password:
+
+PLAY [MySQL Master] *****************************************************************************************************
+
+TASK [Gathering Facts] **************************************************************************************************
+ok: [master]
+
+TASK [mysql_master : Install MySQL server] ******************************************************************************
+ok: [master]
+
+TASK [mysql_master : Ensure MySQL started] ******************************************************************************
+ok: [master]
+
+TASK [mysql_master : Configure bind address] ****************************************************************************
+ok: [master]
+
+TASK [mysql_master : Enable binary logging] *****************************************************************************
+ok: [master]
+
+TASK [mysql_master : Restart MySQL after config] ************************************************************************
+changed: [master]
+
+TASK [mysql_master : Wait for MySQL] ************************************************************************************
+ok: [master]
+
+TASK [mysql_master : Create replication user] ***************************************************************************
+[WARNING]: Option column_case_sensitive is not provided. The default is now false, so the column's name will be
+uppercased. The default will be changed to true in community.mysql 4.0.0.
+changed: [master]
+
+TASK [mysql_master : Create application database] ***********************************************************************
+ok: [master]
+
+TASK [mysql_master : Create application user] ***************************************************************************
+ok: [master]
+
+TASK [mysql_master : Create replication user] ***************************************************************************
+changed: [master]
+
+TASK [mysql_master : Create barman user] ********************************************************************************
+ok: [master]
+
+TASK [mysql_master : Create backup user for mysqldump] ******************************************************************
+ok: [master]
+
+PLAY [Wait for MySQL master] ********************************************************************************************
+
+TASK [Gathering Facts] **************************************************************************************************
+ok: [replica]
+
+TASK [wait_for] *********************************************************************************************************
+ok: [replica]
+
+PLAY [MySQL Replica] ****************************************************************************************************
+
+TASK [Gathering Facts] **************************************************************************************************
+ok: [replica]
+
+TASK [mysql_replica : Install Python MySQL dependencies] ****************************************************************
+ok: [replica]
+
+TASK [mysql_replica : Install MySQL] ************************************************************************************
+ok: [replica]
+
+TASK [mysql_replica : Start MySQL] **************************************************************************************
+ok: [replica]
+
+TASK [mysql_replica : Configure server-id] ******************************************************************************
+ok: [replica]
+
+TASK [mysql_replica : Stop replication] *********************************************************************************
+changed: [replica]
+
+TASK [mysql_replica : Reset replication] ********************************************************************************
+changed: [replica]
+
+TASK [mysql_replica : Configure replication source] *********************************************************************
+changed: [replica]
+
+TASK [mysql_replica : Start replication] ********************************************************************************
+changed: [replica]
+
+PLAY [Barman Backup] ****************************************************************************************************
+
+TASK [Gathering Facts] **************************************************************************************************
+ok: [barman]
+
+TASK [barman : Install mysql client] ************************************************************************************
+ok: [barman]
+
+TASK [barman : Create backup directory] *********************************************************************************
+ok: [barman]
+
+TASK [barman : Create mysql backup script] ******************************************************************************
+ok: [barman]
+
+TASK [barman : Schedule backup cron] ************************************************************************************
+ok: [barman]
+
+PLAY RECAP **************************************************************************************************************
+barman                     : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+master                     : ok=13   changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+replica                    : ok=11   changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+
 ## УРОК 46 Postgres SQL: Backup + Репликация 
 
 - **Домашнее задание "Репликация postgres"**
