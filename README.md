@@ -10801,6 +10801,9 @@ PLAY RECAP *********************************************************************
 
 <img width="806" height="858" alt="Screenshot 2026-02-16 at 11 25 42" src="https://github.com/user-attachments/assets/75a62f4c-dae8-41b4-b728-aff9ed3f67c1" />
 
+
+
+
 ## УРОК 44 MySQL: Backup + Репликация
 - **Домашнее задание "Репликация mysql"**
 - 🎯 Цель:
@@ -11323,10 +11326,10 @@ rebuild → пересоздание реплики
 start → просто запуск/подключение
 stop → обслуживание
 ```
-### Изменения отразил выше (поправил)
+### Изменения отразил выше (поправил), проверяем
 
 📍 на master
-- **root@psql-master:~# sudo mysql**
+- **root@psql-master:~# sudo mysql** # Проверяем статус и вносим изменения в БД
 ```bash
 Welcome to the MySQL monitor.  Commands end with ; or \g.
 mysql> SHOW MASTER STATUS;
@@ -11342,7 +11345,7 @@ mysql> mysql> INSERT INTO appdb.test_replica VALUES (7);
 Query OK, 1 row affected (0.00 sec)
 ```
 📍 на replica
--**root@web2-psql-replica:~# sudo mysql**
+-**root@web2-psql-replica:~# sudo mysql** # соответсвует и реплицируется
 ```bash
 Welcome to the MySQL monitor.  Commands end with ; or \g.
 Your MySQL connection id is 169
@@ -11368,7 +11371,7 @@ mysql> SELECT * FROM appdb.test_replica;
 +------+
 7 rows in set (0.00 sec)
 ```
-🔁 1. ПРОВЕРКА БЭКАПА
+🔁 2. ПРОВЕРКА БЭКАПА
 -**root@barman:~# ls -lh /backup/mysql** # немного накопилось...болел
 ```bash
 total 36K
@@ -11387,7 +11390,7 @@ total 36K
 -rw-r--r-- 1 root root 1.9K Mar 24 02:00 appdb_2026-03-24_02-00.sql
 -rw-r--r-- 1 root root 1.9K Mar 25 02:00 appdb_2026-03-25_02-00.sql
 ```
--**root@barman:~# bash -x /usr/local/bin/mysql_backup.sh** # проверка работы
+-**root@barman:~# bash -x /usr/local/bin/mysql_backup.sh** # проверка работы 
 ```bash
 ++ date +%F_%H-%M
 + DATE=2026-03-25_17-43
@@ -11397,7 +11400,7 @@ total 36K
 mysqldump: [Warning] Using a password on the command line interface can be insecure.
 + find /backup/mysql -type f -mtime +7 -delete
 ```
--**root@barman:~# ls -lh /backup/mysql**
+-**root@barman:~# ls -lh /backup/mysql** # добавился файл
 ```bash
 total 40K
 -rw-r--r-- 1 root root    0 Mar 21 15:42 appdb_2026-03-21_15-42.sql
@@ -11439,13 +11442,13 @@ total 40K
 -- Table structure for table `test_replica`
 --
 ```
-🔁 1. ПРОВЕРКА ВОССТАНОВЛЕНИЯ
+🔁 3. ПРОВЕРКА ВОССТАНОВЛЕНИЯ
 - **root@barman:~# scp /backup/mysql/appdb_2026-03-25_02-00.sql spg@192.168.50.16:/tmp/** копируем нужный дамп на реплику (потому что там будем восстанавливать как тест)
 ```bash
 spg@192.168.50.16's password:
 appdb_2026-03-25_02-00.sql       100% 1891     5.3MB/s   00:00
 ```
-- **root@web2-psql-replica:~# mysql test_restore <  /tmp/appdb_2026-03-25_02-00.sql**
+- **root@web2-psql-replica:~# mysql test_restore <  /tmp/appdb_2026-03-25_02-00.sql** # восстановление
 - **root@web2-psql-replica:~# sudo mysql**
 ```bash
 mysql> SHOW DATABASES;
@@ -11475,6 +11478,8 @@ mysql> SHOW TABLES;
 1 row in set (0.00 sec)
 ```
 ### Восстановилось, поставленный цели достигнуты
+
+
 
 ## УРОК 46 Postgres SQL: Backup + Репликация 
 
