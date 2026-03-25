@@ -11323,17 +11323,25 @@ barman                     : ok=5    changed=0    unreachable=0    failed=0    s
 master                     : ok=13   changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 replica                    : ok=11   changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
-### 
-ansible-playbook -i inventory.ini site.yml -e mysql_replica_mode=rebuild -K
+
+🔁 1. ПРОВЕРКА РЕПЛИКАЦИИ
+### Проверка показала:
+```bash
+- репликация запущена, но не идет (Replica_IO_Running: Yes
+          Replica_SQL_Running: No)
+- Source_Log_File и Exec_Source_Log_Pos - не соотвествует текущему на мастере
+- appdb.test_replica - не создается на replica
+```
+### Внес изменения в роль mysql_replica под различные условия, согласно которым будут или нет копироваться уже существующие БД с мастера на реплику (сценарий выхода из строя машины реплики):
+```bash
+ansible-playbook -i inventory.ini site.yml -e mysql_replica_mode=rebuild -K # -e "mysql_replica_mode=rebuild"можно было не указывать, так уже прописано в главном файле
 init → первичное разворачивание
 rebuild → пересоздание реплики
 start → просто запуск/подключение
 stop → обслуживание
+```
+### Изменения отразил выше (поправил)
 
-🔁 1. ПРОВЕРКА РЕПЛИКАЦИИ
-### Проверка показала:
-- репликация запущена, но не идет
-- Source_Log_File и  - не соотвествует текущему на мастере
 📍 на master
 - **root@psql-master:~# sudo mysql**
 ```bash
@@ -11377,7 +11385,79 @@ mysql> SELECT * FROM appdb.test_replica;
 +------+
 7 rows in set (0.00 sec)
 ```
-📍 на replica
+🔁 1. ПРОВЕРКА БЭКАПА
+-**root@barman:~# ls -lh /backup/mysql** # немного накопилось...болел
+```bash
+total 36K
+-rw-r--r-- 1 root root    0 Mar 21 15:42 appdb_2026-03-21_15-42.sql
+-rw-r--r-- 1 root root    0 Mar 21 16:11 appdb_2026-03-21_16-11.sql
+-rw-r--r-- 1 root root    0 Mar 22 02:00 appdb_2026-03-22_02-00.sql
+-rw-r--r-- 1 root root    0 Mar 22 09:58 appdb_2026-03-22_09-58.sql
+-rw-r--r-- 1 root root    0 Mar 22 10:02 appdb_2026-03-22_10-02.sql
+-rw-r--r-- 1 root root 1.3K Mar 22 12:22 appdb_2026-03-22_12-22.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 12:52 appdb_2026-03-22_12-52.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:13 appdb_2026-03-22_13-13.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:19 appdb_2026-03-22_13-19.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:22 appdb_2026-03-22_13-22.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:23 appdb_2026-03-22_13-23.sql
+-rw-r--r-- 1 root root 1.9K Mar 23 02:00 appdb_2026-03-23_02-00.sql
+-rw-r--r-- 1 root root 1.9K Mar 24 02:00 appdb_2026-03-24_02-00.sql
+-rw-r--r-- 1 root root 1.9K Mar 25 02:00 appdb_2026-03-25_02-00.sql
+```
+-**root@barman:~# bash -x /usr/local/bin/mysql_backup.sh** # проверка работы
+```bash
+++ date +%F_%H-%M
++ DATE=2026-03-25_17-43
++ BACKUP_DIR=/backup/mysql
++ FILE=/backup/mysql/appdb_2026-03-25_17-43.sql
++ mysqldump -h 192.168.50.15 -u backup -pbackup63 appdb
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
++ find /backup/mysql -type f -mtime +7 -delete
+```
+-**root@barman:~# ls -lh /backup/mysql**
+```bash
+total 40K
+-rw-r--r-- 1 root root    0 Mar 21 15:42 appdb_2026-03-21_15-42.sql
+-rw-r--r-- 1 root root    0 Mar 21 16:11 appdb_2026-03-21_16-11.sql
+-rw-r--r-- 1 root root    0 Mar 22 02:00 appdb_2026-03-22_02-00.sql
+-rw-r--r-- 1 root root    0 Mar 22 09:58 appdb_2026-03-22_09-58.sql
+-rw-r--r-- 1 root root    0 Mar 22 10:02 appdb_2026-03-22_10-02.sql
+-rw-r--r-- 1 root root 1.3K Mar 22 12:22 appdb_2026-03-22_12-22.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 12:52 appdb_2026-03-22_12-52.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:13 appdb_2026-03-22_13-13.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:19 appdb_2026-03-22_13-19.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:22 appdb_2026-03-22_13-22.sql
+-rw-r--r-- 1 root root 1.9K Mar 22 13:23 appdb_2026-03-22_13-23.sql
+-rw-r--r-- 1 root root 1.9K Mar 23 02:00 appdb_2026-03-23_02-00.sql
+-rw-r--r-- 1 root root 1.9K Mar 24 02:00 appdb_2026-03-24_02-00.sql
+-rw-r--r-- 1 root root 1.9K Mar 25 02:00 appdb_2026-03-25_02-00.sql
+-rw-r--r-- 1 root root 1.9K Mar 25 17:43 appdb_2026-03-25_17-43.sql
+```
+-**root@barman:~# head -n 20 /backup/mysql/appdb_2026-03-25_02-00.sql** # Проверка содержимого бэкапа
+```bash
+-- MySQL dump 10.13  Distrib 8.0.45, for Linux (x86_64)
+--
+-- Host: 192.168.50.15    Database: appdb
+-- ------------------------------------------------------
+-- Server version	8.0.45-0ubuntu0.24.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `test_replica`
+--
+```
+
+
 
 ## УРОК 46 Postgres SQL: Backup + Репликация 
 
