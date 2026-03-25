@@ -11324,7 +11324,59 @@ master                     : ok=13   changed=3    unreachable=0    failed=0    s
 replica                    : ok=11   changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 ### 
+ansible-playbook -i inventory.ini site.yml -e mysql_replica_mode=rebuild -K
+init → первичное разворачивание
+rebuild → пересоздание реплики
+start → просто запуск/подключение
+stop → обслуживание
+
 🔁 1. ПРОВЕРКА РЕПЛИКАЦИИ
+### Проверка показала:
+- репликация запущена, но не идет
+- Source_Log_File и  - не соотвествует текущему на мастере
+📍 на master
+- **root@psql-master:~# sudo mysql**
+```bash
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+mysql> SHOW MASTER STATUS;
++------------------+----------+--------------+------------------+-------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------------+----------+--------------+------------------+-------------------+
+| mysql-bin.000018 |      717 |              |                  |                   |
++------------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+mysql> mysql> INSERT INTO appdb.test_replica VALUES (7);
+
+Query OK, 1 row affected (0.00 sec)
+```
+📍 на replica
+-**root@web2-psql-replica:~# sudo mysql**
+```bash
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 169
+Server version: 8.0.45-0ubuntu0.24.04.1 (Ubuntu)
+
+mysql> SHOW REPLICA STATUS\G
+Relay_Source_Log_File: mysql-bin.000018
+Replica_IO_Running: Yes
+Replica_SQL_Running: Yes
+Exec_Source_Log_Pos: 717
+
+mysql> SELECT * FROM appdb.test_replica;
++------+
+| id   |
++------+
+|    1 |
+|    2 |
+|    3 |
+|    4 |
+|    5 |
+|    6 |
+|    7 |
++------+
+7 rows in set (0.00 sec)
+```
 📍 на replica
 
 ## УРОК 46 Postgres SQL: Backup + Репликация 
