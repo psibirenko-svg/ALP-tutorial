@@ -10952,7 +10952,9 @@ ansible_python_interpreter=/usr/bin/python3.12
   hosts: replica
   become: yes
   roles:
-    - mysql_replica
+    - role: mysql_replica
+      vars:
+        mysql_replica_mode: rebuild
 
 - name: Barman Backup
   hosts: barman
@@ -11130,12 +11132,53 @@ mysql_backup_password: backup63
     mode: stopreplica
     login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: mysql_replica_mode in ["init", "rebuild"]
 
 - name: Reset replication
   community.mysql.mysql_replication:
     mode: resetreplicaall
     login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: mysql_replica_mode in ["init", "rebuild"]
+
+- name: Dump all databases from master
+  delegate_to: 192.168.50.15
+  shell: >
+    mysqldump --all-databases
+    --single-transaction
+    --routines --events --triggers
+    --source-data=2 > /tmp/full.sql
+  when: mysql_replica_mode in ["init", "rebuild"]
+
+- name: Fetch dump to controller
+  delegate_to: 192.168.50.15
+  fetch:
+    src: /tmp/full.sql
+    dest: /tmp/full.sql
+    flat: yes
+  when: mysql_replica_mode in ["init", "rebuild"]
+
+- name: Copy dump to replica
+  copy:
+    src: /tmp/full.sql
+    dest: /tmp/full.sql
+  when: mysql_replica_mode in ["init", "rebuild"]
+
+- name: Import dump
+  community.mysql.mysql_db:
+    state: import
+    name: all
+    target: /tmp/full.sql
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: mysql_replica_mode in ["init", "rebuild"]
+
+- name: Get master status
+  delegate_to: 192.168.50.15
+  community.mysql.mysql_replication:
+    mode: getprimary
+  register: master_status
+  when: mysql_replica_mode in ["init", "rebuild"]
 
 - name: Configure replication source
   community.mysql.mysql_replication:
@@ -11143,78 +11186,18 @@ mysql_backup_password: backup63
     master_host: "192.168.50.15"
     master_user: "repl"
     master_password: "repl63"
-    master_log_file: "mysql-bin.000001"
-    master_log_pos: 2118
+    master_log_file: "{{ master_status.File }}"
+    master_log_pos: "{{ master_status.Position }}"
     login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: mysql_replica_mode in ["init", "rebuild"]
 
 - name: Start replication
   community.mysql.mysql_replication:
     mode: startreplica
     login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
-```
-- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/defaults/main.yml**
-```bash
----
-# defaults file for mysql_replica
-backup_password: backup63
-```
--**root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/mysql_replica/handlers/main.yml**
-```bash
----
-- name: Restart MySQL
-  service:
-    name: mysql
-    state: restarted
-```
-- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/barman/defaults/main.yml**
-```bash
----
-# defaults file for barman
-mysql_master_ip: 192.168.50.15
-backup_password: backup63
-mysql_db: appdb
-```
-- **root@ansible:/home/spg/Ansible1603/Ansible/mysql# cat roles/barman/tasks/main.yml**
-```bash
----
-- name: Install mysql client
-  apt:
-    name: mysql-client
-    state: present
-    update_cache: yes
-
-- name: Create backup directory
-  file:
-    path: /backup/mysql
-    state: directory
-    mode: '0755'
-
-- name: Create mysql backup script
-  copy:
-    dest: /usr/local/bin/mysql_backup.sh
-    mode: '0755'
-    content: |
-      #!/bin/bash
-
-      DATE=$(date +%F_%H-%M)
-      BACKUP_DIR="/backup/mysql"
-      FILE="$BACKUP_DIR/appdb_${DATE}.sql"
-      mkdir -p "$BACKUP_DIR"
-
-      mysqldump -h {{ mysql_master_ip }} \
-        -u backup -p'{{ backup_password }}' \
-        appdb > $FILE
-
-      find $BACKUP_DIR -type f -mtime +7 -delete
-
-- name: Schedule backup cron
-  cron:
-    name: mysql backup
-    job: "/usr/local/bin/mysql_backup.sh"
-    hour: 2
-    minute: 0
+  when: mysql_replica_mode in ["init", "rebuild", "start"]
 ```
 ### Протокол исполнения 
 - **root@ansible:/home/spg/Ansible1603/Ansible/mysql# ansible-playbook -i inventory.ini site.yml -K**
