@@ -11456,8 +11456,42 @@ total 40K
 -- Table structure for table `test_replica`
 --
 ```
+🔁 1. ПРОВЕРКА ВОССТАНОВЛЕНИЯ
+- **root@barman:~# scp /backup/mysql/appdb_2026-03-25_02-00.sql spg@192.168.50.16:/tmp/** копируем нужный дамп на реплику (потому что там будем восстанавливать как тест)
+```bash
+spg@192.168.50.16's password:
+appdb_2026-03-25_02-00.sql       100% 1891     5.3MB/s   00:00
+```
+- **root@web2-psql-replica:~# mysql test_restore <  /tmp/appdb_2026-03-25_02-00.sql**
+- **root@web2-psql-replica:~# sudo mysql**
+```bash
+mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| appdb              |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| test_restore       |
++--------------------+
+6 rows in set (0.01 sec)
 
+mysql> USE test_restore;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
 
+Database changed
+mysql> SHOW TABLES;
++------------------------+
+| Tables_in_test_restore |
++------------------------+
+| test_replica           |
++------------------------+
+1 row in set (0.00 sec)
+```
+### Восстановилось, поставленный цели достигнуты
 
 ## УРОК 46 Postgres SQL: Backup + Репликация 
 
